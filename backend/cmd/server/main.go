@@ -1,9 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
+
+	"tsunagu/backend/internal/sandbox"
 )
 
 func main() {
@@ -12,10 +16,45 @@ func main() {
 		addr = ":8080"
 	}
 
+	sandboxAddr := os.Getenv("TSUNAGU_SANDBOX_ADDR")
+	if sandboxAddr == "" {
+		sandboxAddr = "localhost:50051"
+	}
+
+	sandboxClient, err := sandbox.NewClient(sandboxAddr)
+	if err != nil {
+		log.Fatalf("connecting to sandbox: %v", err)
+	}
+	defer sandboxClient.Close()
+
 	mux := http.NewServeMux()
+
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))
+	})
+
+	mux.HandleFunc("/search", func(w http.ResponseWriter, r *http.Request) {
+		extensionID := r.URL.Query().Get("extension_id")
+		query := r.URL.Query().Get("q")
+		page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+		if page == 0 {
+			page = 1
+		}
+
+		if extensionID == "" || query == "" {
+			http.Error(w, "extension_id and q are required", http.StatusBadRequest)
+			return
+		}
+
+		resp, err := sandboxClient.Search(r.Context(), extensionID, query, int32(page))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadGateway)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(resp)
 	})
 
 	log.Printf("tsunagu backend listening on %s", addr)

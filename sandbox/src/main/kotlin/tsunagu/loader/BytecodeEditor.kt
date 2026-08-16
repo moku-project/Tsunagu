@@ -63,6 +63,9 @@ object BytecodeEditor {
 
     private const val REPLACEMENT_PATH = "tsunagu/loader/replace"
 
+
+    private val classesToReplace = emptyList<String>()
+
     private val interfaceInvokespecialOwnerPrefixes = listOf(
         "kotlinx/serialization/",
     )
