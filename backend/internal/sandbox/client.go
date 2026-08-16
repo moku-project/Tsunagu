@@ -37,3 +37,25 @@ func (c *Client) Search(ctx context.Context, extensionID, query string, page int
 		Page:        page,
 	})
 }
+
+func (c *Client) GetDetails(ctx context.Context, extensionID, sourceEntryID string) (*sandboxv1.EntryDetails, error) {
+	return c.rpc.GetDetails(ctx, &sandboxv1.EntryRequest{
+		ExtensionId:   extensionID,
+		SourceEntryId: sourceEntryID,
+	})
+}
+
+func (c *Client) GetChapters(ctx context.Context, extensionID, sourceEntryID string) (*sandboxv1.ChapterList, error) {
+	return c.rpc.GetChapters(ctx, &sandboxv1.EntryRequest{
+		ExtensionId:   extensionID,
+		SourceEntryId: sourceEntryID,
+	})
+}
+
+func (c *Client) GetPages(ctx context.Context, extensionID, sourceEntryID, sourceChapterID string) (*sandboxv1.PageList, error) {
+	return c.rpc.GetPages(ctx, &sandboxv1.ChapterRequest{
+		ExtensionId:     extensionID,
+		SourceEntryId:   sourceEntryID,
+		SourceChapterId: sourceChapterID,
+	})
+}

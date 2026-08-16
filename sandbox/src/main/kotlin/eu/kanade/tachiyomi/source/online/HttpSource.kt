@@ -12,6 +12,8 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import rx.Observable
+import java.net.URI
+import java.net.URISyntaxException
 
 fun GET(url: String, headers: Headers = Headers.Builder().build()): Request =
     Request.Builder().url(url).headers(headers).build()
@@ -94,4 +96,27 @@ abstract class HttpSource : CatalogueSource {
 
     open fun getMangaUrl(manga: SManga): String = baseUrl + manga.url
     open fun getChapterUrl(chapter: SChapter): String = baseUrl + chapter.url
+
+    fun SChapter.setUrlWithoutDomain(url: String) {
+        this.url = getUrlWithoutDomain(url)
+    }
+
+    fun SManga.setUrlWithoutDomain(url: String) {
+        this.url = getUrlWithoutDomain(url)
+    }
+
+    private fun getUrlWithoutDomain(orig: String): String =
+        try {
+            val uri = URI(orig.replace(" ", "%20"))
+            var out = uri.path
+            if (uri.query != null) {
+                out += "?" + uri.query
+            }
+            if (uri.fragment != null) {
+                out += "#" + uri.fragment
+            }
+            out
+        } catch (_: URISyntaxException) {
+            orig
+        }
 }
