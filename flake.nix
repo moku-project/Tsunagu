@@ -22,6 +22,7 @@
             sqlc
             gqlgen
 
+            # Java 21 for the sandbox (Gradle/Kotlin)
             jdk21
             kotlin
             gradle
@@ -39,6 +40,13 @@
             vips
             pkg-config
           ];
+
+          # Set JAVA_HOME to JDK 17
+          shellHook = ''
+            export JAVA_HOME=${pkgs.jdk21}/lib/openjdk
+            export PATH=$JAVA_HOME/bin:$PATH
+            echo "Java 21 ready: $(java -version 2>&1 | head -n1)"
+          '';
         };
 
         packages = { };

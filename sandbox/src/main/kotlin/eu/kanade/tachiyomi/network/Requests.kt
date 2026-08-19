@@ -21,9 +21,6 @@ fun GET(
     cache: CacheControl = DEFAULT_CACHE_CONTROL,
 ): Request = GET(url.toHttpUrl(), headers, cache)
 
-/**
- * @since extensions-lib 1.4
- */
 fun GET(
     url: HttpUrl,
     headers: Headers = DEFAULT_HEADERS,

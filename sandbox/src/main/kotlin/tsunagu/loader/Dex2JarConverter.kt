@@ -3,25 +3,15 @@ package tsunagu.loader
 import com.googlecode.d2j.dex.Dex2jar
 import com.googlecode.d2j.reader.MultiDexFileReader
 import com.googlecode.dex2jar.tools.BaksmaliBaseDexExceptionHandler
+import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.File
 import java.nio.file.Files
 
 class Dex2JarConversionException(message: String) : Exception(message)
 
 object Dex2JarConverter {
-    /**
-     * Convert an APK's dex bytecode to a jar.
-     *
-     * Mirrors Suwayomi's PackageTools.dex2jar invocation (same underlying
-     * dex2jar library, non-default flags). The default-flags call
-     * (Dex2jar.from(apkFile).to(outputJar)) produces structurally-plausible
-     * but incorrect bytecode for some Kotlin-generated classes (e.g.
-     * kotlinx.serialization's $$serializer classes), surfacing later as
-     * IncompatibleClassChangeError at runtime instead of a conversion-time
-     * failure. reUseReg(false) and topoLogicalSort() avoid the bad register
-     * reconstruction; dontSanitizeNames(true) preserves Kotlin's special
-     * characters (e.g. the "$$" in generated serializer class names).
-     */
+    private val logger = KotlinLogging.logger {}
+
     fun convert(apkFile: File): File {
         val outputJar = Files.createTempFile("tsunagu-ext-", ".jar")
         Files.deleteIfExists(outputJar)
@@ -40,17 +30,25 @@ object Dex2JarConverter {
             .noCode(false)
             .skipExceptions(false)
             .dontSanitizeNames(true)
+            .computeFrames(true)
             .to(outputJar)
 
         if (handler.hasException()) {
             val errorFile = Files.createTempFile("tsunagu-ext-error-", ".txt")
+            logger.error {
+                """
+                Detail Error Information in File $errorFile
+                Please report this file to one of following link if possible (any one).
+                https://sourceforge.net/p/dex2jar/tickets/
+                https://bitbucket.org/pxb1988/dex2jar/issues
+                https://github.com/pxb1988/dex2jar/issues
+                dex2jar@googlegroups.com
+                """.trimIndent()
+            }
             handler.dump(errorFile, emptyArray<String>())
-            throw Dex2JarConversionException(
-                "dex2jar reported conversion errors for ${apkFile.name}; details: $errorFile"
-            )
+        } else {
+            BytecodeEditor.fixAndroidClasses(outputJar)
         }
-
-        BytecodeEditor.fixAndroidClasses(outputJar)
 
         return outputJar.toFile()
     }

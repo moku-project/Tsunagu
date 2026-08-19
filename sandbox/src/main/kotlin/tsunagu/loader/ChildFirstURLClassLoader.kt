@@ -6,14 +6,6 @@ import java.net.URL
 import java.net.URLClassLoader
 import java.util.Enumeration
 
-/**
- * A parent-last class loader that will try in order:
- * - the system class loader
- * - the child class loader
- * - the parent class loader.
- *
- * Copied from Suwayomi's suwayomi.tachidesk.manga.impl.util.ChildFirstURLClassLoader.
- */
 class ChildFirstURLClassLoader(
     urls: Array<URL>,
     parent: ClassLoader? = null,
@@ -25,12 +17,14 @@ class ChildFirstURLClassLoader(
         resolve: Boolean,
     ): Class<*> {
         var c = findLoadedClass(name)
+
         if (c == null && systemClassLoader != null) {
             try {
                 c = systemClassLoader.loadClass(name)
             } catch (_: ClassNotFoundException) {
             }
         }
+
         if (c == null) {
             c =
                 try {
@@ -39,9 +33,11 @@ class ChildFirstURLClassLoader(
                     super.loadClass(name, resolve)
                 }
         }
+
         if (resolve) {
             resolveClass(c)
         }
+
         return c
     }
 
@@ -59,16 +55,21 @@ class ChildFirstURLClassLoader(
                 while (systemUrls?.hasMoreElements() == true) {
                     add(systemUrls.nextElement())
                 }
+
                 while (localUrls?.hasMoreElements() == true) {
                     add(localUrls.nextElement())
                 }
+
                 while (parentUrls?.hasMoreElements() == true) {
                     add(parentUrls.nextElement())
                 }
             }
+
         return object : Enumeration<URL> {
             val iterator = urls.iterator()
+
             override fun hasMoreElements() = iterator.hasNext()
+
             override fun nextElement() = iterator.next()
         }
     }

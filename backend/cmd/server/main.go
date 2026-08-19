@@ -1,3 +1,4 @@
+// main.go
 package main
 
 import (
@@ -32,6 +33,97 @@ func main() {
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))
+	})
+
+	mux.HandleFunc("/repositories", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			indexURL := r.URL.Query().Get("index_url")
+			if indexURL == "" {
+				http.Error(w, "index_url is required", http.StatusBadRequest)
+				return
+			}
+			resp, err := sandboxClient.AddRepository(r.Context(), indexURL)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadGateway)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(resp)
+		case http.MethodGet:
+			resp, err := sandboxClient.ListRepositories(r.Context())
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadGateway)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(resp)
+		default:
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	mux.HandleFunc("/repositories/extensions", func(w http.ResponseWriter, r *http.Request) {
+		repositoryID := r.URL.Query().Get("repository_id")
+		if repositoryID == "" {
+			http.Error(w, "repository_id is required", http.StatusBadRequest)
+			return
+		}
+
+		resp, err := sandboxClient.ListAvailableExtensions(r.Context(), repositoryID)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadGateway)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(resp)
+	})
+
+	mux.HandleFunc("/extensions/install", func(w http.ResponseWriter, r *http.Request) {
+		repositoryID := r.URL.Query().Get("repository_id")
+		extensionID := r.URL.Query().Get("extension_id")
+		if repositoryID == "" || extensionID == "" {
+			http.Error(w, "repository_id and extension_id are required", http.StatusBadRequest)
+			return
+		}
+
+		resp, err := sandboxClient.InstallExtension(r.Context(), repositoryID, extensionID)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadGateway)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(resp)
+	})
+
+	mux.HandleFunc("/extensions", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			resp, err := sandboxClient.ListInstalledExtensions(r.Context())
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadGateway)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(resp)
+		case http.MethodDelete:
+			extensionID := r.URL.Query().Get("extension_id")
+			if extensionID == "" {
+				http.Error(w, "extension_id is required", http.StatusBadRequest)
+				return
+			}
+			resp, err := sandboxClient.UninstallExtension(r.Context(), extensionID)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadGateway)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(resp)
+		default:
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		}
 	})
 
 	mux.HandleFunc("/search", func(w http.ResponseWriter, r *http.Request) {

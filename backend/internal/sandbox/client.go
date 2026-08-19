@@ -1,3 +1,4 @@
+// client.go
 package sandbox
 
 import (
@@ -28,6 +29,39 @@ func NewClient(addr string) (*Client, error) {
 
 func (c *Client) Close() error {
 	return c.conn.Close()
+}
+
+func (c *Client) AddRepository(ctx context.Context, indexURL string) (*sandboxv1.Repository, error) {
+	return c.rpc.AddRepository(ctx, &sandboxv1.AddRepositoryRequest{
+		IndexUrl: indexURL,
+	})
+}
+
+func (c *Client) ListRepositories(ctx context.Context) (*sandboxv1.RepositoryList, error) {
+	return c.rpc.ListRepositories(ctx, &sandboxv1.Empty{})
+}
+
+func (c *Client) ListAvailableExtensions(ctx context.Context, repositoryID string) (*sandboxv1.ExtensionList, error) {
+	return c.rpc.ListAvailableExtensions(ctx, &sandboxv1.ListAvailableExtensionsRequest{
+		RepositoryId: repositoryID,
+	})
+}
+
+func (c *Client) InstallExtension(ctx context.Context, repositoryID, extensionID string) (*sandboxv1.Extension, error) {
+	return c.rpc.InstallExtension(ctx, &sandboxv1.InstallExtensionRequest{
+		RepositoryId: repositoryID,
+		ExtensionId:  extensionID,
+	})
+}
+
+func (c *Client) ListInstalledExtensions(ctx context.Context) (*sandboxv1.ExtensionList, error) {
+	return c.rpc.ListInstalledExtensions(ctx, &sandboxv1.Empty{})
+}
+
+func (c *Client) UninstallExtension(ctx context.Context, extensionID string) (*sandboxv1.Empty, error) {
+	return c.rpc.UninstallExtension(ctx, &sandboxv1.ExtensionRequest{
+		ExtensionId: extensionID,
+	})
 }
 
 func (c *Client) Search(ctx context.Context, extensionID, query string, page int32) (*sandboxv1.SearchResponse, error) {
