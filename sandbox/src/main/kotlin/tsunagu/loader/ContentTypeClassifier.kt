@@ -1,12 +1,17 @@
 package tsunagu.loader
 
+import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.source.online.HttpSource
 
 enum class ContentType { MANGA, ANIME, NOVEL }
 
 object ContentTypeClassifier {
     fun classify(clazz: Class<*>): ContentType? =
-        if (HttpSource::class.java.isAssignableFrom(clazz)) ContentType.MANGA else null
+        when {
+            HttpSource::class.java.isAssignableFrom(clazz) -> ContentType.MANGA
+            AnimeHttpSource::class.java.isAssignableFrom(clazz) -> ContentType.ANIME
+            else -> null
+        }
 
     fun fromPackageName(packageName: String): ContentType =
         when {

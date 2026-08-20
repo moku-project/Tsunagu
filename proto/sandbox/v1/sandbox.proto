@@ -8,13 +8,12 @@ service ExtensionService {
   rpc LoadExtensions(LoadExtensionsRequest) returns (ExtensionList);
   rpc ListLoadedExtensions(Empty) returns (ExtensionList);
   rpc UnloadExtension(ExtensionRequest) returns (Empty);
-
   rpc Search(SearchRequest) returns (SearchResponse);
   rpc GetDetails(EntryRequest) returns (EntryDetails);
   rpc GetChapters(EntryRequest) returns (ChapterList);
-
   rpc GetPages(ChapterRequest) returns (PageList);
   rpc GetChapterText(ChapterRequest) returns (TextContent);
+  rpc GetEpisodes(EntryRequest) returns (EpisodeList);
   rpc GetVideoStream(EpisodeRequest) returns (StreamInfo);
 }
 
@@ -110,6 +109,17 @@ message PageList {
 message TextContent {
   string content = 1;
   string format = 2;
+}
+
+message EpisodeList {
+  repeated EpisodeSummary episodes = 1;
+}
+
+message EpisodeSummary {
+  string source_episode_id = 1;
+  string name = 2;
+  double number = 3;
+  int64 upload_timestamp = 4;
 }
 
 message EpisodeRequest {

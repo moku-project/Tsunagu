@@ -39,6 +39,8 @@
 
             vips
             pkg-config
+
+            python3
           ];
 
           # Set JAVA_HOME to JDK 17

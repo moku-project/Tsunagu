@@ -105,6 +105,12 @@ func (c *Client) GetChapterText(ctx context.Context, extensionID, sourceEntryID,
 	})
 }
 
+func (c *Client) GetEpisodes(ctx context.Context, extensionID, sourceEntryID string) (*sandboxv1.EpisodeList, error) {
+	ctx, cancel := c.withTimeout(ctx)
+	defer cancel()
+	return c.rpc.GetEpisodes(ctx, &sandboxv1.EntryRequest{ExtensionId: extensionID, SourceEntryId: sourceEntryID})
+}
+
 func (c *Client) GetVideoStream(ctx context.Context, extensionID, sourceEntryID, sourceEpisodeID string) (*sandboxv1.StreamInfo, error) {
 	ctx, cancel := c.withTimeout(ctx)
 	defer cancel()

@@ -21,6 +21,7 @@ class ExtensionRegistry(private val extensionsDir: File) {
     fun loadAll() {
         extensionsDir.listFiles { file -> file.extension == "apk" || file.extension == "jar" }?.forEach { file ->
             runCatching { load(file) }
+                .onFailure { println("FAILED to load $file: ${it.stackTraceToString()}") }
         }
     }
 

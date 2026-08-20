@@ -1,5 +1,7 @@
 package tsunagu.loader
 
+import eu.kanade.tachiyomi.animesource.AnimeSource
+import eu.kanade.tachiyomi.animesource.AnimeSourceFactory
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.SourceFactory
 import net.dongliu.apk.parser.ApkFile
@@ -11,7 +13,7 @@ import javax.xml.parsers.DocumentBuilderFactory
 
 data class LoadedExtension(
     val packageName: String,
-    val source: Source,
+    val source: Any,
     val classLoader: ClassLoader,
     val contentType: ContentType,
 )
@@ -20,6 +22,7 @@ class ExtensionLoadException(message: String) : Exception(message)
 
 object ExtensionLoader {
     private const val METADATA_SOURCE_CLASS = "tachiyomi.extension.class"
+    private const val METADATA_ANIME_SOURCE_CLASS = "tachiyomi.animeextension.class"
 
     fun load(file: File): LoadedExtension {
         val className: String
@@ -37,7 +40,8 @@ object ExtensionLoader {
                 packageName = doc.documentElement.getAttribute("package")
 
                 val sourceClassMeta = getManifestMetaData(doc, METADATA_SOURCE_CLASS)
-                    ?: throw ExtensionLoadException("no $METADATA_SOURCE_CLASS meta-data in manifest for $packageName")
+                    ?: getManifestMetaData(doc, METADATA_ANIME_SOURCE_CLASS)
+                    ?: throw ExtensionLoadException("no $METADATA_SOURCE_CLASS or $METADATA_ANIME_SOURCE_CLASS meta-data in manifest for $packageName")
 
                 className = sourceClassMeta.trim().let {
                     if (it.startsWith(".")) packageName + it else it
@@ -53,7 +57,8 @@ object ExtensionLoader {
             val doc = apk.manifestXml.byteInputStream().use { dBuilder.parse(it) }
 
             val sourceClassMeta = getManifestMetaData(doc, METADATA_SOURCE_CLASS)
-                ?: throw ExtensionLoadException("no $METADATA_SOURCE_CLASS meta-data in manifest for $packageName")
+                ?: getManifestMetaData(doc, METADATA_ANIME_SOURCE_CLASS)
+                ?: throw ExtensionLoadException("no $METADATA_SOURCE_CLASS or $METADATA_ANIME_SOURCE_CLASS meta-data in manifest for $packageName")
 
             className = sourceClassMeta.trim().let {
                 if (it.startsWith(".")) packageName + it else it
@@ -67,12 +72,16 @@ object ExtensionLoader {
         val clazz = classLoader.loadClass(className)
         val instance = clazz.getDeclaredConstructor().newInstance()
 
-        val source: Source = when (instance) {
+        val source: Any = when (instance) {
             is Source -> instance
             is SourceFactory -> instance.createSources().firstOrNull()
                 ?: throw ExtensionLoadException("$className is a SourceFactory but createSources() returned nothing")
+            is AnimeSource -> instance
+            is AnimeSourceFactory -> instance.createSources().firstOrNull()
+                ?: throw ExtensionLoadException("$className is an AnimeSourceFactory but createSources() returned nothing")
             else -> throw ExtensionLoadException(
-                "$className does not implement eu.kanade.tachiyomi.source.Source or SourceFactory " +
+                "$className does not implement eu.kanade.tachiyomi.source.Source, SourceFactory, " +
+                    "eu.kanade.tachiyomi.animesource.AnimeSource, or AnimeSourceFactory " +
                     "(loaded as ${instance.javaClass.name} — check for a duplicate/stub definition " +
                     "of eu.kanade.tachiyomi.source.Source on the classpath)",
             )

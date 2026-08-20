@@ -1,3 +1,5 @@
 package androidx.preference
 
-class PreferenceScreen
+class PreferenceScreen {
+    fun addPreference(preference: Preference) {}
+}

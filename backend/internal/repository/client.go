@@ -57,6 +57,7 @@ func FetchIndex(indexURL string) ([]ParsedExtension, error) {
 	if i := strings.LastIndex(indexURL, "/"); i >= 0 {
 		apkBaseURL = indexURL[:i]
 	}
+	apkBaseURL = strings.TrimSuffix(apkBaseURL, "/") + "/apk/"
 
 	if trimmed := strings.TrimSpace(string(data)); strings.HasPrefix(trimmed, "[") {
 		var legacy []legacyRepoExtension

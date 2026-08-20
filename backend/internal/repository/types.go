@@ -97,7 +97,7 @@ func legacyToParsedExtensions(exts []legacyRepoExtension, apkBaseURL string) []P
 		out = append(out, ParsedExtension{
 			Name:        ext.Name,
 			PackageName: ext.Pkg,
-			ApkURL:      apkBaseURL + "/" + ext.Apk,
+			ApkURL:      apkBaseURL + ext.Apk,
 			JarURL:      "",
 			IconURL:     "",
 			VersionName: ext.Version,

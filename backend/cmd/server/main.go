@@ -329,4 +329,30 @@ func registerRoutes(mux *http.ServeMux, c *sandbox.Client, sy *sync.Syncer) {
 		}
 		httputil.JSON(w, resp)
 	})
+
+	mux.HandleFunc("/episodes", func(w http.ResponseWriter, r *http.Request) {
+		params, ok := httputil.RequireParams(w, r, "extension_id", "source_entry_id")
+		if !ok {
+			return
+		}
+		resp, err := c.GetEpisodes(r.Context(), params["extension_id"], params["source_entry_id"])
+		if err != nil {
+			httputil.GRPCError(w, err)
+			return
+		}
+		httputil.JSON(w, resp)
+	})
+
+	mux.HandleFunc("/stream", func(w http.ResponseWriter, r *http.Request) {
+		params, ok := httputil.RequireParams(w, r, "extension_id", "source_entry_id", "source_episode_id")
+		if !ok {
+			return
+		}
+		resp, err := c.GetVideoStream(r.Context(), params["extension_id"], params["source_entry_id"], params["source_episode_id"])
+		if err != nil {
+			httputil.GRPCError(w, err)
+			return
+		}
+		httputil.JSON(w, resp)
+	})
 }

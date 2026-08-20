@@ -42,7 +42,7 @@ func (s *Syncer) AddRepository(ctx context.Context, indexURL string) (sqlcgen.Re
 			PackageName:  ext.PackageName,
 			Name:         ext.Name,
 			Version:      ext.VersionName,
-			ContentType:  repo.ContentType,
+			ContentType:  repository.ClassifyContentType(ext.PackageName),
 			Lang:         ext.Lang,
 			IconUrl:      nullString(ext.IconURL),
 			ApkUrl:       ext.ApkURL,
@@ -66,16 +66,28 @@ func (s *Syncer) ListAvailableExtensions(ctx context.Context, repositoryID int64
 	return s.q.ListExtensionsByRepository(ctx, repositoryID)
 }
 
+func extensionDownloadTarget(ext sqlcgen.Extension) (url string, fileExt string, err error) {
+	if ext.JarUrl.Valid && ext.JarUrl.String != "" {
+		return ext.JarUrl.String, "jar", nil
+	}
+	if ext.ApkUrl != "" {
+		return ext.ApkUrl, "apk", nil
+	}
+	return "", "", fmt.Errorf("extension %s has no jar_url or apk_url", ext.PackageName)
+}
+
 func (s *Syncer) InstallExtension(ctx context.Context, packageName string) (sqlcgen.Extension, error) {
 	ext, err := s.q.GetExtensionByPackageName(ctx, packageName)
 	if err != nil {
 		return sqlcgen.Extension{}, fmt.Errorf("lookup extension %s: %w", packageName, err)
 	}
-	if !ext.JarUrl.Valid || ext.JarUrl.String == "" {
-		return sqlcgen.Extension{}, fmt.Errorf("extension %s has no jar_url", packageName)
+
+	downloadURL, fileExt, err := extensionDownloadTarget(ext)
+	if err != nil {
+		return sqlcgen.Extension{}, err
 	}
 
-	path, err := repository.DownloadJAR(s.cacheDir, ext.PackageName, ext.Version, ext.JarUrl.String)
+	path, err := repository.DownloadExtensionFile(s.cacheDir, ext.PackageName, ext.Version, downloadURL, fileExt)
 	if err != nil {
 		return sqlcgen.Extension{}, err
 	}
@@ -96,7 +108,7 @@ func (s *Syncer) UninstallExtension(ctx context.Context, packageName string) (sq
 		return sqlcgen.Extension{}, err
 	}
 	if ext.JarPath.Valid {
-		_ = os.Remove(ext.JarPath.String) // best-effort
+		_ = os.Remove(ext.JarPath.String)
 	}
 	return updated, nil
 }
@@ -114,12 +126,14 @@ func (s *Syncer) UpdateExtension(ctx context.Context, packageName string) (sqlcg
 	if err != nil {
 		return sqlcgen.Extension{}, fmt.Errorf("lookup extension %s: %w", packageName, err)
 	}
-	if !ext.JarUrl.Valid {
-		return sqlcgen.Extension{}, fmt.Errorf("extension %s has no jar_url", packageName)
+
+	downloadURL, fileExt, err := extensionDownloadTarget(ext)
+	if err != nil {
+		return sqlcgen.Extension{}, err
 	}
 
 	oldPath := ext.JarPath
-	path, err := repository.DownloadJAR(s.cacheDir, ext.PackageName, ext.Version, ext.JarUrl.String)
+	path, err := repository.DownloadExtensionFile(s.cacheDir, ext.PackageName, ext.Version, downloadURL, fileExt)
 	if err != nil {
 		return sqlcgen.Extension{}, err
 	}
