@@ -8,7 +8,6 @@ import org.koin.core.context.startKoin
 import org.koin.dsl.module
 import tsunagu.grpc.ExtensionServiceImpl
 import tsunagu.registry.ExtensionRegistry
-import tsunagu.repository.RepositoryRegistry
 import tsunagu.source.GetSource
 import java.io.File
 
@@ -27,10 +26,9 @@ fun main() {
     val registry = ExtensionRegistry(extensionsDir)
     GetSource.bind(registry) // lets NetworkHelper's user-agent-change hook reset loaded sources
     registry.loadAll()
-    val repositoryRegistry = RepositoryRegistry()
     val server = NettyServerBuilder
         .forPort(port)
-        .addService(ExtensionServiceImpl(registry, repositoryRegistry))
+        .addService(ExtensionServiceImpl(registry))
         .addService(ProtoReflectionService.newInstance())
         .build()
         .start()

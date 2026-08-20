@@ -5,12 +5,9 @@ package sandbox.v1;
 option go_package = "tsunagu/backend/internal/sandbox/gen;sandboxv1";
 
 service ExtensionService {
-  rpc AddRepository(AddRepositoryRequest) returns (Repository);
-  rpc ListRepositories(Empty) returns (RepositoryList);
-  rpc ListAvailableExtensions(ListAvailableExtensionsRequest) returns (ExtensionList);
-  rpc InstallExtension(InstallExtensionRequest) returns (Extension);
-  rpc ListInstalledExtensions(Empty) returns (ExtensionList);
-  rpc UninstallExtension(ExtensionRequest) returns (Empty);
+  rpc LoadExtensions(LoadExtensionsRequest) returns (ExtensionList);
+  rpc ListLoadedExtensions(Empty) returns (ExtensionList);
+  rpc UnloadExtension(ExtensionRequest) returns (Empty);
 
   rpc Search(SearchRequest) returns (SearchResponse);
   rpc GetDetails(EntryRequest) returns (EntryDetails);
@@ -30,27 +27,15 @@ enum ContentType {
 
 message Empty {}
 
-message AddRepositoryRequest {
-  string index_url = 1;
+message LoadExtensionsRequest {
+  repeated ExtensionToLoad extensions = 1;
 }
 
-message Repository {
-  string id = 1;
-  string index_url = 2;
-  string name = 3;
-}
-
-message RepositoryList {
-  repeated Repository repositories = 1;
-}
-
-message ListAvailableExtensionsRequest {
-  string repository_id = 1;
-}
-
-message InstallExtensionRequest {
-  string repository_id = 1;
-  string extension_id = 2;
+message ExtensionToLoad {
+  string extension_id = 1;
+  string jar_path = 2;
+  ContentType content_type = 3;
+  string lang = 4;
 }
 
 message ExtensionRequest {

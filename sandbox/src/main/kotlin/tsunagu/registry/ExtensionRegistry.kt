@@ -50,8 +50,7 @@ class ExtensionRegistry(private val extensionsDir: File) {
             response.close()
             throw ExtensionDownloadException("failed to download $url: HTTP ${response.code}")
         }
-        val bytes = response.body?.bytes()
-            ?: throw ExtensionDownloadException("empty response body from $url")
+        val bytes = response.body.bytes()
 
         val target = File(extensionsDir, "$extensionId.$ext")
         Files.write(target.toPath(), bytes)

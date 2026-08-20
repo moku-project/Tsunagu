@@ -11,92 +11,35 @@ import kotlinx.coroutines.runBlocking
 import sandbox.v1.ExtensionServiceGrpc
 import sandbox.v1.Sandbox
 import tsunagu.loader.ContentType
-import tsunagu.loader.ContentTypeClassifier
 import tsunagu.loader.LoadedExtension
 import tsunagu.registry.ExtensionRegistry
-import tsunagu.repository.ParsedExtension
-import tsunagu.repository.RepositoryRegistry
-import tsunagu.source.getMangaUpdate
-import tsunagu.source.getPageList
-import tsunagu.source.getSearchManga
+import java.io.File
 
 class ExtensionServiceImpl(
     private val registry: ExtensionRegistry,
-    private val repositoryRegistry: RepositoryRegistry,
 ) : ExtensionServiceGrpc.ExtensionServiceImplBase() {
 
     private val logger = KotlinLogging.logger {}
-
-    override fun addRepository(
-        request: Sandbox.AddRepositoryRequest,
-        responseObserver: StreamObserver<Sandbox.Repository>,
-    ) {
-        try {
-            val entry = repositoryRegistry.add(request.indexUrl)
-            responseObserver.onNext(
-                Sandbox.Repository.newBuilder()
-                    .setId(entry.id)
-                    .setIndexUrl(entry.indexUrl)
-                    .setName(entry.indexUrl)
-                    .build()
-            )
-            responseObserver.onCompleted()
-        } catch (e: Exception) {
-            logger.error(e) { "add repository failed" }
-            responseObserver.onError(internal(e))
-        }
-    }
-
-    override fun listRepositories(
-        request: Sandbox.Empty,
-        responseObserver: StreamObserver<Sandbox.RepositoryList>,
-    ) {
-        val builder = Sandbox.RepositoryList.newBuilder()
-        repositoryRegistry.list().forEach { entry ->
-            builder.addRepositories(
-                Sandbox.Repository.newBuilder()
-                    .setId(entry.id)
-                    .setIndexUrl(entry.indexUrl)
-                    .setName(entry.indexUrl)
-                    .build()
-            )
-        }
-        responseObserver.onNext(builder.build())
-        responseObserver.onCompleted()
-    }
-
-    override fun listAvailableExtensions(
-        request: Sandbox.ListAvailableExtensionsRequest,
+    
+    override fun loadExtensions(
+        request: Sandbox.LoadExtensionsRequest,
         responseObserver: StreamObserver<Sandbox.ExtensionList>,
     ) {
         try {
-            val repo = repositoryRegistry.get(request.repositoryId)
             val builder = Sandbox.ExtensionList.newBuilder()
-            repo.extensions.forEach { ext -> builder.addExtensions(toAvailableExtensionProto(ext)) }
+            request.extensionsList.forEach { toLoad ->
+                val loaded = registry.install(File(toLoad.jarPath), toLoad.extensionId)
+                builder.addExtensions(toExtensionProto(loaded))
+            }
             responseObserver.onNext(builder.build())
             responseObserver.onCompleted()
         } catch (e: Exception) {
-            logger.error(e) { "list available extensions failed" }
+            logger.error(e) { "load extensions failed" }
             responseObserver.onError(internal(e))
         }
     }
 
-    override fun installExtension(
-        request: Sandbox.InstallExtensionRequest,
-        responseObserver: StreamObserver<Sandbox.Extension>,
-    ) {
-        try {
-            val match = repositoryRegistry.findExtension(request.repositoryId, request.extensionId)
-            val loaded = registry.installFromUrl(match.apkUrl, match.jarUrl, match.packageName)
-            responseObserver.onNext(toExtensionProto(loaded))
-            responseObserver.onCompleted()
-        } catch (e: Exception) {
-            logger.error(e) { "install extension failed" }
-            responseObserver.onError(internal(e))
-        }
-    }
-
-    override fun listInstalledExtensions(
+    override fun listLoadedExtensions(
         request: Sandbox.Empty,
         responseObserver: StreamObserver<Sandbox.ExtensionList>,
     ) {
@@ -106,7 +49,7 @@ class ExtensionServiceImpl(
         responseObserver.onCompleted()
     }
 
-    override fun uninstallExtension(
+    override fun unloadExtension(
         request: Sandbox.ExtensionRequest,
         responseObserver: StreamObserver<Sandbox.Empty>,
     ) {
@@ -163,8 +106,7 @@ class ExtensionServiceImpl(
             val chapter: SChapter = SChapter.create().apply { url = request.sourceChapterId; name = "" }
             val pages = runBlocking {
                 source.getPageList(chapter).map { page ->
-                    val imageUrl = page.imageUrl ?: (source as? HttpSource)?.getImageUrl(page)
-                    imageUrl ?: page.url
+                    page.imageUrl ?: source.getImageUrl(page)
                 }
             }
             val builder = Sandbox.PageList.newBuilder()
@@ -190,7 +132,7 @@ class ExtensionServiceImpl(
     private fun <T> handle(
         responseObserver: StreamObserver<T>,
         extensionId: String,
-        block: (eu.kanade.tachiyomi.source.online.HttpSource) -> T,
+        block: (HttpSource) -> T,
     ) {
         val extension = registry.get(extensionId)
         if (extension == null) {
@@ -198,8 +140,8 @@ class ExtensionServiceImpl(
             return
         }
         try {
-            val httpSource = extension.source as? eu.kanade.tachiyomi.source.online.HttpSource
-            ?: return responseObserver.onError(internal(IllegalStateException("extension $extensionId is not an HttpSource")))
+            val httpSource = extension.source as? HttpSource
+                ?: return responseObserver.onError(internal(IllegalStateException("extension $extensionId is not an HttpSource")))
             responseObserver.onNext(block(httpSource))
             responseObserver.onCompleted()
         } catch (e: Throwable) {
@@ -220,15 +162,6 @@ class ExtensionServiceImpl(
             .setId(ext.packageName)
             .setName(ext.packageName)
             .setContentType(toContentTypeProto(ext.contentType))
-            .build()
-
-    private fun toAvailableExtensionProto(ext: ParsedExtension): Sandbox.Extension =
-        Sandbox.Extension.newBuilder()
-            .setId(ext.packageName)
-            .setName(ext.name)
-            .setVersion(ext.versionName)
-            .setContentType(toContentTypeProto(ContentTypeClassifier.fromPackageName(ext.packageName)))
-            .setLang(ext.lang)
             .build()
 
     private fun toEntrySummary(manga: SManga): Sandbox.EntrySummary =
