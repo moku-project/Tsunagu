@@ -312,3 +312,89 @@ func (s *Syncer) ListLibraryEntries(ctx context.Context, contentType string) ([]
 	}
 	return s.q.ListLibraryEntriesByContentType(ctx, contentType)
 }
+
+func (s *Syncer) SyncChapters(ctx context.Context, c *sandbox.Client, libraryEntryID int64) ([]sqlcgen.Chapter, error) {
+	entry, err := s.q.GetLibraryEntry(ctx, libraryEntryID)
+	if err != nil {
+		return nil, fmt.Errorf("get library entry %d: %w", libraryEntryID, err)
+	}
+	if !entry.ExtensionID.Valid {
+		return nil, fmt.Errorf("library entry %d has no extension (extension was removed)", libraryEntryID)
+	}
+	ext, err := s.q.GetExtension(ctx, entry.ExtensionID.Int64)
+	if err != nil {
+		return nil, fmt.Errorf("get extension %d: %w", entry.ExtensionID.Int64, err)
+	}
+
+	type summary struct {
+		sourceID string
+		name     string
+		number   float64
+		uploadTS int64
+	}
+	var summaries []summary
+
+	switch ext.ContentType {
+	case "anime":
+		list, err := c.GetEpisodes(ctx, ext.PackageName, entry.ExternalID)
+		if err != nil {
+			return nil, fmt.Errorf("get episodes for %s/%s: %w", ext.PackageName, entry.ExternalID, err)
+		}
+		for _, e := range list.Episodes {
+			summaries = append(summaries, summary{e.SourceEpisodeId, e.Name, e.Number, e.UploadTimestamp})
+		}
+	default: // manga, novel
+		list, err := c.GetChapters(ctx, ext.PackageName, entry.ExternalID)
+		if err != nil {
+			return nil, fmt.Errorf("get chapters for %s/%s: %w", ext.PackageName, entry.ExternalID, err)
+		}
+		for _, ch := range list.Chapters {
+			summaries = append(summaries, summary{ch.SourceChapterId, ch.Name, ch.Number, ch.UploadTimestamp})
+		}
+	}
+
+	chapters := make([]sqlcgen.Chapter, 0, len(summaries))
+	for _, sm := range summaries {
+		var uploadedAt sql.NullInt64
+		if sm.uploadTS > 0 {
+			uploadedAt = sql.NullInt64{Int64: sm.uploadTS / 1000, Valid: true}
+		}
+		chapter, err := s.q.CreateChapter(ctx, sqlcgen.CreateChapterParams{
+			LibraryEntryID: libraryEntryID,
+			ExternalID:     sm.sourceID,
+			Title:          sql.NullString{String: sm.name, Valid: sm.name != ""},
+			Number:         sql.NullFloat64{Float64: sm.number, Valid: true},
+			UploadedAt:     uploadedAt,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("upsert chapter %s: %w", sm.sourceID, err)
+		}
+		chapters = append(chapters, chapter)
+	}
+
+	return chapters, nil
+}
+
+func (s *Syncer) RecordProgress(ctx context.Context, libraryEntryID, chapterID int64, progress float64, completed bool, positionSeconds, durationSeconds *float64) (sqlcgen.ReadingProgress, error) {
+	params := sqlcgen.UpsertReadingProgressParams{
+		LibraryEntryID: libraryEntryID,
+		ChapterID:      chapterID,
+		Progress:       progress,
+		Completed:      completed,
+	}
+	if positionSeconds != nil {
+		params.PositionSeconds = sql.NullFloat64{Float64: *positionSeconds, Valid: true}
+	}
+	if durationSeconds != nil {
+		params.DurationSeconds = sql.NullFloat64{Float64: *durationSeconds, Valid: true}
+	}
+	return s.q.UpsertReadingProgress(ctx, params)
+}
+
+func (s *Syncer) MarkChapterRead(ctx context.Context, libraryEntryID, chapterID int64) (sqlcgen.ReadingProgress, error) {
+	return s.RecordProgress(ctx, libraryEntryID, chapterID, 1.0, true, nil, nil)
+}
+
+func (s *Syncer) ListReadingProgress(ctx context.Context, libraryEntryID int64) ([]sqlcgen.ReadingProgress, error) {
+	return s.q.ListReadingProgressByLibraryEntry(ctx, libraryEntryID)
+}

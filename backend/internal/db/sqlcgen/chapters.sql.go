@@ -25,7 +25,7 @@ type CreateChapterParams struct {
 	ExternalID     string          `json:"external_id"`
 	Title          sql.NullString  `json:"title"`
 	Number         sql.NullFloat64 `json:"number"`
-	UploadedAt     sql.NullTime    `json:"uploaded_at"`
+	UploadedAt     sql.NullInt64   `json:"uploaded_at"`
 }
 
 func (q *Queries) CreateChapter(ctx context.Context, arg CreateChapterParams) (Chapter, error) {

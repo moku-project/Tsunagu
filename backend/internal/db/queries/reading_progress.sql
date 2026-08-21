@@ -1,9 +1,11 @@
 -- name: UpsertReadingProgress :one
-INSERT INTO reading_progress (library_entry_id, chapter_id, progress, completed)
-VALUES (?, ?, ?, ?)
+INSERT INTO reading_progress (library_entry_id, chapter_id, progress, completed, position_seconds, duration_seconds)
+VALUES (?, ?, ?, ?, ?, ?)
 ON CONFLICT(library_entry_id, chapter_id) DO UPDATE SET
     progress = excluded.progress,
     completed = excluded.completed,
+    position_seconds = excluded.position_seconds,
+    duration_seconds = excluded.duration_seconds,
     updated_at = CURRENT_TIMESTAMP
 RETURNING *;
 

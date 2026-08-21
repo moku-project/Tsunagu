@@ -23,6 +23,12 @@ var migration0003 string
 //go:embed migrations/0004_library_organization.sql
 var migration0004 string
 
+//go:embed migrations/0005_chapter_uploaded_at_epoch.sql
+var migration0005 string
+
+//go:embed migrations/0006_reading_progress_position.sql
+var migration0006 string
+
 var migrations = []struct {
 	name string
 	sql  string
@@ -31,6 +37,8 @@ var migrations = []struct {
 	{"0002_extension_updates.sql", migration0002},
 	{"0003_extension_removal.sql", migration0003},
 	{"0004_library_organization.sql", migration0004},
+	{"0005_chapter_uploaded_at_epoch.sql", migration0005},
+	{"0006_reading_progress_position.sql", migration0006},
 }
 
 func Open(path string) (*sql.DB, error) {

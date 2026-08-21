@@ -10,3 +10,4 @@ WORKDIR /app
 COPY --from=build /src/sandbox/build/libs/*.jar /app/tsunagu-sandbox.jar
 EXPOSE 50051
 ENTRYPOINT ["java", "-jar", "/app/tsunagu-sandbox.jar"]
+a

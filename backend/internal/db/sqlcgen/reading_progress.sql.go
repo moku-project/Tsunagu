@@ -7,10 +7,11 @@ package sqlcgen
 
 import (
 	"context"
+	"database/sql"
 )
 
 const getReadingProgress = `-- name: GetReadingProgress :one
-SELECT id, library_entry_id, chapter_id, progress, completed, updated_at FROM reading_progress WHERE library_entry_id = ? AND chapter_id = ?
+SELECT id, library_entry_id, chapter_id, progress, completed, updated_at, position_seconds, duration_seconds FROM reading_progress WHERE library_entry_id = ? AND chapter_id = ?
 `
 
 type GetReadingProgressParams struct {
@@ -28,12 +29,14 @@ func (q *Queries) GetReadingProgress(ctx context.Context, arg GetReadingProgress
 		&i.Progress,
 		&i.Completed,
 		&i.UpdatedAt,
+		&i.PositionSeconds,
+		&i.DurationSeconds,
 	)
 	return i, err
 }
 
 const listReadingProgressByLibraryEntry = `-- name: ListReadingProgressByLibraryEntry :many
-SELECT id, library_entry_id, chapter_id, progress, completed, updated_at FROM reading_progress WHERE library_entry_id = ? ORDER BY updated_at DESC
+SELECT id, library_entry_id, chapter_id, progress, completed, updated_at, position_seconds, duration_seconds FROM reading_progress WHERE library_entry_id = ? ORDER BY updated_at DESC
 `
 
 func (q *Queries) ListReadingProgressByLibraryEntry(ctx context.Context, libraryEntryID int64) ([]ReadingProgress, error) {
@@ -52,6 +55,8 @@ func (q *Queries) ListReadingProgressByLibraryEntry(ctx context.Context, library
 			&i.Progress,
 			&i.Completed,
 			&i.UpdatedAt,
+			&i.PositionSeconds,
+			&i.DurationSeconds,
 		); err != nil {
 			return nil, err
 		}
@@ -67,20 +72,24 @@ func (q *Queries) ListReadingProgressByLibraryEntry(ctx context.Context, library
 }
 
 const upsertReadingProgress = `-- name: UpsertReadingProgress :one
-INSERT INTO reading_progress (library_entry_id, chapter_id, progress, completed)
-VALUES (?, ?, ?, ?)
+INSERT INTO reading_progress (library_entry_id, chapter_id, progress, completed, position_seconds, duration_seconds)
+VALUES (?, ?, ?, ?, ?, ?)
 ON CONFLICT(library_entry_id, chapter_id) DO UPDATE SET
     progress = excluded.progress,
     completed = excluded.completed,
+    position_seconds = excluded.position_seconds,
+    duration_seconds = excluded.duration_seconds,
     updated_at = CURRENT_TIMESTAMP
-RETURNING id, library_entry_id, chapter_id, progress, completed, updated_at
+RETURNING id, library_entry_id, chapter_id, progress, completed, updated_at, position_seconds, duration_seconds
 `
 
 type UpsertReadingProgressParams struct {
-	LibraryEntryID int64   `json:"library_entry_id"`
-	ChapterID      int64   `json:"chapter_id"`
-	Progress       float64 `json:"progress"`
-	Completed      bool    `json:"completed"`
+	LibraryEntryID  int64           `json:"library_entry_id"`
+	ChapterID       int64           `json:"chapter_id"`
+	Progress        float64         `json:"progress"`
+	Completed       bool            `json:"completed"`
+	PositionSeconds sql.NullFloat64 `json:"position_seconds"`
+	DurationSeconds sql.NullFloat64 `json:"duration_seconds"`
 }
 
 func (q *Queries) UpsertReadingProgress(ctx context.Context, arg UpsertReadingProgressParams) (ReadingProgress, error) {
@@ -89,6 +98,8 @@ func (q *Queries) UpsertReadingProgress(ctx context.Context, arg UpsertReadingPr
 		arg.ChapterID,
 		arg.Progress,
 		arg.Completed,
+		arg.PositionSeconds,
+		arg.DurationSeconds,
 	)
 	var i ReadingProgress
 	err := row.Scan(
@@ -98,6 +109,8 @@ func (q *Queries) UpsertReadingProgress(ctx context.Context, arg UpsertReadingPr
 		&i.Progress,
 		&i.Completed,
 		&i.UpdatedAt,
+		&i.PositionSeconds,
+		&i.DurationSeconds,
 	)
 	return i, err
 }

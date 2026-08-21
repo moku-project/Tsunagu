@@ -125,7 +125,13 @@ class ExtensionServiceImpl(
                     val plugin = extension.source as NovelPlugin
                     toEntryDetailsNovel(plugin.parseNovel(request.sourceEntryId))
                 }
-                else -> {
+                ContentType.ANIME -> {
+                    val source = extension.source as AnimeHttpSource
+                    val stub = SAnime.create().apply { url = request.sourceEntryId; title = "" }
+                    val anime = runBlocking { source.getAnimeDetails(stub) }
+                    toEntryDetailsAnime(anime)
+                }
+                ContentType.MANGA -> {
                     val source = extension.source as HttpSource
                     val stub = SManga.create().apply { url = request.sourceEntryId; title = "" }
                     val update = runBlocking {
@@ -337,6 +343,27 @@ class ExtensionServiceImpl(
             .addAllAuthors(listOfNotNull(novel.author))
             .addAllGenres(novel.genres?.split(",")?.map { it.trim() } ?: emptyList())
             .setStatus(novel.status ?: "")
+            .build()
+    private fun animeStatusToString(status: Int): String =
+        when (status) {
+            SAnime.ONGOING -> "Ongoing"
+            SAnime.COMPLETED -> "Completed"
+            SAnime.LICENSED -> "Licensed"
+            SAnime.PUBLISHING_FINISHED -> "Publishing Finished"
+            SAnime.CANCELLED -> "Cancelled"
+            SAnime.ON_HIATUS -> "On Hiatus"
+            else -> ""
+        }
+
+    private fun toEntryDetailsAnime(anime: SAnime): Sandbox.EntryDetails =
+        Sandbox.EntryDetails.newBuilder()
+            .setSourceEntryId(anime.url)
+            .setTitle(anime.title)
+            .setDescription(anime.description ?: "")
+            .setCoverUrl(anime.thumbnail_url ?: "")
+            .addAllAuthors(listOfNotNull(anime.author))
+            .addAllGenres(anime.genre?.split(",")?.map { it.trim() } ?: emptyList())
+            .setStatus(animeStatusToString(anime.status))
             .build()
 
     private fun toChapterSummary(chapter: SChapter): Sandbox.ChapterSummary =

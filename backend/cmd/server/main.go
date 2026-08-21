@@ -249,6 +249,122 @@ func registerRoutes(mux *http.ServeMux, c *sandbox.Client, sy *sync.Syncer) {
 		w.WriteHeader(http.StatusNoContent)
 	})
 
+	mux.HandleFunc("/library/chapters/sync", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			httputil.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		params, ok := httputil.RequireParams(w, r, "library_entry_id")
+		if !ok {
+			return
+		}
+		entryID, err := strconv.ParseInt(params["library_entry_id"], 10, 64)
+		if err != nil {
+			httputil.Error(w, "invalid library_entry_id", http.StatusBadRequest)
+			return
+		}
+		chapters, err := sy.SyncChapters(r.Context(), c, entryID)
+		if err != nil {
+			httputil.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		httputil.JSON(w, chapters)
+	})
+
+	mux.HandleFunc("/reading-progress", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			params, ok := httputil.RequireParams(w, r, "library_entry_id", "chapter_id", "progress")
+			if !ok {
+				return
+			}
+			entryID, err := strconv.ParseInt(params["library_entry_id"], 10, 64)
+			if err != nil {
+				httputil.Error(w, "invalid library_entry_id", http.StatusBadRequest)
+				return
+			}
+			chapterID, err := strconv.ParseInt(params["chapter_id"], 10, 64)
+			if err != nil {
+				httputil.Error(w, "invalid chapter_id", http.StatusBadRequest)
+				return
+			}
+			progress, err := strconv.ParseFloat(params["progress"], 64)
+			if err != nil {
+				httputil.Error(w, "invalid progress", http.StatusBadRequest)
+				return
+			}
+			completed := r.URL.Query().Get("completed") == "true" || r.Form.Get("completed") == "true"
+			var positionSeconds, durationSeconds *float64
+			if v := r.Form.Get("position_seconds"); v != "" {
+				parsed, err := strconv.ParseFloat(v, 64)
+				if err != nil {
+					httputil.Error(w, "invalid position_seconds", http.StatusBadRequest)
+					return
+				}
+				positionSeconds = &parsed
+			}
+			if v := r.Form.Get("duration_seconds"); v != "" {
+				parsed, err := strconv.ParseFloat(v, 64)
+				if err != nil {
+					httputil.Error(w, "invalid duration_seconds", http.StatusBadRequest)
+					return
+				}
+				durationSeconds = &parsed
+			}
+			result, err := sy.RecordProgress(r.Context(), entryID, chapterID, progress, completed, positionSeconds, durationSeconds)
+			if err != nil {
+				httputil.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			httputil.JSON(w, result)
+		case http.MethodGet:
+			params, ok := httputil.RequireParams(w, r, "library_entry_id")
+			if !ok {
+				return
+			}
+			entryID, err := strconv.ParseInt(params["library_entry_id"], 10, 64)
+			if err != nil {
+				httputil.Error(w, "invalid library_entry_id", http.StatusBadRequest)
+				return
+			}
+			list, err := sy.ListReadingProgress(r.Context(), entryID)
+			if err != nil {
+				httputil.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			httputil.JSON(w, list)
+		default:
+			httputil.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	mux.HandleFunc("/reading-progress/mark-read", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			httputil.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		params, ok := httputil.RequireParams(w, r, "library_entry_id", "chapter_id")
+		if !ok {
+			return
+		}
+		entryID, err := strconv.ParseInt(params["library_entry_id"], 10, 64)
+		if err != nil {
+			httputil.Error(w, "invalid library_entry_id", http.StatusBadRequest)
+			return
+		}
+		chapterID, err := strconv.ParseInt(params["chapter_id"], 10, 64)
+		if err != nil {
+			httputil.Error(w, "invalid chapter_id", http.StatusBadRequest)
+			return
+		}
+		result, err := sy.MarkChapterRead(r.Context(), entryID, chapterID)
+		if err != nil {
+			httputil.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		httputil.JSON(w, result)
+	})
+
 	mux.HandleFunc("/repositories/extensions", func(w http.ResponseWriter, r *http.Request) {
 		params, ok := httputil.RequireParams(w, r, "repository_id")
 		if !ok {

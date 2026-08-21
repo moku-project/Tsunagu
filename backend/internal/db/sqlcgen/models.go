@@ -21,7 +21,7 @@ type Chapter struct {
 	ExternalID     string          `json:"external_id"`
 	Title          sql.NullString  `json:"title"`
 	Number         sql.NullFloat64 `json:"number"`
-	UploadedAt     sql.NullTime    `json:"uploaded_at"`
+	UploadedAt     sql.NullInt64   `json:"uploaded_at"`
 }
 
 type Download struct {
@@ -101,12 +101,14 @@ type NovelChapterContent struct {
 }
 
 type ReadingProgress struct {
-	ID             int64     `json:"id"`
-	LibraryEntryID int64     `json:"library_entry_id"`
-	ChapterID      int64     `json:"chapter_id"`
-	Progress       float64   `json:"progress"`
-	Completed      bool      `json:"completed"`
-	UpdatedAt      time.Time `json:"updated_at"`
+	ID              int64           `json:"id"`
+	LibraryEntryID  int64           `json:"library_entry_id"`
+	ChapterID       int64           `json:"chapter_id"`
+	Progress        float64         `json:"progress"`
+	Completed       bool            `json:"completed"`
+	UpdatedAt       time.Time       `json:"updated_at"`
+	PositionSeconds sql.NullFloat64 `json:"position_seconds"`
+	DurationSeconds sql.NullFloat64 `json:"duration_seconds"`
 }
 
 type Repository struct {
