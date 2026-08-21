@@ -58,6 +58,10 @@ dependencies {
     implementation("io.insert-koin:koin-core:4.2.2")
     implementation("com.github.null2264:injekt-koin:ee267b2e27")
 
+    // GraalVM JS (novel plugin runtime)
+    implementation("org.graalvm.polyglot:polyglot:24.1.1")
+    implementation("org.graalvm.polyglot:js-community:24.1.1")
+
     compileOnly("javax.annotation:javax.annotation-api:1.3.2")
 
     testImplementation(kotlin("test"))
@@ -65,6 +69,9 @@ dependencies {
 
 application {
     mainClass.set("tsunagu.MainKt")
+    applicationDefaultJvmArgs = listOf(
+        "-Dpolyglot.engine.WarnInterpreterOnly=false",
+    )
 }
 
 tasks.test {

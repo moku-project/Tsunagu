@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -18,6 +19,18 @@ func (e *FetchError) Error() string { return e.msg }
 
 func fetchErrorf(format string, args ...any) error {
 	return &FetchError{msg: fmt.Sprintf(format, args...)}
+}
+
+func filterValid(exts []ParsedExtension) []ParsedExtension {
+	out := make([]ParsedExtension, 0, len(exts))
+	for _, ext := range exts {
+		if !IsValidPackageName(ext.PackageName) {
+			log.Printf("skipping repo entry with invalid package name %q", ext.PackageName)
+			continue
+		}
+		out = append(out, ext)
+	}
+	return out
 }
 
 func FetchIndex(indexURL string) ([]ParsedExtension, error) {
@@ -60,9 +73,21 @@ func FetchIndex(indexURL string) ([]ParsedExtension, error) {
 	apkBaseURL = strings.TrimSuffix(apkBaseURL, "/") + "/apk/"
 
 	if trimmed := strings.TrimSpace(string(data)); strings.HasPrefix(trimmed, "[") {
-		var legacy []legacyRepoExtension
-		if err := json.Unmarshal(data, &legacy); err == nil {
-			return legacyToParsedExtensions(legacy, apkBaseURL), nil
+		var probe []map[string]json.RawMessage
+		if err := json.Unmarshal(data, &probe); err == nil && len(probe) > 0 {
+			_, hasID := probe[0]["id"]
+			_, hasURL := probe[0]["url"]
+			_, hasPkg := probe[0]["pkg"]
+			if hasID && hasURL && !hasPkg {
+				var novel []novelRepoEntry
+				if err := json.Unmarshal(data, &novel); err == nil {
+					return filterValid(novelToParsedExtensions(novel)), nil
+				}
+			}
+			var legacy []legacyRepoExtension
+			if err := json.Unmarshal(data, &legacy); err == nil {
+				return filterValid(legacyToParsedExtensions(legacy, apkBaseURL)), nil
+			}
 		}
 	}
 
@@ -78,5 +103,5 @@ func FetchIndex(indexURL string) ([]ParsedExtension, error) {
 		)
 	}
 
-	return idx.toParsedExtensions(apkBaseURL), nil
+	return filterValid(idx.toParsedExtensions(apkBaseURL)), nil
 }

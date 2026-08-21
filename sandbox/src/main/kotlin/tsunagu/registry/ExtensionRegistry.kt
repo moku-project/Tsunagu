@@ -9,6 +9,7 @@ import java.nio.file.Files
 import java.util.concurrent.ConcurrentHashMap
 
 class ExtensionDownloadException(message: String) : Exception(message)
+class InvalidExtensionIdException(message: String) : Exception(message)
 
 class ExtensionRegistry(private val extensionsDir: File) {
     private val extensions = ConcurrentHashMap<String, LoadedExtension>()
@@ -18,8 +19,24 @@ class ExtensionRegistry(private val extensionsDir: File) {
         extensionsDir.mkdirs()
     }
 
+    private fun requireSafeExtensionId(extensionId: String) {
+        val safe = Regex("^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+        if (!safe.matches(extensionId)) {
+            throw InvalidExtensionIdException("unsafe extension id: $extensionId")
+        }
+    }
+
+    private fun targetFile(extensionId: String, ext: String): File {
+        requireSafeExtensionId(extensionId)
+        val target = File(extensionsDir, "$extensionId.$ext").canonicalFile
+        if (!target.parentFile.canonicalFile.equals(extensionsDir.canonicalFile)) {
+            throw InvalidExtensionIdException("resolved path escapes extensions dir: $extensionId")
+        }
+        return target
+    }
+
     fun loadAll() {
-        extensionsDir.listFiles { file -> file.extension == "apk" || file.extension == "jar" }?.forEach { file ->
+        extensionsDir.listFiles { file -> file.extension == "apk" || file.extension == "jar" || file.extension == "js" }?.forEach { file ->
             runCatching { load(file) }
                 .onFailure { println("FAILED to load $file: ${it.stackTraceToString()}") }
         }
@@ -37,13 +54,18 @@ class ExtensionRegistry(private val extensionsDir: File) {
 
     fun install(sourceFile: File, extensionId: String): LoadedExtension {
         val ext = sourceFile.extension.ifBlank { "apk" }
-        val target = File(extensionsDir, "$extensionId.$ext")
+        val target = targetFile(extensionId, ext)
         sourceFile.copyTo(target, overwrite = true)
         return load(target)
     }
 
-    fun installFromUrl(apkUrl: String, jarUrl: String?, extensionId: String): LoadedExtension {
-        val (url, ext) = if (jarUrl != null) jarUrl to "jar" else apkUrl to "apk"
+    fun installFromUrl(apkUrl: String?, jarUrl: String?, jsUrl: String?, extensionId: String): LoadedExtension {
+        val (url, ext) = when {
+            jsUrl != null -> jsUrl to "js"
+            jarUrl != null -> jarUrl to "jar"
+            apkUrl != null -> apkUrl to "apk"
+            else -> throw ExtensionDownloadException("no download url provided for $extensionId")
+        }
 
         val request = Request.Builder().url(url).build()
         val response = client.newCall(request).execute()
@@ -53,15 +75,17 @@ class ExtensionRegistry(private val extensionsDir: File) {
         }
         val bytes = response.body.bytes()
 
-        val target = File(extensionsDir, "$extensionId.$ext")
+        val target = targetFile(extensionId, ext)
         Files.write(target.toPath(), bytes)
         return load(target)
     }
 
     fun uninstall(extensionId: String) {
+        requireSafeExtensionId(extensionId)
         extensions.remove(extensionId)
         File(extensionsDir, "$extensionId.apk").delete()
         File(extensionsDir, "$extensionId.jar").delete()
+        File(extensionsDir, "$extensionId.js").delete()
     }
 
     fun invalidateAll() {

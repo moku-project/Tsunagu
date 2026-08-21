@@ -1,23 +1,15 @@
 services:
-  postgres:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: tsunagu
-      POSTGRES_PASSWORD: tsunagu
-      POSTGRES_DB: tsunagu
-    ports:
-      - "5432:5432"
-    volumes:
-      - tsunagu-db:/var/lib/postgresql/data
-
   sandbox:
     build:
       context: .
       dockerfile: sandbox/Dockerfile
     environment:
       SANDBOX_PORT: 50051
-    ports:
-      - "50051:50051"
+      SANDBOX_EXTENSIONS_DIR: /data/extensions
+    volumes:
+      - tsunagu-extensions:/data/extensions
+    expose:
+      - "50051"
 
   backend:
     build:
@@ -25,13 +17,16 @@ services:
       dockerfile: backend/Dockerfile
     environment:
       TSUNAGU_ADDR: ":8080"
-      TSUNAGU_DB_URL: "postgres://tsunagu:tsunagu@postgres:5432/tsunagu?sslmode=disable"
+      TSUNAGU_DB_PATH: "/data/tsunagu.db"
+      TSUNAGU_JAR_CACHE_DIR: "/data/jar-cache"
       TSUNAGU_SANDBOX_ADDR: "sandbox:50051"
     ports:
       - "8080:8080"
+    volumes:
+      - tsunagu-db:/data
     depends_on:
-      - postgres
       - sandbox
 
 volumes:
   tsunagu-db:
+  tsunagu-extensions:

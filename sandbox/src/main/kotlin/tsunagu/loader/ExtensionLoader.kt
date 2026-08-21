@@ -9,6 +9,7 @@ import org.w3c.dom.Element
 import org.w3c.dom.Node
 import java.io.File
 import java.util.zip.ZipFile
+import tsunagu.novel.NovelPluginLoader
 import javax.xml.parsers.DocumentBuilderFactory
 
 data class LoadedExtension(
@@ -25,6 +26,10 @@ object ExtensionLoader {
     private const val METADATA_ANIME_SOURCE_CLASS = "tachiyomi.animeextension.class"
 
     fun load(file: File): LoadedExtension {
+        if (file.extension == "js") {
+            return NovelPluginLoader.load(file)
+        }
+
         val className: String
         val packageName: String
         val jarFile: File

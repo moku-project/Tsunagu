@@ -8,11 +8,16 @@ func RequireParams(w http.ResponseWriter, r *http.Request, names ...string) (map
 		return nil, false
 	}
 
+	source := r.Form
+	if r.Method == http.MethodDelete {
+		source = r.URL.Query()
+	}
+
 	values := make(map[string]string, len(names))
 	missing := make([]string, 0)
 
 	for _, name := range names {
-		v := r.Form.Get(name)
+		v := source.Get(name)
 		if v == "" {
 			missing = append(missing, name)
 			continue

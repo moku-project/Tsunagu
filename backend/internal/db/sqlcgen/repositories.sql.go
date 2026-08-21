@@ -123,3 +123,27 @@ func (q *Queries) TouchRepositorySync(ctx context.Context, id int64) error {
 	_, err := q.db.ExecContext(ctx, touchRepositorySync, id)
 	return err
 }
+
+const updateRepositoryName = `-- name: UpdateRepositoryName :one
+UPDATE repositories SET name = ? WHERE id = ?
+RETURNING id, index_url, name, content_type, added_at, last_synced_at
+`
+
+type UpdateRepositoryNameParams struct {
+	Name sql.NullString `json:"name"`
+	ID   int64          `json:"id"`
+}
+
+func (q *Queries) UpdateRepositoryName(ctx context.Context, arg UpdateRepositoryNameParams) (Repository, error) {
+	row := q.db.QueryRowContext(ctx, updateRepositoryName, arg.Name, arg.ID)
+	var i Repository
+	err := row.Scan(
+		&i.ID,
+		&i.IndexUrl,
+		&i.Name,
+		&i.ContentType,
+		&i.AddedAt,
+		&i.LastSyncedAt,
+	)
+	return i, err
+}

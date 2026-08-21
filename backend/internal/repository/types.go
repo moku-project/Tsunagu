@@ -8,6 +8,7 @@ type ParsedExtension struct {
 	IconURL     string
 	VersionName string
 	Lang        string
+	ContentType string
 }
 
 type repoIndex struct {
@@ -62,6 +63,16 @@ type legacyRepoExtension struct {
 	Version string `json:"version"`
 }
 
+type novelRepoEntry struct {
+	ID      string `json:"id"`
+	Name    string `json:"name"`
+	Site    string `json:"site"`
+	Lang    string `json:"lang"`
+	Version string `json:"version"`
+	URL     string `json:"url"`
+	IconURL string `json:"iconUrl"`
+}
+
 func (idx *repoIndex) toParsedExtensions(baseRawURL string) []ParsedExtension {
 	if idx.ExtensionList == nil {
 		return nil
@@ -102,6 +113,23 @@ func legacyToParsedExtensions(exts []legacyRepoExtension, apkBaseURL string) []P
 			IconURL:     "",
 			VersionName: ext.Version,
 			Lang:        ext.Lang,
+		})
+	}
+	return out
+}
+
+func novelToParsedExtensions(exts []novelRepoEntry) []ParsedExtension {
+	out := make([]ParsedExtension, 0, len(exts))
+	for _, ext := range exts {
+		out = append(out, ParsedExtension{
+			Name:        ext.Name,
+			PackageName: ext.ID,
+			ApkURL:      "",
+			JarURL:      ext.URL,
+			IconURL:     ext.IconURL,
+			VersionName: ext.Version,
+			Lang:        ext.Lang,
+			ContentType: "novel",
 		})
 	}
 	return out

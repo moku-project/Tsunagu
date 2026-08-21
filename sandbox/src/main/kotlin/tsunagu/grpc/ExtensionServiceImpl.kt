@@ -16,6 +16,9 @@ import sandbox.v1.ExtensionServiceGrpc
 import sandbox.v1.Sandbox
 import tsunagu.loader.ContentType
 import tsunagu.loader.LoadedExtension
+import tsunagu.novel.ChapterItem
+import tsunagu.novel.NovelPlugin
+import tsunagu.novel.SourceNovel
 import tsunagu.registry.ExtensionRegistry
 import java.io.File
 
@@ -84,6 +87,19 @@ class ExtensionServiceImpl(
                     builder.setHasNextPage(page.hasNextPage)
                     page.animes.forEach { anime -> builder.addResults(toEntrySummaryAnime(anime)) }
                 }
+                is NovelPlugin -> {
+                    val results = source.searchNovels(request.query, request.page)
+                    builder.setHasNextPage(results.isNotEmpty())
+                    results.forEach { novel ->
+                        builder.addResults(
+                            Sandbox.EntrySummary.newBuilder()
+                                .setSourceEntryId(novel.path)
+                                .setTitle(novel.name)
+                                .setCoverUrl(novel.cover ?: "")
+                                .build(),
+                        )
+                    }
+                }
                 else -> throw IllegalStateException("extension ${request.extensionId} is not searchable")
             }
             responseObserver.onNext(builder.build())
@@ -98,12 +114,31 @@ class ExtensionServiceImpl(
         request: Sandbox.EntryRequest,
         responseObserver: StreamObserver<Sandbox.EntryDetails>,
     ) {
-        handle(responseObserver, request.extensionId) { source ->
-            val stub = SManga.create().apply { url = request.sourceEntryId; title = "" }
-            val update = runBlocking {
-                source.getMangaUpdate(stub, emptyList(), fetchDetails = true, fetchChapters = false)
+        val extension = registry.get(request.extensionId)
+        if (extension == null) {
+            responseObserver.onError(notFound(request.extensionId))
+            return
+        }
+        try {
+            val details = when (extension.contentType) {
+                ContentType.NOVEL -> {
+                    val plugin = extension.source as NovelPlugin
+                    toEntryDetailsNovel(plugin.parseNovel(request.sourceEntryId))
+                }
+                else -> {
+                    val source = extension.source as HttpSource
+                    val stub = SManga.create().apply { url = request.sourceEntryId; title = "" }
+                    val update = runBlocking {
+                        source.getMangaUpdate(stub, emptyList(), fetchDetails = true, fetchChapters = false)
+                    }
+                    toEntryDetails(update.manga)
+                }
             }
-            toEntryDetails(update.manga)
+            responseObserver.onNext(details)
+            responseObserver.onCompleted()
+        } catch (e: Throwable) {
+            logger.error(e) { "extension call failed" }
+            responseObserver.onError(internal(e))
         }
     }
 
@@ -111,14 +146,36 @@ class ExtensionServiceImpl(
         request: Sandbox.EntryRequest,
         responseObserver: StreamObserver<Sandbox.ChapterList>,
     ) {
-        handle(responseObserver, request.extensionId) { source ->
-            val stub = SManga.create().apply { url = request.sourceEntryId; title = "" }
-            val update = runBlocking {
-                source.getMangaUpdate(stub, emptyList(), fetchDetails = false, fetchChapters = true)
+        val extension = registry.get(request.extensionId)
+        if (extension == null) {
+            responseObserver.onError(notFound(request.extensionId))
+            return
+        }
+        try {
+            val list = when (extension.contentType) {
+                ContentType.NOVEL -> {
+                    val plugin = extension.source as NovelPlugin
+                    val novel = plugin.parseNovel(request.sourceEntryId)
+                    val builder = Sandbox.ChapterList.newBuilder()
+                    novel.chapters.forEach { chapter -> builder.addChapters(toChapterSummaryNovel(chapter)) }
+                    builder.build()
+                }
+                else -> {
+                    val source = extension.source as HttpSource
+                    val stub = SManga.create().apply { url = request.sourceEntryId; title = "" }
+                    val update = runBlocking {
+                        source.getMangaUpdate(stub, emptyList(), fetchDetails = false, fetchChapters = true)
+                    }
+                    val builder = Sandbox.ChapterList.newBuilder()
+                    update.chapters.forEach { chapter -> builder.addChapters(toChapterSummary(chapter)) }
+                    builder.build()
+                }
             }
-            val builder = Sandbox.ChapterList.newBuilder()
-            update.chapters.forEach { chapter -> builder.addChapters(toChapterSummary(chapter)) }
-            builder.build()
+            responseObserver.onNext(list)
+            responseObserver.onCompleted()
+        } catch (e: Throwable) {
+            logger.error(e) { "extension call failed" }
+            responseObserver.onError(internal(e))
         }
     }
 
@@ -143,7 +200,26 @@ class ExtensionServiceImpl(
         request: Sandbox.ChapterRequest,
         responseObserver: StreamObserver<Sandbox.TextContent>,
     ) {
-        responseObserver.onError(unimplemented())
+        val extension = registry.get(request.extensionId)
+        if (extension == null) {
+            responseObserver.onError(notFound(request.extensionId))
+            return
+        }
+        if (extension.contentType != ContentType.NOVEL) {
+            responseObserver.onError(unimplemented())
+            return
+        }
+        try {
+            val plugin = extension.source as NovelPlugin
+            val text = plugin.parseChapter(request.sourceChapterId)
+            responseObserver.onNext(
+                Sandbox.TextContent.newBuilder().setContent(text).setFormat("html").build(),
+            )
+            responseObserver.onCompleted()
+        } catch (e: Throwable) {
+            logger.error(e) { "extension call failed" }
+            responseObserver.onError(internal(e))
+        }
     }
 
     override fun getEpisodes(
@@ -252,12 +328,31 @@ class ExtensionServiceImpl(
             .addAllGenres(manga.genre?.split(",")?.map { it.trim() } ?: emptyList())
             .build()
 
+    private fun toEntryDetailsNovel(novel: SourceNovel): Sandbox.EntryDetails =
+        Sandbox.EntryDetails.newBuilder()
+            .setSourceEntryId(novel.path)
+            .setTitle(novel.name)
+            .setDescription(novel.summary ?: "")
+            .setCoverUrl(novel.cover ?: "")
+            .addAllAuthors(listOfNotNull(novel.author))
+            .addAllGenres(novel.genres?.split(",")?.map { it.trim() } ?: emptyList())
+            .setStatus(novel.status ?: "")
+            .build()
+
     private fun toChapterSummary(chapter: SChapter): Sandbox.ChapterSummary =
         Sandbox.ChapterSummary.newBuilder()
             .setSourceChapterId(chapter.url)
             .setName(chapter.name)
             .setNumber(chapter.chapter_number.toDouble())
             .setUploadTimestamp(chapter.date_upload)
+            .build()
+
+    private fun toChapterSummaryNovel(chapter: ChapterItem): Sandbox.ChapterSummary =
+        Sandbox.ChapterSummary.newBuilder()
+            .setSourceChapterId(chapter.path)
+            .setName(chapter.name)
+            .setNumber(chapter.chapterNumber ?: 0.0)
+            .setUploadTimestamp(0)
             .build()
 
     private fun toEpisodeSummary(episode: SEpisode): Sandbox.EpisodeSummary =

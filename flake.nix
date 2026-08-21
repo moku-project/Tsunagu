@@ -41,6 +41,9 @@
             pkg-config
 
             python3
+
+            # Node for compiling LNReader plugin .ts sources (esbuild via npx)
+            nodejs_22
           ];
 
           # Set JAVA_HOME to JDK 17

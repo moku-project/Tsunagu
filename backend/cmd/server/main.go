@@ -147,7 +147,8 @@ func registerRoutes(mux *http.ServeMux, c *sandbox.Client, sy *sync.Syncer) {
 			if !ok {
 				return
 			}
-			repo, err := sy.AddRepository(r.Context(), params["index_url"])
+			_ = r.ParseForm()
+			repo, err := sy.AddRepository(r.Context(), params["index_url"], r.Form.Get("name"))
 			if err != nil {
 				httputil.Error(w, err.Error(), http.StatusBadGateway)
 				return
@@ -160,9 +161,46 @@ func registerRoutes(mux *http.ServeMux, c *sandbox.Client, sy *sync.Syncer) {
 				return
 			}
 			httputil.JSON(w, repos)
+		case http.MethodDelete:
+			params, ok := httputil.RequireParams(w, r, "repository_id")
+			if !ok {
+				return
+			}
+			repoID, err := strconv.ParseInt(params["repository_id"], 10, 64)
+			if err != nil {
+				httputil.Error(w, "invalid repository_id", http.StatusBadRequest)
+				return
+			}
+			if err := sy.DeleteRepository(r.Context(), repoID); err != nil {
+				httputil.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			w.WriteHeader(http.StatusNoContent)
 		default:
 			httputil.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		}
+	})
+
+	mux.HandleFunc("/repositories/rename", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			httputil.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		params, ok := httputil.RequireParams(w, r, "repository_id", "name")
+		if !ok {
+			return
+		}
+		repoID, err := strconv.ParseInt(params["repository_id"], 10, 64)
+		if err != nil {
+			httputil.Error(w, "invalid repository_id", http.StatusBadRequest)
+			return
+		}
+		repo, err := sy.RenameRepository(r.Context(), repoID, params["name"])
+		if err != nil {
+			httputil.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		httputil.JSON(w, repo)
 	})
 
 	mux.HandleFunc("/repositories/extensions", func(w http.ResponseWriter, r *http.Request) {
@@ -323,6 +361,19 @@ func registerRoutes(mux *http.ServeMux, c *sandbox.Client, sy *sync.Syncer) {
 			return
 		}
 		resp, err := c.GetPages(r.Context(), params["extension_id"], params["source_entry_id"], params["source_chapter_id"])
+		if err != nil {
+			httputil.GRPCError(w, err)
+			return
+		}
+		httputil.JSON(w, resp)
+	})
+
+	mux.HandleFunc("/chapter-text", func(w http.ResponseWriter, r *http.Request) {
+		params, ok := httputil.RequireParams(w, r, "extension_id", "source_entry_id", "source_chapter_id")
+		if !ok {
+			return
+		}
+		resp, err := c.GetChapterText(r.Context(), params["extension_id"], params["source_entry_id"], params["source_chapter_id"])
 		if err != nil {
 			httputil.GRPCError(w, err)
 			return

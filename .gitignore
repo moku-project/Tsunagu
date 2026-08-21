@@ -6,6 +6,7 @@ result-*
 
 backend/bin/
 backend/tmp/
+backend/tsunagu-server
 *.exe
 *.test
 *.out
@@ -15,6 +16,7 @@ backend/internal/api/graph/model/generated_models.go
 sandbox/.gradle/
 sandbox/build/
 sandbox/out/
+.gradle/
 !sandbox/gradle/wrapper/gradle-wrapper.jar
 *.class
 

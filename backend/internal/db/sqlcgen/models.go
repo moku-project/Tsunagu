@@ -55,15 +55,17 @@ type Extension struct {
 }
 
 type LibraryEntry struct {
-	ID          int64          `json:"id"`
-	ExtensionID int64          `json:"extension_id"`
-	ExternalID  string         `json:"external_id"`
-	ContentType string         `json:"content_type"`
-	Title       string         `json:"title"`
-	CoverPath   sql.NullString `json:"cover_path"`
-	Description sql.NullString `json:"description"`
-	Status      sql.NullString `json:"status"`
-	AddedAt     time.Time      `json:"added_at"`
+	ID                 int64          `json:"id"`
+	ExtensionID        sql.NullInt64  `json:"extension_id"`
+	ExtensionName      string         `json:"extension_name"`
+	ExternalID         string         `json:"external_id"`
+	ContentType        string         `json:"content_type"`
+	Title              string         `json:"title"`
+	CoverPath          sql.NullString `json:"cover_path"`
+	Description        sql.NullString `json:"description"`
+	Status             sql.NullString `json:"status"`
+	ExtensionRemovedAt sql.NullTime   `json:"extension_removed_at"`
+	AddedAt            time.Time      `json:"added_at"`
 }
 
 type MangaPage struct {

@@ -12,29 +12,31 @@ import (
 
 const createLibraryEntry = `-- name: CreateLibraryEntry :one
 INSERT INTO library_entries (
-    extension_id, external_id, content_type, title, cover_path, description, status
-) VALUES (?, ?, ?, ?, ?, ?, ?)
+    extension_id, extension_name, external_id, content_type, title, cover_path, description, status
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 ON CONFLICT(extension_id, external_id) DO UPDATE SET
     title = excluded.title,
     cover_path = excluded.cover_path,
     description = excluded.description,
     status = excluded.status
-RETURNING id, extension_id, external_id, content_type, title, cover_path, description, status, added_at
+RETURNING id, extension_id, extension_name, external_id, content_type, title, cover_path, description, status, extension_removed_at, added_at
 `
 
 type CreateLibraryEntryParams struct {
-	ExtensionID int64          `json:"extension_id"`
-	ExternalID  string         `json:"external_id"`
-	ContentType string         `json:"content_type"`
-	Title       string         `json:"title"`
-	CoverPath   sql.NullString `json:"cover_path"`
-	Description sql.NullString `json:"description"`
-	Status      sql.NullString `json:"status"`
+	ExtensionID   sql.NullInt64  `json:"extension_id"`
+	ExtensionName string         `json:"extension_name"`
+	ExternalID    string         `json:"external_id"`
+	ContentType   string         `json:"content_type"`
+	Title         string         `json:"title"`
+	CoverPath     sql.NullString `json:"cover_path"`
+	Description   sql.NullString `json:"description"`
+	Status        sql.NullString `json:"status"`
 }
 
 func (q *Queries) CreateLibraryEntry(ctx context.Context, arg CreateLibraryEntryParams) (LibraryEntry, error) {
 	row := q.db.QueryRowContext(ctx, createLibraryEntry,
 		arg.ExtensionID,
+		arg.ExtensionName,
 		arg.ExternalID,
 		arg.ContentType,
 		arg.Title,
@@ -46,12 +48,14 @@ func (q *Queries) CreateLibraryEntry(ctx context.Context, arg CreateLibraryEntry
 	err := row.Scan(
 		&i.ID,
 		&i.ExtensionID,
+		&i.ExtensionName,
 		&i.ExternalID,
 		&i.ContentType,
 		&i.Title,
 		&i.CoverPath,
 		&i.Description,
 		&i.Status,
+		&i.ExtensionRemovedAt,
 		&i.AddedAt,
 	)
 	return i, err
@@ -67,7 +71,7 @@ func (q *Queries) DeleteLibraryEntry(ctx context.Context, id int64) error {
 }
 
 const getLibraryEntry = `-- name: GetLibraryEntry :one
-SELECT id, extension_id, external_id, content_type, title, cover_path, description, status, added_at FROM library_entries WHERE id = ?
+SELECT id, extension_id, extension_name, external_id, content_type, title, cover_path, description, status, extension_removed_at, added_at FROM library_entries WHERE id = ?
 `
 
 func (q *Queries) GetLibraryEntry(ctx context.Context, id int64) (LibraryEntry, error) {
@@ -76,19 +80,21 @@ func (q *Queries) GetLibraryEntry(ctx context.Context, id int64) (LibraryEntry, 
 	err := row.Scan(
 		&i.ID,
 		&i.ExtensionID,
+		&i.ExtensionName,
 		&i.ExternalID,
 		&i.ContentType,
 		&i.Title,
 		&i.CoverPath,
 		&i.Description,
 		&i.Status,
+		&i.ExtensionRemovedAt,
 		&i.AddedAt,
 	)
 	return i, err
 }
 
 const listLibraryEntries = `-- name: ListLibraryEntries :many
-SELECT id, extension_id, external_id, content_type, title, cover_path, description, status, added_at FROM library_entries ORDER BY added_at DESC
+SELECT id, extension_id, extension_name, external_id, content_type, title, cover_path, description, status, extension_removed_at, added_at FROM library_entries ORDER BY added_at DESC
 `
 
 func (q *Queries) ListLibraryEntries(ctx context.Context) ([]LibraryEntry, error) {
@@ -103,12 +109,14 @@ func (q *Queries) ListLibraryEntries(ctx context.Context) ([]LibraryEntry, error
 		if err := rows.Scan(
 			&i.ID,
 			&i.ExtensionID,
+			&i.ExtensionName,
 			&i.ExternalID,
 			&i.ContentType,
 			&i.Title,
 			&i.CoverPath,
 			&i.Description,
 			&i.Status,
+			&i.ExtensionRemovedAt,
 			&i.AddedAt,
 		); err != nil {
 			return nil, err
@@ -125,7 +133,7 @@ func (q *Queries) ListLibraryEntries(ctx context.Context) ([]LibraryEntry, error
 }
 
 const listLibraryEntriesByContentType = `-- name: ListLibraryEntriesByContentType :many
-SELECT id, extension_id, external_id, content_type, title, cover_path, description, status, added_at FROM library_entries WHERE content_type = ? ORDER BY added_at DESC
+SELECT id, extension_id, extension_name, external_id, content_type, title, cover_path, description, status, extension_removed_at, added_at FROM library_entries WHERE content_type = ? ORDER BY added_at DESC
 `
 
 func (q *Queries) ListLibraryEntriesByContentType(ctx context.Context, contentType string) ([]LibraryEntry, error) {
@@ -140,12 +148,14 @@ func (q *Queries) ListLibraryEntriesByContentType(ctx context.Context, contentTy
 		if err := rows.Scan(
 			&i.ID,
 			&i.ExtensionID,
+			&i.ExtensionName,
 			&i.ExternalID,
 			&i.ContentType,
 			&i.Title,
 			&i.CoverPath,
 			&i.Description,
 			&i.Status,
+			&i.ExtensionRemovedAt,
 			&i.AddedAt,
 		); err != nil {
 			return nil, err
@@ -159,4 +169,15 @@ func (q *Queries) ListLibraryEntriesByContentType(ctx context.Context, contentTy
 		return nil, err
 	}
 	return items, nil
+}
+
+const markLibraryEntriesExtensionRemoved = `-- name: MarkLibraryEntriesExtensionRemoved :exec
+UPDATE library_entries
+SET extension_removed_at = CURRENT_TIMESTAMP
+WHERE extension_id = ? AND extension_removed_at IS NULL
+`
+
+func (q *Queries) MarkLibraryEntriesExtensionRemoved(ctx context.Context, extensionID sql.NullInt64) error {
+	_, err := q.db.ExecContext(ctx, markLibraryEntriesExtensionRemoved, extensionID)
+	return err
 }

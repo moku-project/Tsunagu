@@ -17,12 +17,16 @@ var migration0001 string
 //go:embed migrations/0002_extension_updates.sql
 var migration0002 string
 
+//go:embed migrations/0003_extension_removal.sql
+var migration0003 string
+
 var migrations = []struct {
 	name string
 	sql  string
 }{
 	{"0001_init.sql", migration0001},
 	{"0002_extension_updates.sql", migration0002},
+	{"0003_extension_removal.sql", migration0003},
 }
 
 func Open(path string) (*sql.DB, error) {
@@ -32,7 +36,7 @@ func Open(path string) (*sql.DB, error) {
 		}
 	}
 
-	conn, err := sql.Open("sqlite", path+"?_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)")
+	conn, err := sql.Open("sqlite", path+"?_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)")
 	if err != nil {
 		return nil, fmt.Errorf("open sqlite: %w", err)
 	}

@@ -17,3 +17,7 @@ UPDATE repositories SET last_synced_at = CURRENT_TIMESTAMP WHERE id = ?;
 
 -- name: DeleteRepository :exec
 DELETE FROM repositories WHERE id = ?;
+
+-- name: UpdateRepositoryName :one
+UPDATE repositories SET name = ? WHERE id = ?
+RETURNING *;
