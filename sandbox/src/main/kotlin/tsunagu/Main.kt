@@ -24,7 +24,8 @@ fun main() {
     }
     val port = System.getenv("SANDBOX_PORT")?.toIntOrNull() ?: 50051
     val extensionsDir = File(System.getenv("SANDBOX_EXTENSIONS_DIR") ?: "extensions")
-    val registry = ExtensionRegistry(extensionsDir)
+    val novelEnabled = System.getenv("SANDBOX_ENABLE_NOVEL")?.toBooleanStrictOrNull() ?: false
+    val registry = ExtensionRegistry(extensionsDir, novelEnabled)
     GetSource.bind(registry)
     registry.loadAll()
     val server = NettyServerBuilder

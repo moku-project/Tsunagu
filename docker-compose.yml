@@ -6,6 +6,7 @@ services:
     environment:
       SANDBOX_PORT: 50051
       SANDBOX_EXTENSIONS_DIR: /data/extensions
+      SANDBOX_ENABLE_NOVEL: "false"
     volumes:
       - tsunagu-extensions:/data/extensions
     expose:

@@ -11,8 +11,13 @@ import java.util.concurrent.ConcurrentHashMap
 class ExtensionDownloadException(message: String) : Exception(message)
 class InvalidExtensionIdException(message: String) : Exception(message)
 
-class ExtensionRegistry(private val extensionsDir: File) {
+class ExtensionRegistry(
+    private val extensionsDir: File,
+    private val novelEnabled: Boolean = false,
+) {
     private val extensions = ConcurrentHashMap<String, LoadedExtension>()
+    private val pendingFiles = ConcurrentHashMap<String, File>()
+    private val loadLocks = ConcurrentHashMap<String, Any>()
     private val client = OkHttpClient()
 
     init {
@@ -36,9 +41,17 @@ class ExtensionRegistry(private val extensionsDir: File) {
     }
 
     fun loadAll() {
-        extensionsDir.listFiles { file -> file.extension == "apk" || file.extension == "jar" || file.extension == "js" }?.forEach { file ->
-            runCatching { load(file) }
-                .onFailure { println("FAILED to load $file: ${it.stackTraceToString()}") }
+        extensionsDir.listFiles { file ->
+            file.extension == "apk" || file.extension == "jar"
+        }?.forEach { file ->
+            runCatching { ExtensionLoader.peekPackageName(file) }
+                .onSuccess { packageName -> pendingFiles[packageName] = file }
+                .onFailure { println("FAILED to peek $file: ${it.stackTraceToString()}") }
+        }
+        if (novelEnabled) {
+            extensionsDir.listFiles { file -> file.extension == "js" }?.forEach { file ->
+                pendingFiles[file.nameWithoutExtension] = file
+            }
         }
     }
 
@@ -48,18 +61,44 @@ class ExtensionRegistry(private val extensionsDir: File) {
         return extension
     }
 
-    fun get(extensionId: String): LoadedExtension? = extensions[extensionId]
+    fun get(extensionId: String): LoadedExtension? {
+        extensions[extensionId]?.let { return it }
+        val pendingFile = pendingFiles[extensionId] ?: return null
+        val lock = loadLocks.computeIfAbsent(extensionId) { Any() }
+        synchronized(lock) {
+            extensions[extensionId]?.let { return it }
+            if (!pendingFiles.containsKey(extensionId)) {
+                return extensions.values.firstOrNull { it.packageName == extensionId }
+            }
+            val loaded = runCatching { load(pendingFile) }.getOrElse { e ->
+                println("FAILED to lazily load extension $extensionId: ${e.stackTraceToString()}")
+                pendingFiles.remove(extensionId)
+                return null
+            }
+            pendingFiles.remove(extensionId)
+            if (loaded.packageName != extensionId) {
+                println("WARNING: extension file '${pendingFile.name}' declares id '${loaded.packageName}' (key mismatch, was cataloged as '$extensionId')")
+            }
+            return loaded
+        }
+    }
 
     fun list(): List<LoadedExtension> = extensions.values.toList()
 
     fun install(sourceFile: File, extensionId: String): LoadedExtension {
         val ext = sourceFile.extension.ifBlank { "apk" }
+        if (ext == "js" && !novelEnabled) {
+            throw InvalidExtensionIdException("novel extensions are disabled: $extensionId")
+        }
         val target = targetFile(extensionId, ext)
         sourceFile.copyTo(target, overwrite = true)
         return load(target)
     }
 
     fun installFromUrl(apkUrl: String?, jarUrl: String?, jsUrl: String?, extensionId: String): LoadedExtension {
+        if (jsUrl != null && !novelEnabled) {
+            throw InvalidExtensionIdException("novel extensions are disabled: $extensionId")
+        }
         val (url, ext) = when {
             jsUrl != null -> jsUrl to "js"
             jarUrl != null -> jarUrl to "jar"

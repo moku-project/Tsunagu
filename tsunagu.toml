@@ -1,0 +1,24 @@
+# Tsunagu configuration
+# Any field left out falls back to its default; env vars still override for now
+# during the transition (TSUNAGU_ADDR, TSUNAGU_SANDBOX_ADDR, etc.)
+
+http_addr = ":8080"
+db_path = "tsunagu.db"
+jar_cache_dir = "./jar-cache"
+
+# Path to the sandbox's `gradle installDist` launcher script
+sandbox_binary_path = "../sandbox/build/install/sandbox/bin/sandbox"  # relative to backend/, where the server is launched from
+sandbox_addr = "localhost:50051"
+sandbox_port = 50051
+sandbox_extensions_dir = "sandbox/extensions"
+
+# Enable novel (.js/GraalJS) extension support
+novel_enabled = false
+
+# Whether Go should kill the sandbox JVM after a period of inactivity.
+idle_reap_enabled = true
+
+# Minutes of no sandbox activity before Go kills the JVM process.
+# It's restarted automatically (lazily) on the next request that needs it.
+# TEMP: set to 0.5 (30s) for testing — change back to 15 once confirmed.
+idle_timeout_minutes = 1

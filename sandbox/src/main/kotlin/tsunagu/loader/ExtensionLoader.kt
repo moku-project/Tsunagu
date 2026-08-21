@@ -25,6 +25,26 @@ object ExtensionLoader {
     private const val METADATA_SOURCE_CLASS = "tachiyomi.extension.class"
     private const val METADATA_ANIME_SOURCE_CLASS = "tachiyomi.animeextension.class"
 
+    fun peekPackageName(file: File): String {
+        if (file.extension == "js") {
+            // novels are keyed by filename elsewhere; not handled here
+            throw ExtensionLoadException("peekPackageName does not support .js files")
+        }
+        if (file.extension == "jar") {
+            ZipFile(file).use { zip ->
+                val manifestEntry = zip.getEntry("AndroidManifest.xml")
+                    ?: throw ExtensionLoadException("no AndroidManifest.xml inside jar ${file.name}")
+                val dbFactory = DocumentBuilderFactory.newInstance()
+                val dBuilder = dbFactory.newDocumentBuilder()
+                val doc = zip.getInputStream(manifestEntry).use { dBuilder.parse(it) }
+                return doc.documentElement.getAttribute("package")
+            }
+        }
+        // apk: ApkFile parses the binary manifest only, no dex2jar/classloading here
+        val apk = ApkFile(file)
+        return apk.apkMeta.packageName
+    }
+
     fun load(file: File): LoadedExtension {
         if (file.extension == "js") {
             return NovelPluginLoader.load(file)

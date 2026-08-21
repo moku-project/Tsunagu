@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"tsunagu/backend/internal/config"
 	"tsunagu/backend/internal/db"
 	"tsunagu/backend/internal/db/sqlcgen"
 	"tsunagu/backend/internal/httputil"
@@ -20,56 +21,45 @@ import (
 )
 
 func main() {
-	addr := os.Getenv("TSUNAGU_ADDR")
-	if addr == "" {
-		addr = ":8080"
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatalf("loading config: %v", err)
 	}
 
-	sandboxAddr := os.Getenv("TSUNAGU_SANDBOX_ADDR")
-	if sandboxAddr == "" {
-		sandboxAddr = "localhost:50051"
-	}
-
-	dbPath := os.Getenv("TSUNAGU_DB_PATH")
-	if dbPath == "" {
-		dbPath = "tsunagu.db"
-	}
-
-	cacheDir := os.Getenv("TSUNAGU_JAR_CACHE_DIR")
-	if cacheDir == "" {
-		cacheDir = "./jar-cache"
-	}
-
-	absCacheDir, err := filepath.Abs(cacheDir)
+	absCacheDir, err := filepath.Abs(cfg.JarCacheDir)
 	if err != nil {
 		log.Fatalf("resolving cache dir: %v", err)
 	}
-	cacheDir = absCacheDir
+	cfg.JarCacheDir = absCacheDir
 
-	conn, err := db.Open(dbPath)
+	conn, err := db.Open(cfg.DBPath)
 	if err != nil {
 		log.Fatalf("opening db: %v", err)
 	}
 	defer conn.Close()
 
 	q := sqlcgen.New(conn)
-	syncer := sync.New(conn, q, cacheDir)
+	syncer := sync.New(conn, q, cfg.JarCacheDir)
 
-	sandboxClient, err := sandbox.NewClient(sandboxAddr)
-	if err != nil {
-		log.Fatalf("connecting to sandbox: %v", err)
-	}
-	defer sandboxClient.Close()
+	supervised := sandbox.NewSupervised(sandbox.SupervisedConfig{
+		BinaryPath:    cfg.SandboxBinaryPath,
+		Port:          cfg.SandboxPort,
+		ExtensionsDir: cfg.SandboxExtDir,
+		NovelEnabled:  cfg.NovelEnabled,
+		Addr:          cfg.SandboxAddr,
+		IdleTimeout:   cfg.IdleTimeout(),
+	})
+	defer supervised.Shutdown()
 
-	if err := reloadInstalledExtensions(context.Background(), syncer, sandboxClient); err != nil {
+	if err := reloadInstalledExtensions(context.Background(), syncer, supervised); err != nil {
 		log.Printf("warning: could not reload installed extensions on startup: %v", err)
 	}
 
 	mux := http.NewServeMux()
-	registerRoutes(mux, sandboxClient, syncer)
+	registerRoutes(mux, supervised, syncer)
 
 	srv := &http.Server{
-		Addr:              addr,
+		Addr:              cfg.HTTPAddr,
 		Handler:           logRequests(mux),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       15 * time.Second,
@@ -78,7 +68,7 @@ func main() {
 	}
 
 	go func() {
-		log.Printf("tsunagu backend listening on %s", addr)
+		log.Printf("tsunagu backend listening on %s", cfg.HTTPAddr)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("server error: %v", err)
 		}
@@ -96,7 +86,7 @@ func main() {
 	}
 }
 
-func reloadInstalledExtensions(ctx context.Context, sy *sync.Syncer, c *sandbox.Client) error {
+func reloadInstalledExtensions(ctx context.Context, sy *sync.Syncer, sc *sandbox.SupervisedClient) error {
 	installed, err := sy.ListInstalledExtensions(ctx)
 	if err != nil {
 		return err
@@ -122,6 +112,10 @@ func reloadInstalledExtensions(ctx context.Context, sy *sync.Syncer, c *sandbox.
 		return nil
 	}
 
+	c, err := sc.Ensure(ctx)
+	if err != nil {
+		return err
+	}
 	_, err = c.LoadExtensions(ctx, toLoad)
 	return err
 }
@@ -134,7 +128,7 @@ func logRequests(next http.Handler) http.Handler {
 	})
 }
 
-func registerRoutes(mux *http.ServeMux, c *sandbox.Client, sy *sync.Syncer) {
+func registerRoutes(mux *http.ServeMux, sc *sandbox.SupervisedClient, sy *sync.Syncer) {
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))
@@ -210,7 +204,12 @@ func registerRoutes(mux *http.ServeMux, c *sandbox.Client, sy *sync.Syncer) {
 			if !ok {
 				return
 			}
-			entry, err := sy.AddToLibrary(r.Context(), c, params["extension_id"], params["source_entry_id"])
+			client, err := sc.Ensure(r.Context())
+			if err != nil {
+				httputil.Error(w, "sandbox unavailable: "+err.Error(), http.StatusServiceUnavailable)
+				return
+			}
+			entry, err := sy.AddToLibrary(r.Context(), client, params["extension_id"], params["source_entry_id"])
 			if err != nil {
 				httputil.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -263,7 +262,12 @@ func registerRoutes(mux *http.ServeMux, c *sandbox.Client, sy *sync.Syncer) {
 			httputil.Error(w, "invalid library_entry_id", http.StatusBadRequest)
 			return
 		}
-		chapters, err := sy.SyncChapters(r.Context(), c, entryID)
+		client, err := sc.Ensure(r.Context())
+		if err != nil {
+			httputil.Error(w, "sandbox unavailable: "+err.Error(), http.StatusServiceUnavailable)
+			return
+		}
+		chapters, err := sy.SyncChapters(r.Context(), client, entryID)
 		if err != nil {
 			httputil.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -394,7 +398,12 @@ func registerRoutes(mux *http.ServeMux, c *sandbox.Client, sy *sync.Syncer) {
 			return
 		}
 
-		loaded, err := c.LoadExtensions(r.Context(), []*sandboxv1.ExtensionToLoad{{
+		client, err := sc.Ensure(r.Context())
+		if err != nil {
+			httputil.Error(w, "sandbox unavailable: "+err.Error(), http.StatusServiceUnavailable)
+			return
+		}
+		loaded, err := client.LoadExtensions(r.Context(), []*sandboxv1.ExtensionToLoad{{
 			ExtensionId: ext.PackageName,
 			JarPath:     ext.JarPath.String,
 			ContentType: sandbox.ContentTypeToProto(ext.ContentType),
@@ -421,7 +430,12 @@ func registerRoutes(mux *http.ServeMux, c *sandbox.Client, sy *sync.Syncer) {
 			if !ok {
 				return
 			}
-			if _, err := c.UnloadExtension(r.Context(), params["package_name"]); err != nil {
+			client, err := sc.Ensure(r.Context())
+			if err != nil {
+				httputil.Error(w, "sandbox unavailable: "+err.Error(), http.StatusServiceUnavailable)
+				return
+			}
+			if _, err := client.UnloadExtension(r.Context(), params["package_name"]); err != nil {
 				httputil.GRPCError(w, err)
 				return
 			}
@@ -452,7 +466,12 @@ func registerRoutes(mux *http.ServeMux, c *sandbox.Client, sy *sync.Syncer) {
 		}
 		pkg := params["package_name"]
 
-		if _, err := c.UnloadExtension(r.Context(), pkg); err != nil {
+		client, err := sc.Ensure(r.Context())
+		if err != nil {
+			httputil.Error(w, "sandbox unavailable: "+err.Error(), http.StatusServiceUnavailable)
+			return
+		}
+		if _, err := client.UnloadExtension(r.Context(), pkg); err != nil {
 			httputil.GRPCError(w, err)
 			return
 		}
@@ -461,7 +480,7 @@ func registerRoutes(mux *http.ServeMux, c *sandbox.Client, sy *sync.Syncer) {
 			httputil.Error(w, err.Error(), http.StatusBadGateway)
 			return
 		}
-		loaded, err := c.LoadExtensions(r.Context(), []*sandboxv1.ExtensionToLoad{{
+		loaded, err := client.LoadExtensions(r.Context(), []*sandboxv1.ExtensionToLoad{{
 			ExtensionId: ext.PackageName,
 			JarPath:     ext.JarPath.String,
 			ContentType: sandbox.ContentTypeToProto(ext.ContentType),
@@ -483,7 +502,12 @@ func registerRoutes(mux *http.ServeMux, c *sandbox.Client, sy *sync.Syncer) {
 		if page == 0 {
 			page = 1
 		}
-		resp, err := c.Search(r.Context(), params["extension_id"], params["q"], int32(page))
+		client, err := sc.Ensure(r.Context())
+		if err != nil {
+			httputil.Error(w, "sandbox unavailable: "+err.Error(), http.StatusServiceUnavailable)
+			return
+		}
+		resp, err := client.Search(r.Context(), params["extension_id"], params["q"], int32(page))
 		if err != nil {
 			httputil.GRPCError(w, err)
 			return
@@ -496,7 +520,12 @@ func registerRoutes(mux *http.ServeMux, c *sandbox.Client, sy *sync.Syncer) {
 		if !ok {
 			return
 		}
-		resp, err := c.GetDetails(r.Context(), params["extension_id"], params["source_entry_id"])
+		client, err := sc.Ensure(r.Context())
+		if err != nil {
+			httputil.Error(w, "sandbox unavailable: "+err.Error(), http.StatusServiceUnavailable)
+			return
+		}
+		resp, err := client.GetDetails(r.Context(), params["extension_id"], params["source_entry_id"])
 		if err != nil {
 			httputil.GRPCError(w, err)
 			return
@@ -509,7 +538,12 @@ func registerRoutes(mux *http.ServeMux, c *sandbox.Client, sy *sync.Syncer) {
 		if !ok {
 			return
 		}
-		resp, err := c.GetChapters(r.Context(), params["extension_id"], params["source_entry_id"])
+		client, err := sc.Ensure(r.Context())
+		if err != nil {
+			httputil.Error(w, "sandbox unavailable: "+err.Error(), http.StatusServiceUnavailable)
+			return
+		}
+		resp, err := client.GetChapters(r.Context(), params["extension_id"], params["source_entry_id"])
 		if err != nil {
 			httputil.GRPCError(w, err)
 			return
@@ -522,7 +556,12 @@ func registerRoutes(mux *http.ServeMux, c *sandbox.Client, sy *sync.Syncer) {
 		if !ok {
 			return
 		}
-		resp, err := c.GetPages(r.Context(), params["extension_id"], params["source_entry_id"], params["source_chapter_id"])
+		client, err := sc.Ensure(r.Context())
+		if err != nil {
+			httputil.Error(w, "sandbox unavailable: "+err.Error(), http.StatusServiceUnavailable)
+			return
+		}
+		resp, err := client.GetPages(r.Context(), params["extension_id"], params["source_entry_id"], params["source_chapter_id"])
 		if err != nil {
 			httputil.GRPCError(w, err)
 			return
@@ -535,7 +574,12 @@ func registerRoutes(mux *http.ServeMux, c *sandbox.Client, sy *sync.Syncer) {
 		if !ok {
 			return
 		}
-		resp, err := c.GetChapterText(r.Context(), params["extension_id"], params["source_entry_id"], params["source_chapter_id"])
+		client, err := sc.Ensure(r.Context())
+		if err != nil {
+			httputil.Error(w, "sandbox unavailable: "+err.Error(), http.StatusServiceUnavailable)
+			return
+		}
+		resp, err := client.GetChapterText(r.Context(), params["extension_id"], params["source_entry_id"], params["source_chapter_id"])
 		if err != nil {
 			httputil.GRPCError(w, err)
 			return
@@ -548,7 +592,12 @@ func registerRoutes(mux *http.ServeMux, c *sandbox.Client, sy *sync.Syncer) {
 		if !ok {
 			return
 		}
-		resp, err := c.GetEpisodes(r.Context(), params["extension_id"], params["source_entry_id"])
+		client, err := sc.Ensure(r.Context())
+		if err != nil {
+			httputil.Error(w, "sandbox unavailable: "+err.Error(), http.StatusServiceUnavailable)
+			return
+		}
+		resp, err := client.GetEpisodes(r.Context(), params["extension_id"], params["source_entry_id"])
 		if err != nil {
 			httputil.GRPCError(w, err)
 			return
@@ -561,7 +610,12 @@ func registerRoutes(mux *http.ServeMux, c *sandbox.Client, sy *sync.Syncer) {
 		if !ok {
 			return
 		}
-		resp, err := c.GetVideoStream(r.Context(), params["extension_id"], params["source_entry_id"], params["source_episode_id"])
+		client, err := sc.Ensure(r.Context())
+		if err != nil {
+			httputil.Error(w, "sandbox unavailable: "+err.Error(), http.StatusServiceUnavailable)
+			return
+		}
+		resp, err := client.GetVideoStream(r.Context(), params["extension_id"], params["source_entry_id"], params["source_episode_id"])
 		if err != nil {
 			httputil.GRPCError(w, err)
 			return
