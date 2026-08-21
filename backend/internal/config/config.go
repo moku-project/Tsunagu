@@ -2,7 +2,6 @@ package config
 
 import (
 	"os"
-	"path/filepath"
 	"strconv"
 	"time"
 
@@ -14,7 +13,7 @@ type Config struct {
 	DBPath            string `toml:"db_path"`
 	JarCacheDir       string `toml:"jar_cache_dir"`
 
-	SandboxBinaryPath string `toml:"sandbox_binary_path"`
+	SandboxJarPath    string `toml:"sandbox_jar_path"`
 	SandboxAddr       string `toml:"sandbox_addr"`
 	SandboxPort       int    `toml:"sandbox_port"`
 	SandboxExtDir     string `toml:"sandbox_extensions_dir"`
@@ -35,7 +34,7 @@ func defaults() Config {
 		HTTPAddr:          ":8080",
 		DBPath:            "tsunagu.db",
 		JarCacheDir:       "./jar-cache",
-		SandboxBinaryPath: "../sandbox/build/install/sandbox/bin/sandbox",
+		SandboxJarPath:    "sandbox.jar",
 		SandboxAddr:       "localhost:50051",
 		SandboxPort:       50051,
 		SandboxExtDir:     "sandbox/extensions",
@@ -59,14 +58,6 @@ func Load() (*Config, error) {
 	}
 
 	applyEnvOverrides(&cfg)
-
-	if cfg.SandboxBinaryPath != "" {
-		abs, err := filepath.Abs(cfg.SandboxBinaryPath)
-		if err == nil {
-			cfg.SandboxBinaryPath = abs
-		}
-	}
-
 	return &cfg, nil
 }
 
@@ -96,8 +87,8 @@ func applyEnvOverrides(cfg *Config) {
 			cfg.NovelEnabled = b
 		}
 	}
-	if v := os.Getenv("TSUNAGU_SANDBOX_BINARY"); v != "" {
-		cfg.SandboxBinaryPath = v
+	if v := os.Getenv("TSUNAGU_SANDBOX_JAR"); v != "" {
+		cfg.SandboxJarPath = v
 	}
 	if v := os.Getenv("TSUNAGU_SANDBOX_IDLE_MINUTES"); v != "" {
 		if m, err := strconv.Atoi(v); err == nil {

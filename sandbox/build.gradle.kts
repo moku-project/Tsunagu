@@ -3,6 +3,7 @@ plugins {
     kotlin("plugin.serialization") version "2.4.10"
     application
     id("com.google.protobuf") version "0.9.4"
+    id("com.gradleup.shadow") version "8.3.5"
 }
 
 group = "com.tsunagu"
@@ -106,4 +107,32 @@ sourceSets {
             srcDir("../proto")
         }
     }
+}
+tasks.register<Exec>("jlinkRuntime") {
+    group = "distribution"
+    description = "Builds a trimmed custom JRE via jlink using the shadow jar's module deps"
+    dependsOn("shadowJar")
+
+    val outputDir = layout.buildDirectory.dir("runtime").get().asFile
+    val modulesFile = file("build-config/jlink-modules.txt")
+
+    doFirst {
+        if (outputDir.exists()) {
+            outputDir.deleteRecursively()
+        }
+    }
+
+    val modules = modulesFile.readText().trim()
+    val javaHome = System.getProperty("java.home")
+
+    commandLine(
+        "$javaHome/bin/jlink",
+        "--module-path", "$javaHome/jmods",
+        "--add-modules", modules,
+        "--output", outputDir.absolutePath,
+        "--strip-debug",
+        "--no-header-files",
+        "--no-man-pages",
+        "--compress=2"
+    )
 }

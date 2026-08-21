@@ -48,3 +48,5 @@ backend/jar-cache/
 backend/tsunagu.db
 backend/tsunagu.db-shm
 backend/tsunagu.db-wal
+/build/
+/dist/

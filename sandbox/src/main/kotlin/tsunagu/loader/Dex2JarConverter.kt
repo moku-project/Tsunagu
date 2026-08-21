@@ -15,6 +15,7 @@ object Dex2JarConverter {
     fun convert(apkFile: File): File {
         val outputJar = Files.createTempFile("tsunagu-ext-", ".jar")
         Files.deleteIfExists(outputJar)
+        outputJar.toFile().deleteOnExit()
 
         val reader = MultiDexFileReader.open(apkFile.readBytes())
         val handler = BaksmaliBaseDexExceptionHandler()
@@ -35,6 +36,7 @@ object Dex2JarConverter {
 
         if (handler.hasException()) {
             val errorFile = Files.createTempFile("tsunagu-ext-error-", ".txt")
+            errorFile.toFile().deleteOnExit()
             logger.error {
                 """
                 Detail Error Information in File $errorFile

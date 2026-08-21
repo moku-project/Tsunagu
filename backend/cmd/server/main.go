@@ -42,7 +42,7 @@ func main() {
 	syncer := sync.New(conn, q, cfg.JarCacheDir)
 
 	supervised := sandbox.NewSupervised(sandbox.SupervisedConfig{
-		BinaryPath:    cfg.SandboxBinaryPath,
+		JarPath:       cfg.SandboxJarPath,
 		Port:          cfg.SandboxPort,
 		ExtensionsDir: cfg.SandboxExtDir,
 		NovelEnabled:  cfg.NovelEnabled,

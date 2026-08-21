@@ -39,6 +39,15 @@ class NetworkHelper {
             }.launchIn(GlobalScope)
     }
 
+    private val networkCacheDir =
+        Files.createTempDirectory("tsunagu_network_cache").toFile().apply {
+            Runtime.getRuntime().addShutdownHook(
+                Thread {
+                    deleteRecursively()
+                },
+            )
+        }
+
     private val baseClientBuilder: OkHttpClient.Builder
         get() {
             val builder =
@@ -50,7 +59,7 @@ class NetworkHelper {
                     .callTimeout(2, TimeUnit.MINUTES)
                     .cache(
                         Cache(
-                            directory = Files.createTempDirectory("tsunagu_network_cache").toFile(),
+                            directory = networkCacheDir,
                             maxSize = 5L * 1024 * 1024, // 5 MiB
                         ),
                     ).addInterceptor(UncaughtExceptionInterceptor())

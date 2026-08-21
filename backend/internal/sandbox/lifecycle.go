@@ -13,7 +13,7 @@ import (
 )
 
 type SupervisedClient struct {
-	binaryPath  string
+	jarPath     string
 	port        int
 	extDir      string
 	novelEnabled bool
@@ -29,7 +29,7 @@ type SupervisedClient struct {
 }
 
 type SupervisedConfig struct {
-	BinaryPath     string
+	JarPath        string
 	Port           int
 	ExtensionsDir  string
 	NovelEnabled   bool
@@ -39,7 +39,7 @@ type SupervisedConfig struct {
 
 func NewSupervised(cfg SupervisedConfig) *SupervisedClient {
 	sc := &SupervisedClient{
-		binaryPath:   cfg.BinaryPath,
+		jarPath:      cfg.JarPath,
 		port:         cfg.Port,
 		extDir:       cfg.ExtensionsDir,
 		novelEnabled: cfg.NovelEnabled,
@@ -81,8 +81,18 @@ func (sc *SupervisedClient) processAlive() bool {
 }
 
 func (sc *SupervisedClient) spawnLocked() error {
-	log.Printf("sandbox: spawning %s", sc.binaryPath)
-	cmd := exec.Command(sc.binaryPath)
+	resolved, err := resolveRuntime(sc.jarPath)
+	if err != nil {
+		return fmt.Errorf("resolving sandbox runtime: %w", err)
+	}
+	log.Printf("sandbox: spawning %s -cp %s tsunagu.MainKt (source: %s)",
+		resolved.JavaBin, resolved.JarPath, resolved.Source)
+	cmd := exec.Command(resolved.JavaBin,
+		"-Dpolyglot.engine.WarnInterpreterOnly=false",
+		"-cp", resolved.JarPath,
+		"tsunagu.MainKt",
+	)
+	cmd.SysProcAttr = &syscall.SysProcAttr{Pdeathsig: syscall.SIGKILL}
 	cmd.Env = append(os.Environ(),
 		"SANDBOX_PORT="+strconv.Itoa(sc.port),
 		"SANDBOX_EXTENSIONS_DIR="+sc.extDir,
