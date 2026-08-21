@@ -54,6 +54,16 @@ type Extension struct {
 	NeedsUpdate      sql.NullBool   `json:"needs_update"`
 }
 
+type Folder struct {
+	ID             int64          `json:"id"`
+	Name           string         `json:"name"`
+	Kind           string         `json:"kind"`
+	SystemKey      sql.NullString `json:"system_key"`
+	ParentFolderID sql.NullInt64  `json:"parent_folder_id"`
+	SortOrder      int64          `json:"sort_order"`
+	CreatedAt      time.Time      `json:"created_at"`
+}
+
 type LibraryEntry struct {
 	ID                 int64          `json:"id"`
 	ExtensionID        sql.NullInt64  `json:"extension_id"`
@@ -66,6 +76,17 @@ type LibraryEntry struct {
 	Status             sql.NullString `json:"status"`
 	ExtensionRemovedAt sql.NullTime   `json:"extension_removed_at"`
 	AddedAt            time.Time      `json:"added_at"`
+}
+
+type LibraryEntryFolder struct {
+	LibraryEntryID int64     `json:"library_entry_id"`
+	FolderID       int64     `json:"folder_id"`
+	AddedAt        time.Time `json:"added_at"`
+}
+
+type LibraryEntryTag struct {
+	LibraryEntryID int64 `json:"library_entry_id"`
+	TagID          int64 `json:"tag_id"`
 }
 
 type MangaPage struct {
@@ -95,6 +116,12 @@ type Repository struct {
 	ContentType  string         `json:"content_type"`
 	AddedAt      time.Time      `json:"added_at"`
 	LastSyncedAt sql.NullTime   `json:"last_synced_at"`
+}
+
+type Tag struct {
+	ID        int64     `json:"id"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type TrackerAccount struct {

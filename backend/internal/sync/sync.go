@@ -9,9 +9,11 @@ import (
 
 	"tsunagu/backend/internal/db/sqlcgen"
 	"tsunagu/backend/internal/repository"
+	"tsunagu/backend/internal/sandbox"
 )
 
 type Syncer struct {
+	db       *sql.DB
 	q        *sqlcgen.Queries
 	cacheDir string
 
@@ -19,8 +21,8 @@ type Syncer struct {
 	locks     map[string]*sync.Mutex
 }
 
-func New(q *sqlcgen.Queries, cacheDir string) *Syncer {
-	return &Syncer{q: q, cacheDir: cacheDir, locks: make(map[string]*sync.Mutex)}
+func New(db *sql.DB, q *sqlcgen.Queries, cacheDir string) *Syncer {
+	return &Syncer{db: db, q: q, cacheDir: cacheDir, locks: make(map[string]*sync.Mutex)}
 }
 
 func (s *Syncer) lockFor(packageName string) *sync.Mutex {
@@ -237,4 +239,76 @@ func nullString(s string) sql.NullString {
 		return sql.NullString{}
 	}
 	return sql.NullString{String: s, Valid: true}
+}
+
+func (s *Syncer) SetReadingStatus(ctx context.Context, libraryEntryID int64, systemKey string) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("begin reading status tx: %w", err)
+	}
+	defer tx.Rollback()
+
+	qtx := s.q.WithTx(tx)
+
+	folder, err := qtx.GetFolderBySystemKey(ctx, sql.NullString{String: systemKey, Valid: true})
+	if err != nil {
+		return fmt.Errorf("get folder %q: %w", systemKey, err)
+	}
+	if folder.Kind != "reading_status" {
+		return fmt.Errorf("folder %q is not a reading-status folder (kind=%s)", systemKey, folder.Kind)
+	}
+
+	if err := qtx.RemoveEntryFromFoldersByKind(ctx, sqlcgen.RemoveEntryFromFoldersByKindParams{
+		LibraryEntryID: libraryEntryID,
+		Kind:           "reading_status",
+	}); err != nil {
+		return fmt.Errorf("remove existing reading status: %w", err)
+	}
+
+	if err := qtx.AddEntryToFolder(ctx, sqlcgen.AddEntryToFolderParams{
+		LibraryEntryID: libraryEntryID,
+		FolderID:       folder.ID,
+	}); err != nil {
+		return fmt.Errorf("add to folder %q: %w", systemKey, err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit reading status tx: %w", err)
+	}
+	return nil
+}
+
+func (s *Syncer) AddToLibrary(ctx context.Context, c *sandbox.Client, packageName, sourceEntryID string) (sqlcgen.LibraryEntry, error) {
+	ext, err := s.q.GetExtensionByPackageName(ctx, packageName)
+	if err != nil {
+		return sqlcgen.LibraryEntry{}, fmt.Errorf("lookup extension %s: %w", packageName, err)
+	}
+
+	details, err := c.GetDetails(ctx, packageName, sourceEntryID)
+	if err != nil {
+		return sqlcgen.LibraryEntry{}, fmt.Errorf("get details for %s/%s: %w", packageName, sourceEntryID, err)
+	}
+
+	entry, err := s.q.CreateLibraryEntry(ctx, sqlcgen.CreateLibraryEntryParams{
+		ExtensionID:   sql.NullInt64{Int64: ext.ID, Valid: true},
+		ExtensionName: ext.Name,
+		ExternalID:    details.SourceEntryId,
+		ContentType:   ext.ContentType,
+		Title:         details.Title,
+		CoverPath:     sql.NullString{String: details.CoverUrl, Valid: details.CoverUrl != ""},
+		Description:   sql.NullString{String: details.Description, Valid: details.Description != ""},
+		Status:        sql.NullString{String: details.Status, Valid: details.Status != ""},
+	})
+	if err != nil {
+		return sqlcgen.LibraryEntry{}, fmt.Errorf("create library entry: %w", err)
+	}
+
+	return entry, nil
+}
+
+func (s *Syncer) ListLibraryEntries(ctx context.Context, contentType string) ([]sqlcgen.LibraryEntry, error) {
+	if contentType == "" {
+		return s.q.ListLibraryEntries(ctx)
+	}
+	return s.q.ListLibraryEntriesByContentType(ctx, contentType)
 }

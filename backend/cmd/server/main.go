@@ -53,7 +53,7 @@ func main() {
 	defer conn.Close()
 
 	q := sqlcgen.New(conn)
-	syncer := sync.New(q, cacheDir)
+	syncer := sync.New(conn, q, cacheDir)
 
 	sandboxClient, err := sandbox.NewClient(sandboxAddr)
 	if err != nil {
@@ -201,6 +201,52 @@ func registerRoutes(mux *http.ServeMux, c *sandbox.Client, sy *sync.Syncer) {
 			return
 		}
 		httputil.JSON(w, repo)
+	})
+
+	mux.HandleFunc("/library", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			params, ok := httputil.RequireParams(w, r, "extension_id", "source_entry_id")
+			if !ok {
+				return
+			}
+			entry, err := sy.AddToLibrary(r.Context(), c, params["extension_id"], params["source_entry_id"])
+			if err != nil {
+				httputil.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			httputil.JSON(w, entry)
+		case http.MethodGet:
+			entries, err := sy.ListLibraryEntries(r.Context(), r.URL.Query().Get("content_type"))
+			if err != nil {
+				httputil.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			httputil.JSON(w, entries)
+		default:
+			httputil.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	mux.HandleFunc("/library/reading-status", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			httputil.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		params, ok := httputil.RequireParams(w, r, "library_entry_id", "system_key")
+		if !ok {
+			return
+		}
+		entryID, err := strconv.ParseInt(params["library_entry_id"], 10, 64)
+		if err != nil {
+			httputil.Error(w, "invalid library_entry_id", http.StatusBadRequest)
+			return
+		}
+		if err := sy.SetReadingStatus(r.Context(), entryID, params["system_key"]); err != nil {
+			httputil.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
 	})
 
 	mux.HandleFunc("/repositories/extensions", func(w http.ResponseWriter, r *http.Request) {

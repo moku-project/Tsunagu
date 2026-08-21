@@ -6,18 +6,25 @@ package sqlcgen
 
 import (
 	"context"
+	"database/sql"
 )
 
 type Querier interface {
+	AddEntryToFolder(ctx context.Context, arg AddEntryToFolderParams) error
+	AddTagToEntry(ctx context.Context, arg AddTagToEntryParams) error
 	CompleteDownload(ctx context.Context, id int64) error
 	CreateChapter(ctx context.Context, arg CreateChapterParams) (Chapter, error)
+	CreateFolder(ctx context.Context, arg CreateFolderParams) (Folder, error)
 	CreateLibraryEntry(ctx context.Context, arg CreateLibraryEntryParams) (LibraryEntry, error)
 	CreateRepository(ctx context.Context, arg CreateRepositoryParams) (Repository, error)
+	CreateTag(ctx context.Context, name string) (Tag, error)
 	CreateTrackerLink(ctx context.Context, arg CreateTrackerLinkParams) (TrackerLink, error)
 	DeleteDownload(ctx context.Context, id int64) error
 	DeleteExtensionsByRepository(ctx context.Context, repositoryID int64) error
+	DeleteFolder(ctx context.Context, id int64) error
 	DeleteLibraryEntry(ctx context.Context, id int64) error
 	DeleteRepository(ctx context.Context, id int64) error
+	DeleteTag(ctx context.Context, id int64) error
 	DeleteTrackerAccount(ctx context.Context, id int64) error
 	DeleteTrackerLink(ctx context.Context, id int64) error
 	EnqueueDownload(ctx context.Context, chapterID int64) (Download, error)
@@ -27,6 +34,8 @@ type Querier interface {
 	GetDownload(ctx context.Context, id int64) (Download, error)
 	GetExtension(ctx context.Context, id int64) (Extension, error)
 	GetExtensionByPackageName(ctx context.Context, packageName string) (Extension, error)
+	GetFolder(ctx context.Context, id int64) (Folder, error)
+	GetFolderBySystemKey(ctx context.Context, systemKey sql.NullString) (Folder, error)
 	GetLibraryEntry(ctx context.Context, id int64) (LibraryEntry, error)
 	GetNovelChapterContent(ctx context.Context, chapterID int64) (NovelChapterContent, error)
 	GetReadingProgress(ctx context.Context, arg GetReadingProgressParams) (ReadingProgress, error)
@@ -35,9 +44,14 @@ type Querier interface {
 	GetTrackerAccount(ctx context.Context, trackerType string) (TrackerAccount, error)
 	GetTrackerLink(ctx context.Context, arg GetTrackerLinkParams) (TrackerLink, error)
 	ListChaptersByLibraryEntry(ctx context.Context, libraryEntryID int64) ([]Chapter, error)
+	ListChildFolders(ctx context.Context, parentFolderID sql.NullInt64) ([]Folder, error)
 	ListDownloadsByStatus(ctx context.Context, status string) ([]Download, error)
+	ListEntriesForTag(ctx context.Context, tagID int64) ([]LibraryEntry, error)
+	ListEntriesInFolder(ctx context.Context, folderID int64) ([]LibraryEntry, error)
 	ListExtensionsByRepository(ctx context.Context, repositoryID int64) ([]Extension, error)
 	ListExtensionsNeedingUpdate(ctx context.Context) ([]Extension, error)
+	ListFolders(ctx context.Context) ([]Folder, error)
+	ListFoldersForEntry(ctx context.Context, libraryEntryID int64) ([]Folder, error)
 	ListInstalledExtensions(ctx context.Context) ([]Extension, error)
 	ListLibraryEntries(ctx context.Context) ([]LibraryEntry, error)
 	ListLibraryEntriesByContentType(ctx context.Context, contentType string) ([]LibraryEntry, error)
@@ -45,15 +59,23 @@ type Querier interface {
 	ListQueuedDownloads(ctx context.Context) ([]Download, error)
 	ListReadingProgressByLibraryEntry(ctx context.Context, libraryEntryID int64) ([]ReadingProgress, error)
 	ListRepositories(ctx context.Context) ([]Repository, error)
+	ListTags(ctx context.Context) ([]Tag, error)
+	ListTagsForEntry(ctx context.Context, libraryEntryID int64) ([]Tag, error)
 	ListTrackerAccounts(ctx context.Context) ([]TrackerAccount, error)
 	ListTrackerLinksByLibraryEntry(ctx context.Context, libraryEntryID int64) ([]TrackerLink, error)
 	MarkExtensionInstalled(ctx context.Context, arg MarkExtensionInstalledParams) (Extension, error)
 	MarkExtensionUninstalled(ctx context.Context, id int64) (Extension, error)
 	MarkExtensionUpdated(ctx context.Context, arg MarkExtensionUpdatedParams) (Extension, error)
+	MarkLibraryEntriesExtensionRemoved(ctx context.Context, extensionID sql.NullInt64) error
+	RemoveEntryFromFolder(ctx context.Context, arg RemoveEntryFromFolderParams) error
+	RemoveEntryFromFoldersByKind(ctx context.Context, arg RemoveEntryFromFoldersByKindParams) error
+	RemoveTagFromEntry(ctx context.Context, arg RemoveTagFromEntryParams) error
+	RenameFolder(ctx context.Context, arg RenameFolderParams) (Folder, error)
 	SetExtensionEnabled(ctx context.Context, arg SetExtensionEnabledParams) (Extension, error)
 	TouchRepositorySync(ctx context.Context, id int64) error
 	TouchTrackerLinkSync(ctx context.Context, id int64) error
 	UpdateDownloadProgress(ctx context.Context, arg UpdateDownloadProgressParams) error
+	UpdateRepositoryName(ctx context.Context, arg UpdateRepositoryNameParams) (Repository, error)
 	UpsertAnimeEpisodeStream(ctx context.Context, arg UpsertAnimeEpisodeStreamParams) error
 	UpsertExtension(ctx context.Context, arg UpsertExtensionParams) (Extension, error)
 	UpsertMangaPage(ctx context.Context, arg UpsertMangaPageParams) error
