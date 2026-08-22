@@ -45,6 +45,7 @@ func main() {
 		JarPath:       cfg.SandboxJarPath,
 		Port:          cfg.SandboxPort,
 		ExtensionsDir: cfg.SandboxExtDir,
+		StorageDir:    cfg.SandboxStorageDir,
 		NovelEnabled:  cfg.NovelEnabled,
 		Addr:          cfg.SandboxAddr,
 		IdleTimeout:   cfg.IdleTimeout(),

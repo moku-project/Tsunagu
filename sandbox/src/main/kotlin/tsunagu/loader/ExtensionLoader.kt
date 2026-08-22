@@ -27,7 +27,6 @@ object ExtensionLoader {
 
     fun peekPackageName(file: File): String {
         if (file.extension == "js") {
-            // novels are keyed by filename elsewhere; not handled here
             throw ExtensionLoadException("peekPackageName does not support .js files")
         }
         if (file.extension == "jar") {
@@ -40,7 +39,6 @@ object ExtensionLoader {
                 return doc.documentElement.getAttribute("package")
             }
         }
-        // apk: ApkFile parses the binary manifest only, no dex2jar/classloading here
         val apk = ApkFile(file)
         return apk.apkMeta.packageName
     }

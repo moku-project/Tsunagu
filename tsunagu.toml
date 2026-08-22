@@ -1,18 +1,14 @@
-# Tsunagu configuration
-
 http_addr = ":8080"
-db_path = "tsunagu.db"
+db_path = "data/tsunagu.db"
 jar_cache_dir = "./jar-cache"
 
-sandbox_jar_path = "../sandbox/build/libs/sandbox-0.1.0-all.jar"
 sandbox_addr = "localhost:50051"
 sandbox_port = 50051
 sandbox_extensions_dir = "sandbox/extensions"
+sandbox_storage_dir = "data/plugin-storage"
 
-# Enable novel (.js/GraalJS) extension support
-novel_enabled = false
+novel_enabled = true
 
-# Whether Go should kill the sandbox JVM after a period of inactivity.
 idle_reap_enabled = true
 
-idle_timeout_minutes = 1
+idle_timeout_minutes = 15

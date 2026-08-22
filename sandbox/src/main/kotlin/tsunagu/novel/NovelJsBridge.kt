@@ -12,8 +12,13 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.graalvm.polyglot.Value
 import org.graalvm.polyglot.proxy.ProxyArray
 import org.graalvm.polyglot.proxy.ProxyExecutable
+import org.graalvm.polyglot.proxy.ProxyInstantiable
 import org.graalvm.polyglot.proxy.ProxyObject
 import org.jsoup.Jsoup
+import org.jsoup.nodes.DataNode
+import org.jsoup.nodes.Element
+import org.jsoup.nodes.Node
+import org.jsoup.nodes.TextNode
 
 object NovelJsBridge {
 
@@ -29,15 +34,17 @@ object NovelJsBridge {
         }
     """
 
-    fun requireFn(): ProxyExecutable = ProxyExecutable { args ->
+    fun requireFn(storageNamespace: String, wrapPromise: Value): ProxyExecutable = ProxyExecutable { args ->
         when (args[0].asString()) {
             "cheerio" -> cheerioModule()
-            "@libs/fetch" -> fetchModule()
+            "htmlparser2" -> htmlparser2Module()
+            "@libs/fetch" -> fetchModule(wrapPromise)
             "@libs/novelStatus" -> novelStatusModule()
             "@libs/isAbsoluteUrl" -> isAbsoluteUrlModule()
             "@libs/defaultCover" -> defaultCoverModule()
             "@libs/utils" -> utilsModule()
             "@libs/filterInputs" -> filterInputsModule()
+            "@libs/storage" -> storageModule(storageNamespace)
             else -> null
         }
     }
@@ -49,10 +56,62 @@ object NovelJsBridge {
         },
     ))
 
-    private fun fetchModule(): ProxyObject = ProxyObject.fromMap(mapOf(
-        "fetchApi" to ProxyExecutable { args -> doFetch(args) },
+    private val VOID_ELEMENTS = setOf(
+        "area", "base", "br", "col", "embed", "hr", "img", "input",
+        "link", "meta", "param", "source", "track", "wbr",
+    )
+
+    private fun htmlparser2Module(): ProxyObject = ProxyObject.fromMap(mapOf(
+        "Parser" to ProxyInstantiable { args -> parserInstance(args.getOrNull(0)) },
+    ))
+
+    private fun parserInstance(options: Value?): ProxyObject {
+        val onopentag = options?.getMember("onopentag")?.takeIf { it.canExecute() }
+        val ontext = options?.getMember("ontext")?.takeIf { it.canExecute() }
+        val onclosetag = options?.getMember("onclosetag")?.takeIf { it.canExecute() }
+        val onend = options?.getMember("onend")?.takeIf { it.canExecute() }
+
+        val buffer = StringBuilder()
+
+        return ProxyObject.fromMap(mapOf(
+            "write" to ProxyExecutable { wargs -> buffer.append(wargs[0].asString()); null },
+            "end" to ProxyExecutable {
+                val doc = Jsoup.parseBodyFragment(buffer.toString())
+                doc.body().childNodes().toList().forEach { node ->
+                    walkHtmlNode(node, onopentag, ontext, onclosetag)
+                }
+                onend?.execute()
+                null
+            },
+            "isVoidElement" to ProxyExecutable { iargs ->
+                VOID_ELEMENTS.contains(iargs[0].asString().lowercase())
+            },
+        ))
+    }
+
+    private fun walkHtmlNode(node: Node, onopentag: Value?, ontext: Value?, onclosetag: Value?) {
+        when (node) {
+            is Element -> {
+                val attribs = ProxyObject.fromMap(node.attributes().associate { it.key to it.value })
+                onopentag?.execute(node.tagName(), attribs)
+                node.childNodes().toList().forEach { walkHtmlNode(it, onopentag, ontext, onclosetag) }
+                onclosetag?.execute(node.tagName())
+            }
+            is TextNode -> {
+                ontext?.execute(node.wholeText)
+            }
+            is DataNode -> {
+                ontext?.execute(node.wholeData)
+            }
+            else -> {}
+        }
+    }
+
+    private fun fetchModule(wrapPromise: Value): ProxyObject = ProxyObject.fromMap(mapOf(
+        "fetchApi" to ProxyExecutable { args -> wrapPromise.execute(doFetch(args)) },
         "fetchText" to ProxyExecutable { args ->
-            try { rawFetch(args).body } catch (e: Exception) { "" }
+            val text = try { rawFetch(args).body } catch (e: Exception) { "" }
+            wrapPromise.execute(text)
         },
     ))
 
@@ -142,6 +201,25 @@ object NovelJsBridge {
         "utf8ToBytes" to ProxyExecutable { args -> args[0].asString().toByteArray(Charsets.UTF_8) },
         "bytesToUtf8" to ProxyExecutable { args -> String(args[0].`as`(ByteArray::class.java), Charsets.UTF_8) },
     ))
+
+    private fun storageModule(storageNamespace: String): ProxyObject = ProxyObject.fromMap(mapOf(
+        "storage" to ProxyObject.fromMap(mapOf(
+            "get" to ProxyExecutable { args -> PluginStorage.get(storageNamespace, args[0].asString()) },
+            "set" to ProxyExecutable { args ->
+                PluginStorage.set(storageNamespace, args[0].asString(), args.getOrNull(1)?.jsValueToKotlin())
+                null
+            },
+            "delete" to ProxyExecutable { args -> PluginStorage.delete(storageNamespace, args[0].asString()); null },
+        )),
+    ))
+
+    private fun Value.jsValueToKotlin(): Any? = when {
+        isNull -> null
+        isBoolean -> asBoolean()
+        isNumber -> asDouble()
+        isString -> asString()
+        else -> toString()
+    }
 
     private fun filterInputsModule(): ProxyObject = ProxyObject.fromMap(mapOf(
         "FilterTypes" to ProxyObject.fromMap(mapOf(

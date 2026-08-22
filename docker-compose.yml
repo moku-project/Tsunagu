@@ -1,33 +1,22 @@
 services:
-  sandbox:
+  tsunagu:
     build:
       context: .
-      dockerfile: sandbox/Dockerfile
-    environment:
-      SANDBOX_PORT: 50051
-      SANDBOX_EXTENSIONS_DIR: /data/extensions
-      SANDBOX_ENABLE_NOVEL: "false"
-    volumes:
-      - tsunagu-extensions:/data/extensions
-    expose:
-      - "50051"
-
-  backend:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
-    environment:
-      TSUNAGU_ADDR: ":8080"
-      TSUNAGU_DB_PATH: "/data/tsunagu.db"
-      TSUNAGU_JAR_CACHE_DIR: "/data/jar-cache"
-      TSUNAGU_SANDBOX_ADDR: "sandbox:50051"
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
     ports:
       - "8080:8080"
     volumes:
-      - tsunagu-db:/data
-    depends_on:
-      - sandbox
+      - tsunagu-data:/app/data
+      - tsunagu-jar-cache:/app/jar-cache
+      - tsunagu-extensions:/app/sandbox/extensions
+      - ./tsunagu.toml:/app/tsunagu.toml:ro
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - JAVA_TOOL_OPTIONS=-Djava.net.preferIPv4Stack=true
 
 volumes:
-  tsunagu-db:
+  tsunagu-data:
+  tsunagu-jar-cache:
   tsunagu-extensions:

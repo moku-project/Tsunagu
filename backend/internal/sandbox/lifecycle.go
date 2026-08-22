@@ -13,12 +13,13 @@ import (
 )
 
 type SupervisedClient struct {
-	jarPath     string
-	port        int
-	extDir      string
+	jarPath      string
+	port         int
+	extDir       string
+	storageDir   string
 	novelEnabled bool
-	addr        string
-	idleTimeout time.Duration
+	addr         string
+	idleTimeout  time.Duration
 
 	mu         sync.Mutex
 	cmd        *exec.Cmd
@@ -29,12 +30,13 @@ type SupervisedClient struct {
 }
 
 type SupervisedConfig struct {
-	JarPath        string
-	Port           int
-	ExtensionsDir  string
-	NovelEnabled   bool
-	Addr           string
-	IdleTimeout    time.Duration
+	JarPath       string
+	Port          int
+	ExtensionsDir string
+	StorageDir    string
+	NovelEnabled  bool
+	Addr          string
+	IdleTimeout   time.Duration
 }
 
 func NewSupervised(cfg SupervisedConfig) *SupervisedClient {
@@ -42,6 +44,7 @@ func NewSupervised(cfg SupervisedConfig) *SupervisedClient {
 		jarPath:      cfg.JarPath,
 		port:         cfg.Port,
 		extDir:       cfg.ExtensionsDir,
+		storageDir:   cfg.StorageDir,
 		novelEnabled: cfg.NovelEnabled,
 		addr:         cfg.Addr,
 		idleTimeout:  cfg.IdleTimeout,
@@ -96,6 +99,7 @@ func (sc *SupervisedClient) spawnLocked() error {
 	cmd.Env = append(os.Environ(),
 		"SANDBOX_PORT="+strconv.Itoa(sc.port),
 		"SANDBOX_EXTENSIONS_DIR="+sc.extDir,
+		"SANDBOX_STORAGE_DIR="+sc.storageDir,
 		"SANDBOX_ENABLE_NOVEL="+strconv.FormatBool(sc.novelEnabled),
 	)
 	cmd.Stdout = &logWriter{prefix: "[sandbox] "}
@@ -153,7 +157,7 @@ func (sc *SupervisedClient) reapLoop() {
 
 func (sc *SupervisedClient) maybeReap() {
 	if sc.idleTimeout <= 0 {
-		return // idle-reap disabled
+		return
 	}
 	sc.mu.Lock()
 	defer sc.mu.Unlock()
@@ -178,7 +182,6 @@ func (sc *SupervisedClient) killLocked() {
 	}
 	sc.cmd = nil
 }
-
 
 func (sc *SupervisedClient) Shutdown() {
 	close(sc.stopReaper)

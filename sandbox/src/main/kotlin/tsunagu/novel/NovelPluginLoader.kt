@@ -3,6 +3,7 @@ package tsunagu.novel
 import org.graalvm.polyglot.Context
 import org.graalvm.polyglot.HostAccess
 import org.graalvm.polyglot.PolyglotException
+import org.graalvm.polyglot.Value
 import tsunagu.loader.ContentType
 import tsunagu.loader.ExtensionLoadException
 import tsunagu.loader.LoadedExtension
@@ -15,6 +16,10 @@ object NovelPluginLoader {
             this._entries = [];
         }
         FormData.prototype.append = function(k, v) { this._entries.push([k, v]); };
+    """
+
+    private const val PROMISE_WRAP_GLUE = """
+        function __wrapPromise(v) { return Promise.resolve(v); }
     """
 
     private const val URL_SEARCH_PARAMS_GLUE = """
@@ -31,13 +36,17 @@ object NovelPluginLoader {
 
     fun load(file: File): LoadedExtension {
         val rawCode = file.readText()
+        val storageNamespace = file.nameWithoutExtension
 
-        val context = Context.newBuilder("js")
+        val context = Context.newBuilder("js", "regex")
             .allowHostAccess(HostAccess.ALL)
             .allowHostClassLookup { false }
             .build()
 
-        context.getBindings("js").putMember("__hostRequire", NovelJsBridge.requireFn())
+        context.eval("js", PROMISE_WRAP_GLUE)
+        val wrapPromise: Value = context.getBindings("js").getMember("__wrapPromise")
+
+        context.getBindings("js").putMember("__hostRequire", NovelJsBridge.requireFn(storageNamespace, wrapPromise))
         context.eval("js", NovelJsBridge.REQUIRE_GLUE)
         context.eval("js", FORM_DATA_GLUE)
         context.eval("js", URL_SEARCH_PARAMS_GLUE)

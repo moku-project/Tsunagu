@@ -8,6 +8,7 @@ import kotlinx.serialization.json.Json
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
 import tsunagu.grpc.ExtensionServiceImpl
+import tsunagu.novel.PluginStorage
 import tsunagu.registry.ExtensionRegistry
 import tsunagu.source.GetSource
 import java.io.File
@@ -24,7 +25,9 @@ fun main() {
     }
     val port = System.getenv("SANDBOX_PORT")?.toIntOrNull() ?: 50051
     val extensionsDir = File(System.getenv("SANDBOX_EXTENSIONS_DIR") ?: "extensions")
+    val storageDir = File(System.getenv("SANDBOX_STORAGE_DIR") ?: "plugin-storage")
     val novelEnabled = System.getenv("SANDBOX_ENABLE_NOVEL")?.toBooleanStrictOrNull() ?: false
+    PluginStorage.baseDir = storageDir
     val registry = ExtensionRegistry(extensionsDir, novelEnabled)
     GetSource.bind(registry)
     registry.loadAll()

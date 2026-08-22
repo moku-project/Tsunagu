@@ -45,6 +45,7 @@ sandbox/.kotlin/
 sandbox/extensions/
 *.apk
 backend/jar-cache/
+backend/tsunagu.toml
 backend/tsunagu.db
 backend/tsunagu.db-shm
 backend/tsunagu.db-wal

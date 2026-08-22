@@ -17,6 +17,7 @@ type Config struct {
 	SandboxAddr       string `toml:"sandbox_addr"`
 	SandboxPort       int    `toml:"sandbox_port"`
 	SandboxExtDir     string `toml:"sandbox_extensions_dir"`
+	SandboxStorageDir string `toml:"sandbox_storage_dir"`
 	NovelEnabled      bool   `toml:"novel_enabled"`
 	IdleReapEnabled   bool   `toml:"idle_reap_enabled"`
 	IdleTimeoutMin    int    `toml:"idle_timeout_minutes"`
@@ -38,6 +39,7 @@ func defaults() Config {
 		SandboxAddr:       "localhost:50051",
 		SandboxPort:       50051,
 		SandboxExtDir:     "sandbox/extensions",
+		SandboxStorageDir: "data/plugin-storage",
 		NovelEnabled:      false,
 		IdleReapEnabled:   true,
 		IdleTimeoutMin:    15,
@@ -81,6 +83,9 @@ func applyEnvOverrides(cfg *Config) {
 	}
 	if v := os.Getenv("SANDBOX_EXTENSIONS_DIR"); v != "" {
 		cfg.SandboxExtDir = v
+	}
+	if v := os.Getenv("SANDBOX_STORAGE_DIR"); v != "" {
+		cfg.SandboxStorageDir = v
 	}
 	if v := os.Getenv("SANDBOX_ENABLE_NOVEL"); v != "" {
 		if b, err := strconv.ParseBool(v); err == nil {
