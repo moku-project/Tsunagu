@@ -120,3 +120,12 @@ func (c *Client) GetVideoStream(ctx context.Context, extensionID, sourceEntryID,
 		SourceEpisodeId:  sourceEpisodeID,
 	})
 }
+
+func (c *Client) GetImageBytes(ctx context.Context, extensionID, imageURL string) (*sandboxv1.ImageData, error) {
+	ctx, cancel := c.withTimeout(ctx)
+	defer cancel()
+	return c.rpc.GetImageBytes(ctx, &sandboxv1.ImageRequest{
+		ExtensionId: extensionID,
+		ImageUrl:    imageURL,
+	})
+}

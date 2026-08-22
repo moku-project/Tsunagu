@@ -7,6 +7,8 @@ import eu.kanade.tachiyomi.animesource.online.AnimeHttpSource
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
 import eu.kanade.tachiyomi.source.online.HttpSource
+import eu.kanade.tachiyomi.network.GET
+import eu.kanade.tachiyomi.network.awaitSuccess
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.grpc.Status
 import io.grpc.StatusRuntimeException
@@ -251,6 +253,25 @@ class ExtensionServiceImpl(
             val video = videos.firstOrNull()
                 ?: throw IllegalStateException("no videos returned for episode ${request.sourceEpisodeId}")
             toStreamInfo(video)
+        }
+    }
+
+    override fun getImageBytes(
+        request: Sandbox.ImageRequest,
+        responseObserver: StreamObserver<Sandbox.ImageData>,
+    ) {
+        handle(responseObserver, request.extensionId) { source ->
+            val response = runBlocking {
+                source.client.newCall(GET(request.imageUrl, source.headers)).awaitSuccess()
+            }
+            response.use { resp ->
+                val bytes = resp.body.bytes()
+                val contentType = resp.header("Content-Type") ?: "image/jpeg"
+                Sandbox.ImageData.newBuilder()
+                    .setData(com.google.protobuf.ByteString.copyFrom(bytes))
+                    .setContentType(contentType)
+                    .build()
+            }
         }
     }
 

@@ -51,3 +51,4 @@ backend/tsunagu.db-shm
 backend/tsunagu.db-wal
 /build/
 /dist/
+backend/media/

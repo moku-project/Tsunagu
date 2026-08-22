@@ -38,3 +38,18 @@ ON CONFLICT(chapter_id) DO UPDATE SET
 
 -- name: GetAnimeEpisodeStream :one
 SELECT * FROM anime_episode_streams WHERE chapter_id = ?;
+
+-- name: GetChapterDownloadContext :one
+SELECT
+    c.id AS chapter_id,
+    c.external_id AS source_chapter_id,
+    le.external_id AS source_entry_id,
+    le.content_type AS content_type,
+    e.package_name AS extension_package_name
+FROM chapters c
+JOIN library_entries le ON le.id = c.library_entry_id
+JOIN extensions e ON e.id = le.extension_id
+WHERE c.id = ?;
+
+-- name: GetChapterByLibraryEntryAndExternalID :one
+SELECT * FROM chapters WHERE library_entry_id = ? AND external_id = ?;

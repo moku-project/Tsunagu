@@ -25,3 +25,8 @@ WHERE extension_id = ? AND extension_removed_at IS NULL;
 
 -- name: DeleteLibraryEntry :exec
 DELETE FROM library_entries WHERE id = ?;
+
+-- name: GetLibraryEntryByExtensionAndExternalID :one
+SELECT le.* FROM library_entries le
+JOIN extensions e ON e.id = le.extension_id
+WHERE e.package_name = ? AND le.external_id = ?;

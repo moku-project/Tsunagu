@@ -15,6 +15,7 @@ service ExtensionService {
   rpc GetChapterText(ChapterRequest) returns (TextContent);
   rpc GetEpisodes(EntryRequest) returns (EpisodeList);
   rpc GetVideoStream(EpisodeRequest) returns (StreamInfo);
+  rpc GetImageBytes(ImageRequest) returns (ImageData);
 }
 
 enum ContentType {
@@ -137,4 +138,14 @@ message StreamInfo {
 message SubtitleTrack {
   string url = 1;
   string lang = 2;
+}
+
+message ImageRequest {
+  string extension_id = 1;
+  string image_url = 2;
+}
+
+message ImageData {
+  bytes data = 1;
+  string content_type = 2;
 }

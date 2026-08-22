@@ -153,6 +153,32 @@ func toReadingProgress(p sqlcgen.ReadingProgress) *model.ReadingProgress {
 	}
 }
 
+func downloadStatus(s string) model.DownloadStatus {
+	switch s {
+	case "queued":
+		return model.DownloadStatusQueued
+	case "downloading":
+		return model.DownloadStatusDownloading
+	case "done":
+		return model.DownloadStatusDone
+	case "failed":
+		return model.DownloadStatusFailed
+	}
+	return model.DownloadStatusQueued
+}
+
+func toDownload(d sqlcgen.Download) *model.Download {
+	return &model.Download{
+		ID:          strconv.FormatInt(d.ID, 10),
+		ChapterID:   strconv.FormatInt(d.ChapterID, 10),
+		Status:      downloadStatus(d.Status),
+		Progress:    d.Progress,
+		Error:       nullStringPtr(d.Error),
+		CreatedAt:   d.CreatedAt,
+		CompletedAt: nullTimePtr(d.CompletedAt),
+	}
+}
+
 func parseID(id string) (int64, error) {
 	return strconv.ParseInt(id, 10, 64)
 }

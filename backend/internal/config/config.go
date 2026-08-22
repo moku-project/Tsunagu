@@ -12,6 +12,7 @@ type Config struct {
 	HTTPAddr          string `toml:"http_addr"`
 	DBPath            string `toml:"db_path"`
 	JarCacheDir       string `toml:"jar_cache_dir"`
+	MediaDir          string `toml:"media_dir"`
 
 	SandboxJarPath    string `toml:"sandbox_jar_path"`
 	SandboxAddr       string `toml:"sandbox_addr"`
@@ -35,6 +36,7 @@ func defaults() Config {
 		HTTPAddr:          ":8080",
 		DBPath:            "tsunagu.db",
 		JarCacheDir:       "./jar-cache",
+		MediaDir:          "./media",
 		SandboxJarPath:    "sandbox.jar",
 		SandboxAddr:       "localhost:50051",
 		SandboxPort:       50051,
@@ -72,6 +74,9 @@ func applyEnvOverrides(cfg *Config) {
 	}
 	if v := os.Getenv("TSUNAGU_JAR_CACHE_DIR"); v != "" {
 		cfg.JarCacheDir = v
+	}
+	if v := os.Getenv("TSUNAGU_MEDIA_DIR"); v != "" {
+		cfg.MediaDir = v
 	}
 	if v := os.Getenv("TSUNAGU_SANDBOX_ADDR"); v != "" {
 		cfg.SandboxAddr = v

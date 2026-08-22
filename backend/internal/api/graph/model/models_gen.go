@@ -17,6 +17,17 @@ type Chapter struct {
 	Title          *string    `json:"title,omitempty"`
 	Number         *float64   `json:"number,omitempty"`
 	UploadedAt     *time.Time `json:"uploadedAt,omitempty"`
+	Download       *Download  `json:"download,omitempty"`
+}
+
+type Download struct {
+	ID          string         `json:"id"`
+	ChapterID   string         `json:"chapterId"`
+	Status      DownloadStatus `json:"status"`
+	Progress    float64        `json:"progress"`
+	Error       *string        `json:"error,omitempty"`
+	CreatedAt   time.Time      `json:"createdAt"`
+	CompletedAt *time.Time     `json:"completedAt,omitempty"`
 }
 
 type Extension struct {
@@ -152,6 +163,65 @@ func (e *ContentType) UnmarshalJSON(b []byte) error {
 }
 
 func (e ContentType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type DownloadStatus string
+
+const (
+	DownloadStatusQueued      DownloadStatus = "QUEUED"
+	DownloadStatusDownloading DownloadStatus = "DOWNLOADING"
+	DownloadStatusDone        DownloadStatus = "DONE"
+	DownloadStatusFailed      DownloadStatus = "FAILED"
+)
+
+var AllDownloadStatus = []DownloadStatus{
+	DownloadStatusQueued,
+	DownloadStatusDownloading,
+	DownloadStatusDone,
+	DownloadStatusFailed,
+}
+
+func (e DownloadStatus) IsValid() bool {
+	switch e {
+	case DownloadStatusQueued, DownloadStatusDownloading, DownloadStatusDone, DownloadStatusFailed:
+		return true
+	}
+	return false
+}
+
+func (e DownloadStatus) String() string {
+	return string(e)
+}
+
+func (e *DownloadStatus) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = DownloadStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid DownloadStatus", str)
+	}
+	return nil
+}
+
+func (e DownloadStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *DownloadStatus) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e DownloadStatus) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

@@ -60,6 +60,24 @@ type Chapter {
   title: String
   number: Float
   uploadedAt: Time
+  download: Download @goField(forceResolver: true)
+}
+
+enum DownloadStatus {
+  QUEUED
+  DOWNLOADING
+  DONE
+  FAILED
+}
+
+type Download {
+  id: ID!
+  chapterId: ID!
+  status: DownloadStatus!
+  progress: Float!
+  error: String
+  createdAt: Time!
+  completedAt: Time
 }
 
 type ReadingProgress {
@@ -101,6 +119,7 @@ type Query {
   readingProgress(libraryEntryId: ID!): [ReadingProgress!]!
   search(extensionId: String!, query: String!, page: Int): SearchResponse!
   sourceDetails(extensionId: String!, sourceEntryId: String!): SourceDetails!
+  downloadStatus(chapterId: ID!): Download
 }
 
 type Mutation {
@@ -114,4 +133,5 @@ type Mutation {
   syncChapters(libraryEntryId: ID!): [Chapter!]!
   updateReadingProgress(libraryEntryId: ID!, chapterId: ID!, progress: Float!, completed: Boolean, positionSeconds: Float, durationSeconds: Float): ReadingProgress!
   markChapterRead(libraryEntryId: ID!, chapterId: ID!): ReadingProgress!
+  enqueueDownload(chapterId: ID!): Download!
 }

@@ -77,6 +77,63 @@ func (q *Queries) GetChapter(ctx context.Context, id int64) (Chapter, error) {
 	return i, err
 }
 
+const getChapterByLibraryEntryAndExternalID = `-- name: GetChapterByLibraryEntryAndExternalID :one
+SELECT id, library_entry_id, external_id, title, number, uploaded_at FROM chapters WHERE library_entry_id = ? AND external_id = ?
+`
+
+type GetChapterByLibraryEntryAndExternalIDParams struct {
+	LibraryEntryID int64  `json:"library_entry_id"`
+	ExternalID     string `json:"external_id"`
+}
+
+func (q *Queries) GetChapterByLibraryEntryAndExternalID(ctx context.Context, arg GetChapterByLibraryEntryAndExternalIDParams) (Chapter, error) {
+	row := q.db.QueryRowContext(ctx, getChapterByLibraryEntryAndExternalID, arg.LibraryEntryID, arg.ExternalID)
+	var i Chapter
+	err := row.Scan(
+		&i.ID,
+		&i.LibraryEntryID,
+		&i.ExternalID,
+		&i.Title,
+		&i.Number,
+		&i.UploadedAt,
+	)
+	return i, err
+}
+
+const getChapterDownloadContext = `-- name: GetChapterDownloadContext :one
+SELECT
+    c.id AS chapter_id,
+    c.external_id AS source_chapter_id,
+    le.external_id AS source_entry_id,
+    le.content_type AS content_type,
+    e.package_name AS extension_package_name
+FROM chapters c
+JOIN library_entries le ON le.id = c.library_entry_id
+JOIN extensions e ON e.id = le.extension_id
+WHERE c.id = ?
+`
+
+type GetChapterDownloadContextRow struct {
+	ChapterID            int64  `json:"chapter_id"`
+	SourceChapterID      string `json:"source_chapter_id"`
+	SourceEntryID        string `json:"source_entry_id"`
+	ContentType          string `json:"content_type"`
+	ExtensionPackageName string `json:"extension_package_name"`
+}
+
+func (q *Queries) GetChapterDownloadContext(ctx context.Context, id int64) (GetChapterDownloadContextRow, error) {
+	row := q.db.QueryRowContext(ctx, getChapterDownloadContext, id)
+	var i GetChapterDownloadContextRow
+	err := row.Scan(
+		&i.ChapterID,
+		&i.SourceChapterID,
+		&i.SourceEntryID,
+		&i.ContentType,
+		&i.ExtensionPackageName,
+	)
+	return i, err
+}
+
 const getNovelChapterContent = `-- name: GetNovelChapterContent :one
 SELECT chapter_id, local_path FROM novel_chapter_content WHERE chapter_id = ?
 `

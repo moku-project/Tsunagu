@@ -18,6 +18,7 @@ import (
 	"tsunagu/backend/internal/config"
 	"tsunagu/backend/internal/db"
 	"tsunagu/backend/internal/db/sqlcgen"
+	"tsunagu/backend/internal/download"
 	"tsunagu/backend/internal/httputil"
 	"tsunagu/backend/internal/sandbox"
 	sandboxv1 "tsunagu/backend/internal/sandbox/gen/sandbox/v1"
@@ -60,9 +61,20 @@ func main() {
 		log.Printf("warning: could not reload installed extensions on startup: %v", err)
 	}
 
+	absMediaDir, err := filepath.Abs(cfg.MediaDir)
+	if err != nil {
+		log.Fatalf("resolving media dir: %v", err)
+	}
+	downloadMgr := download.New(q, supervised, absMediaDir)
+	downloadMgr.Start()
+	defer downloadMgr.Shutdown()
+
+	globalMediaDir = absMediaDir
+
 	mux := http.NewServeMux()
-	registerRoutes(mux, supervised, syncer)
-	registerGraphQL(mux, supervised, syncer)
+	mux.Handle("/media/", http.StripPrefix("/media/", http.FileServer(http.Dir(absMediaDir))))
+	registerRoutes(mux, supervised, syncer, q, absMediaDir)
+	registerGraphQL(mux, supervised, syncer, downloadMgr, q)
 
 	srv := &http.Server{
 		Addr:              cfg.HTTPAddr,
@@ -134,14 +146,14 @@ func logRequests(next http.Handler) http.Handler {
 	})
 }
 
-func registerGraphQL(mux *http.ServeMux, sc *sandbox.SupervisedClient, sy *sync.Syncer) {
-	resolver := &graph.Resolver{Sy: sy, Sc: sc}
+func registerGraphQL(mux *http.ServeMux, sc *sandbox.SupervisedClient, sy *sync.Syncer, dm *download.Manager, q *sqlcgen.Queries) {
+	resolver := &graph.Resolver{Sy: sy, Sc: sc, Dm: dm, Q: q}
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: resolver}))
 	mux.Handle("/api/graphql", srv)
 	mux.Handle("/api/graphql/playground", playground.Handler("Tsunagu GraphQL", "/api/graphql"))
 }
 
-func registerRoutes(mux *http.ServeMux, sc *sandbox.SupervisedClient, sy *sync.Syncer) {
+func registerRoutes(mux *http.ServeMux, sc *sandbox.SupervisedClient, sy *sync.Syncer, q *sqlcgen.Queries, mediaDir string) {
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))
@@ -569,6 +581,12 @@ func registerRoutes(mux *http.ServeMux, sc *sandbox.SupervisedClient, sy *sync.S
 		if !ok {
 			return
 		}
+
+		if localURLs, found := localMangaPageURLs(r.Context(), q, params["extension_id"], params["source_entry_id"], params["source_chapter_id"]); found {
+			httputil.JSON(w, map[string]any{"page_urls": localURLs})
+			return
+		}
+
 		client, err := sc.Ensure(r.Context())
 		if err != nil {
 			httputil.Error(w, "sandbox unavailable: "+err.Error(), http.StatusServiceUnavailable)
@@ -587,6 +605,12 @@ func registerRoutes(mux *http.ServeMux, sc *sandbox.SupervisedClient, sy *sync.S
 		if !ok {
 			return
 		}
+
+		if content, format, found := localNovelChapterContent(r.Context(), q, params["extension_id"], params["source_entry_id"], params["source_chapter_id"]); found {
+			httputil.JSON(w, map[string]any{"content": content, "format": format})
+			return
+		}
+
 		client, err := sc.Ensure(r.Context())
 		if err != nil {
 			httputil.Error(w, "sandbox unavailable: "+err.Error(), http.StatusServiceUnavailable)
@@ -636,3 +660,70 @@ func registerRoutes(mux *http.ServeMux, sc *sandbox.SupervisedClient, sy *sync.S
 		httputil.JSON(w, resp)
 	})
 }
+
+func localMangaPageURLs(ctx context.Context, q *sqlcgen.Queries, extensionID, sourceEntryID, sourceChapterID string) ([]string, bool) {
+	chapter, ok := resolveLocalChapter(ctx, q, extensionID, sourceEntryID, sourceChapterID)
+	if !ok {
+		return nil, false
+	}
+	pages, err := q.ListMangaPages(ctx, chapter.ID)
+	if err != nil || len(pages) == 0 {
+		return nil, false
+	}
+	urls := make([]string, 0, len(pages))
+	for _, p := range pages {
+		if !p.LocalPath.Valid || p.LocalPath.String == "" {
+			return nil, false
+		}
+		urls = append(urls, localPathToMediaURL(p.LocalPath.String))
+	}
+	return urls, true
+}
+
+func localNovelChapterContent(ctx context.Context, q *sqlcgen.Queries, extensionID, sourceEntryID, sourceChapterID string) (string, string, bool) {
+	chapter, ok := resolveLocalChapter(ctx, q, extensionID, sourceEntryID, sourceChapterID)
+	if !ok {
+		return "", "", false
+	}
+	row, err := q.GetNovelChapterContent(ctx, chapter.ID)
+	if err != nil || !row.LocalPath.Valid || row.LocalPath.String == "" {
+		return "", "", false
+	}
+	data, err := os.ReadFile(row.LocalPath.String)
+	if err != nil {
+		return "", "", false
+	}
+	format := "html"
+	if ext := filepath.Ext(row.LocalPath.String); ext != "" {
+		format = ext[1:]
+	}
+	return string(data), format, true
+}
+
+func resolveLocalChapter(ctx context.Context, q *sqlcgen.Queries, extensionID, sourceEntryID, sourceChapterID string) (sqlcgen.Chapter, bool) {
+	entry, err := q.GetLibraryEntryByExtensionAndExternalID(ctx, sqlcgen.GetLibraryEntryByExtensionAndExternalIDParams{
+		PackageName: extensionID,
+		ExternalID:  sourceEntryID,
+	})
+	if err != nil {
+		return sqlcgen.Chapter{}, false
+	}
+	chapter, err := q.GetChapterByLibraryEntryAndExternalID(ctx, sqlcgen.GetChapterByLibraryEntryAndExternalIDParams{
+		LibraryEntryID: entry.ID,
+		ExternalID:     sourceChapterID,
+	})
+	if err != nil {
+		return sqlcgen.Chapter{}, false
+	}
+	return chapter, true
+}
+
+func localPathToMediaURL(absPath string) string {
+	rel, err := filepath.Rel(globalMediaDir, absPath)
+	if err != nil {
+		return absPath
+	}
+	return "/media/" + filepath.ToSlash(rel)
+}
+
+var globalMediaDir string

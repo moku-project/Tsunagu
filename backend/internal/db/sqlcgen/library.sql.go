@@ -93,6 +93,36 @@ func (q *Queries) GetLibraryEntry(ctx context.Context, id int64) (LibraryEntry, 
 	return i, err
 }
 
+const getLibraryEntryByExtensionAndExternalID = `-- name: GetLibraryEntryByExtensionAndExternalID :one
+SELECT le.id, le.extension_id, le.extension_name, le.external_id, le.content_type, le.title, le.cover_path, le.description, le.status, le.extension_removed_at, le.added_at FROM library_entries le
+JOIN extensions e ON e.id = le.extension_id
+WHERE e.package_name = ? AND le.external_id = ?
+`
+
+type GetLibraryEntryByExtensionAndExternalIDParams struct {
+	PackageName string `json:"package_name"`
+	ExternalID  string `json:"external_id"`
+}
+
+func (q *Queries) GetLibraryEntryByExtensionAndExternalID(ctx context.Context, arg GetLibraryEntryByExtensionAndExternalIDParams) (LibraryEntry, error) {
+	row := q.db.QueryRowContext(ctx, getLibraryEntryByExtensionAndExternalID, arg.PackageName, arg.ExternalID)
+	var i LibraryEntry
+	err := row.Scan(
+		&i.ID,
+		&i.ExtensionID,
+		&i.ExtensionName,
+		&i.ExternalID,
+		&i.ContentType,
+		&i.Title,
+		&i.CoverPath,
+		&i.Description,
+		&i.Status,
+		&i.ExtensionRemovedAt,
+		&i.AddedAt,
+	)
+	return i, err
+}
+
 const listLibraryEntries = `-- name: ListLibraryEntries :many
 SELECT id, extension_id, extension_name, external_id, content_type, title, cover_path, description, status, extension_removed_at, added_at FROM library_entries ORDER BY added_at DESC
 `
