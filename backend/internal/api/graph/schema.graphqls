@@ -1,0 +1,117 @@
+scalar Time
+
+directive @goField(forceResolver: Boolean, name: String, omittable: Boolean) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+
+enum ContentType {
+  NOVEL
+  MANGA
+  ANIME
+}
+
+type Repository {
+  id: ID!
+  indexUrl: String!
+  name: String
+  contentType: ContentType!
+  addedAt: Time!
+  lastSyncedAt: Time
+}
+
+type Extension {
+  id: ID!
+  repositoryId: ID!
+  packageName: String!
+  name: String!
+  version: String!
+  contentType: ContentType!
+  lang: String!
+  iconUrl: String
+  apkUrl: String
+  jarUrl: String
+  jarPath: String
+  installed: Boolean!
+  enabled: Boolean!
+  discoveredAt: Time!
+  installedAt: Time
+  installedVersion: String
+  needsUpdate: Boolean
+}
+
+type LibraryEntry {
+  id: ID!
+  extensionId: ID
+  extensionName: String!
+  externalId: String!
+  contentType: ContentType!
+  title: String!
+  coverPath: String
+  description: String
+  status: String
+  extensionRemovedAt: Time
+  addedAt: Time!
+  chapters: [Chapter!]! @goField(forceResolver: true)
+  readingProgress: [ReadingProgress!]! @goField(forceResolver: true)
+}
+
+type Chapter {
+  id: ID!
+  libraryEntryId: ID!
+  externalId: String!
+  title: String
+  number: Float
+  uploadedAt: Time
+}
+
+type ReadingProgress {
+  id: ID!
+  libraryEntryId: ID!
+  chapterId: ID!
+  progress: Float!
+  completed: Boolean!
+  positionSeconds: Float
+  durationSeconds: Float
+  updatedAt: Time!
+}
+
+type SearchResult {
+  sourceEntryId: String!
+  title: String!
+  coverUrl: String
+}
+
+type SearchResponse {
+  results: [SearchResult!]!
+  hasNextPage: Boolean!
+}
+
+type SourceDetails {
+  sourceEntryId: String!
+  title: String!
+  description: String
+  coverUrl: String
+  status: String
+}
+
+type Query {
+  repositories: [Repository!]!
+  availableExtensions(repositoryId: ID!): [Extension!]!
+  installedExtensions: [Extension!]!
+  library(contentType: ContentType): [LibraryEntry!]!
+  libraryEntry(id: ID!): LibraryEntry
+  readingProgress(libraryEntryId: ID!): [ReadingProgress!]!
+  search(extensionId: String!, query: String!, page: Int): SearchResponse!
+  sourceDetails(extensionId: String!, sourceEntryId: String!): SourceDetails!
+}
+
+type Mutation {
+  addRepository(indexUrl: String!, name: String): Repository!
+  renameRepository(repositoryId: ID!, name: String!): Repository!
+  deleteRepository(repositoryId: ID!): Boolean!
+  installExtension(packageName: String!): Extension!
+  uninstallExtension(packageName: String!): Extension!
+  updateExtension(packageName: String!): Extension!
+  addToLibrary(extensionId: String!, sourceEntryId: String!): LibraryEntry!
+  syncChapters(libraryEntryId: ID!): [Chapter!]!
+  updateReadingProgress(libraryEntryId: ID!, chapterId: ID!, progress: Float!, completed: Boolean, positionSeconds: Float, durationSeconds: Float): ReadingProgress!
+  markChapterRead(libraryEntryId: ID!, chapterId: ID!): ReadingProgress!
+}

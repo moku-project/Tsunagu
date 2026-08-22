@@ -6,6 +6,7 @@ interface SharedPreferences {
     fun getBoolean(key: String, defValue: Boolean): Boolean
     fun getLong(key: String, defValue: Long): Long
     fun getFloat(key: String, defValue: Float): Float
+    fun getStringSet(key: String, defValue: Set<String>?): Set<String>?
     fun contains(key: String): Boolean
     fun edit(): Editor
     fun getAll(): Map<String, *>
@@ -16,6 +17,7 @@ interface SharedPreferences {
         fun putBoolean(key: String, value: Boolean): Editor
         fun putLong(key: String, value: Long): Editor
         fun putFloat(key: String, value: Float): Editor
+        fun putStringSet(key: String, values: Set<String>?): Editor
         fun remove(key: String): Editor
         fun clear(): Editor
         fun apply()

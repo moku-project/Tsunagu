@@ -10,6 +10,8 @@ class InMemorySharedPreferences : SharedPreferences {
     override fun getBoolean(key: String, defValue: Boolean) = store[key] as? Boolean ?: defValue
     override fun getLong(key: String, defValue: Long) = store[key] as? Long ?: defValue
     override fun getFloat(key: String, defValue: Float) = store[key] as? Float ?: defValue
+    @Suppress("UNCHECKED_CAST")
+    override fun getStringSet(key: String, defValue: Set<String>?) = store[key] as? Set<String> ?: defValue
     override fun contains(key: String) = store.containsKey(key)
     override fun getAll(): Map<String, *> = store.toMap()
 
@@ -26,6 +28,7 @@ class InMemorySharedPreferences : SharedPreferences {
         override fun putBoolean(key: String, value: Boolean) = apply { pending[key] = value }
         override fun putLong(key: String, value: Long) = apply { pending[key] = value }
         override fun putFloat(key: String, value: Float) = apply { pending[key] = value }
+        override fun putStringSet(key: String, values: Set<String>?) = apply { pending[key] = values }
         override fun remove(key: String) = apply { pending[key] = REMOVE_MARKER }
         override fun clear() = apply { clearFlag = true }
 

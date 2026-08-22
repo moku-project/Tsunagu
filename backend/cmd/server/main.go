@@ -11,6 +11,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/playground"
+
+	"tsunagu/backend/internal/api/graph"
 	"tsunagu/backend/internal/config"
 	"tsunagu/backend/internal/db"
 	"tsunagu/backend/internal/db/sqlcgen"
@@ -58,6 +62,7 @@ func main() {
 
 	mux := http.NewServeMux()
 	registerRoutes(mux, supervised, syncer)
+	registerGraphQL(mux, supervised, syncer)
 
 	srv := &http.Server{
 		Addr:              cfg.HTTPAddr,
@@ -127,6 +132,13 @@ func logRequests(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 		log.Printf("%s %s %s", r.Method, r.URL.Path, time.Since(start))
 	})
+}
+
+func registerGraphQL(mux *http.ServeMux, sc *sandbox.SupervisedClient, sy *sync.Syncer) {
+	resolver := &graph.Resolver{Sy: sy, Sc: sc}
+	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: resolver}))
+	mux.Handle("/api/graphql", srv)
+	mux.Handle("/api/graphql/playground", playground.Handler("Tsunagu GraphQL", "/api/graphql"))
 }
 
 func registerRoutes(mux *http.ServeMux, sc *sandbox.SupervisedClient, sy *sync.Syncer) {

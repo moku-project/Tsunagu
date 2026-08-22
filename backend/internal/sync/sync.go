@@ -43,8 +43,12 @@ func (s *Syncer) AddRepository(ctx context.Context, indexURL string, name string
 	}
 
 	repoContentType := "manga"
-	if len(parsed) > 0 && parsed[0].ContentType != "" {
-		repoContentType = parsed[0].ContentType
+	if len(parsed) > 0 {
+		if parsed[0].ContentType != "" {
+			repoContentType = parsed[0].ContentType
+		} else {
+			repoContentType = repository.ClassifyContentType(parsed[0].PackageName)
+		}
 	}
 
 	if name == "" {
@@ -304,6 +308,10 @@ func (s *Syncer) AddToLibrary(ctx context.Context, c *sandbox.Client, packageNam
 	}
 
 	return entry, nil
+}
+
+func (s *Syncer) GetLibraryEntry(ctx context.Context, id int64) (sqlcgen.LibraryEntry, error) {
+	return s.q.GetLibraryEntry(ctx, id)
 }
 
 func (s *Syncer) ListLibraryEntries(ctx context.Context, contentType string) ([]sqlcgen.LibraryEntry, error) {
