@@ -37,6 +37,8 @@ type Manager struct {
 	wakeCh chan struct{}
 	stopCh chan struct{}
 	wg     sync.WaitGroup
+	runningMu sync.Mutex
+	running   map[int64]context.CancelFunc
 }
 
 func New(q *sqlcgen.Queries, sc *sandbox.SupervisedClient, mediaDir string) *Manager {
@@ -48,6 +50,7 @@ func New(q *sqlcgen.Queries, sc *sandbox.SupervisedClient, mediaDir string) *Man
 		workers:      2,
 		wakeCh:       make(chan struct{}, 1),
 		stopCh:       make(chan struct{}),
+		running:      make(map[int64]context.CancelFunc),
 	}
 }
 
@@ -112,7 +115,18 @@ func (m *Manager) processOne() {
 		return
 	}
 
-	if err := m.runJob(ctx, job.ID, job.ChapterID); err != nil {
+	jobCtx, cancel := context.WithCancel(ctx)
+	m.runningMu.Lock()
+	m.running[job.ChapterID] = cancel
+	m.runningMu.Unlock()
+	defer func() {
+		m.runningMu.Lock()
+		delete(m.running, job.ChapterID)
+		m.runningMu.Unlock()
+		cancel()
+	}()
+
+	if err := m.runJob(jobCtx, job.ID, job.ChapterID); err != nil {
 		log.Printf("download: job %d (chapter %d) failed: %v", job.ID, job.ChapterID, err)
 		_ = m.q.FailDownload(ctx, sqlcgen.FailDownloadParams{
 			Error: sql.NullString{String: err.Error(), Valid: true},
@@ -531,4 +545,14 @@ func parseInt64(s string) (int64, error) {
 	var n int64
 	_, err := fmt.Sscanf(s, "%d", &n)
 	return n, err
+}
+
+func (m *Manager) Cancel(ctx context.Context, chapterID int64) error {
+	m.runningMu.Lock()
+	cancel, ok := m.running[chapterID]
+	m.runningMu.Unlock()
+	if ok {
+		cancel()
+	}
+	return nil
 }

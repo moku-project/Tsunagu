@@ -1,10 +1,12 @@
 package graph
 
+
 import (
 	"context"
 	"database/sql"
 	"fmt"
 	"tsunagu/backend/internal/api/graph/model"
+	"tsunagu/backend/internal/db/sqlcgen"
 	"tsunagu/backend/internal/sandbox"
 	sandboxv1 "tsunagu/backend/internal/sandbox/gen/sandbox/v1"
 )
@@ -36,6 +38,41 @@ func (r *chapterResolver) Download(ctx context.Context, obj *model.Chapter) (*mo
 		}
 	}
 	return nil, nil
+}
+
+func (r *chapterResolver) Pages(ctx context.Context, obj *model.Chapter) ([]string, error) {
+	chID, err := parseID(obj.ID)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := r.Q.ListMangaPages(ctx, chID)
+	if err != nil {
+		return nil, err
+	}
+	urls := make([]string, 0, len(rows))
+	for _, row := range rows {
+		if !row.LocalPath.Valid || row.LocalPath.String == "" {
+			continue
+		}
+		urls = append(urls, localPathToMediaURL(r.MediaDir, row.LocalPath.String))
+	}
+	return urls, nil
+}
+
+func (r *chapterResolver) VideoURL(ctx context.Context, obj *model.Chapter) (*string, error) {
+	chID, err := parseID(obj.ID)
+	if err != nil {
+		return nil, err
+	}
+	row, err := r.Q.GetAnimeEpisodeStream(ctx, chID)
+	if err != nil {
+		return nil, nil
+	}
+	if !row.LocalPath.Valid || row.LocalPath.String == "" {
+		return nil, nil
+	}
+	url := localPathToMediaURL(r.MediaDir, row.LocalPath.String)
+	return &url, nil
 }
 
 func (r *libraryEntryResolver) Chapters(ctx context.Context, obj *model.LibraryEntry) ([]*model.Chapter, error) {
@@ -72,6 +109,130 @@ func (r *libraryEntryResolver) ReadingProgress(ctx context.Context, obj *model.L
 		out = append(out, toReadingProgress(p))
 	}
 	return out, nil
+}
+
+func (r *mutationResolver) CreateFolder(ctx context.Context, name string, parentFolderID *string) (*model.Folder, error) {
+	var parentID sql.NullInt64
+	if parentFolderID != nil {
+		pid, err := parseID(*parentFolderID)
+		if err != nil {
+			return nil, err
+		}
+		parentID = sql.NullInt64{Int64: pid, Valid: true}
+	}
+	row, err := r.Q.CreateFolder(ctx, sqlcgen.CreateFolderParams{
+		Name:           name,
+		ParentFolderID: parentID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return toFolder(row), nil
+}
+
+func (r *mutationResolver) RenameFolder(ctx context.Context, folderID string, name string) (*model.Folder, error) {
+	fid, err := parseID(folderID)
+	if err != nil {
+		return nil, err
+	}
+	row, err := r.Q.RenameFolder(ctx, sqlcgen.RenameFolderParams{
+		Name: name,
+		ID:   fid,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return toFolder(row), nil
+}
+
+func (r *mutationResolver) DeleteFolder(ctx context.Context, folderID string) (bool, error) {
+	fid, err := parseID(folderID)
+	if err != nil {
+		return false, err
+	}
+	if err := r.Q.DeleteFolder(ctx, fid); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (r *mutationResolver) AddEntryToFolder(ctx context.Context, libraryEntryID string, folderID string) (bool, error) {
+	eid, err := parseID(libraryEntryID)
+	if err != nil {
+		return false, err
+	}
+	fid, err := parseID(folderID)
+	if err != nil {
+		return false, err
+	}
+	if err := r.Q.AddEntryToFolder(ctx, sqlcgen.AddEntryToFolderParams{
+		LibraryEntryID: eid,
+		FolderID:       fid,
+	}); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (r *mutationResolver) RemoveEntryFromFolder(ctx context.Context, libraryEntryID string, folderID string) (bool, error) {
+	eid, err := parseID(libraryEntryID)
+	if err != nil {
+		return false, err
+	}
+	fid, err := parseID(folderID)
+	if err != nil {
+		return false, err
+	}
+	if err := r.Q.RemoveEntryFromFolder(ctx, sqlcgen.RemoveEntryFromFolderParams{
+		LibraryEntryID: eid,
+		FolderID:       fid,
+	}); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+func (r *mutationResolver) MarkChaptersRead(ctx context.Context, libraryEntryID string, chapterIds []string, read bool) ([]*model.ReadingProgress, error) {
+	entryID, err := parseID(libraryEntryID)
+	if err != nil {
+		return nil, err
+	}
+	progress := 1.0
+	if !read {
+		progress = 0.0
+	}
+	results := make([]*model.ReadingProgress, 0, len(chapterIds))
+	for _, chapterID := range chapterIds {
+		chID, err := parseID(chapterID)
+		if err != nil {
+			return nil, err
+		}
+		row, err := r.Q.UpsertReadingProgress(ctx, sqlcgen.UpsertReadingProgressParams{
+			LibraryEntryID: entryID,
+			ChapterID:      chID,
+			Completed:      read,
+			Progress:       progress,
+		})
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, toReadingProgress(row))
+	}
+	return results, nil
+}
+
+func (r *mutationResolver) DequeueDownload(ctx context.Context, chapterID string) (bool, error) {
+	chID, err := parseID(chapterID)
+	if err != nil {
+		return false, err
+	}
+	if err := r.Dm.Cancel(ctx, chID); err != nil {
+		return false, err
+	}
+	if err := r.Q.DeleteDownloadByChapter(ctx, chID); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (r *mutationResolver) AddRepository(ctx context.Context, indexURL string, name *string) (*model.Repository, error) {
@@ -266,6 +427,54 @@ func (r *mutationResolver) RetryDownload(ctx context.Context, chapterID string) 
 	}
 	r.Dm.Wake()
 	return toDownload(d), nil
+}
+
+func (r *queryResolver) About(ctx context.Context) (*model.AboutServer, error) {
+	return &model.AboutServer{
+		Name:      r.Name,
+		Version:   r.Version,
+		BuildTime: r.BuildTime,
+	}, nil
+}
+
+func (r *queryResolver) Folders(ctx context.Context) ([]*model.Folder, error) {
+	rows, err := r.Q.ListFolders(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*model.Folder, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, toFolder(row))
+	}
+	return out, nil
+}
+
+func (r *queryResolver) Folder(ctx context.Context, id string) (*model.Folder, error) {
+	fid, err := parseID(id)
+	if err != nil {
+		return nil, err
+	}
+	row, err := r.Q.GetFolder(ctx, fid)
+	if err != nil {
+		return nil, nil
+	}
+	return toFolder(row), nil
+}
+
+func (r *queryResolver) EntriesInFolder(ctx context.Context, folderID string) ([]*model.LibraryEntry, error) {
+	fid, err := parseID(folderID)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := r.Q.ListEntriesInFolder(ctx, fid)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*model.LibraryEntry, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, toLibraryEntry(row))
+	}
+	return out, nil
 }
 
 func (r *queryResolver) Repositories(ctx context.Context) ([]*model.Repository, error) {

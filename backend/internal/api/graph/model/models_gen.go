@@ -10,6 +10,12 @@ import (
 	"time"
 )
 
+type AboutServer struct {
+	Name      string `json:"name"`
+	Version   string `json:"version"`
+	BuildTime string `json:"buildTime"`
+}
+
 type Chapter struct {
 	ID             string     `json:"id"`
 	LibraryEntryID string     `json:"libraryEntryId"`
@@ -18,6 +24,8 @@ type Chapter struct {
 	Number         *float64   `json:"number,omitempty"`
 	UploadedAt     *time.Time `json:"uploadedAt,omitempty"`
 	Download       *Download  `json:"download,omitempty"`
+	Pages          []string   `json:"pages,omitempty"`
+	VideoURL       *string    `json:"videoUrl,omitempty"`
 }
 
 type Download struct {
@@ -51,6 +59,15 @@ type Extension struct {
 	InstalledAt      *time.Time  `json:"installedAt,omitempty"`
 	InstalledVersion *string     `json:"installedVersion,omitempty"`
 	NeedsUpdate      *bool       `json:"needsUpdate,omitempty"`
+}
+
+type Folder struct {
+	ID             string  `json:"id"`
+	Name           string  `json:"name"`
+	Kind           string  `json:"kind"`
+	SystemKey      *string `json:"systemKey,omitempty"`
+	ParentFolderID *string `json:"parentFolderId,omitempty"`
+	SortOrder      int32   `json:"sortOrder"`
 }
 
 type LibraryEntry struct {

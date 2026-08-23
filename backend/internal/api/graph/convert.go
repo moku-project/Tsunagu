@@ -2,6 +2,7 @@ package graph
 
 import (
 	"database/sql"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -196,4 +197,28 @@ func toDownload(d sqlcgen.Download) *model.Download {
 
 func parseID(id string) (int64, error) {
 	return strconv.ParseInt(id, 10, 64)
+}
+
+func localPathToMediaURL(mediaDir, absPath string) string {
+	rel, err := filepath.Rel(mediaDir, absPath)
+	if err != nil {
+		return absPath
+	}
+	return "/media/" + filepath.ToSlash(rel)
+}
+
+func toFolder(f sqlcgen.Folder) *model.Folder {
+	var parentID *string
+	if f.ParentFolderID.Valid {
+		s := strconv.FormatInt(f.ParentFolderID.Int64, 10)
+		parentID = &s
+	}
+	return &model.Folder{
+		ID:             strconv.FormatInt(f.ID, 10),
+		Name:           f.Name,
+		Kind:           f.Kind,
+		SystemKey:      nullStringPtr(f.SystemKey),
+		ParentFolderID: parentID,
+		SortOrder:      int32(f.SortOrder),
+	}
 }

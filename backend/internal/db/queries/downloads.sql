@@ -40,3 +40,7 @@ SELECT * FROM downloads WHERE chapter_id = ? ORDER BY created_at DESC LIMIT 1;
 UPDATE downloads SET status = 'queued', progress = 0, error = NULL, downloaded_bytes = NULL, bytes_per_sec = NULL
 WHERE id = ? AND status = 'failed'
 RETURNING *;
+
+
+-- name: DeleteDownloadByChapter :exec
+DELETE FROM downloads WHERE chapter_id = ?;

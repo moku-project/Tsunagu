@@ -8,8 +8,12 @@ import (
 )
 
 type Resolver struct {
-	Sy *sync.Syncer
-	Sc *sandbox.SupervisedClient
-	Dm *download.Manager
-	Q  *sqlcgen.Queries
+	Sy       *sync.Syncer
+	Sc       *sandbox.SupervisedClient
+	Dm       *download.Manager
+	Q        *sqlcgen.Queries
+	MediaDir string
+	Name     string
+	Version  string
+	BuildTime string
 }

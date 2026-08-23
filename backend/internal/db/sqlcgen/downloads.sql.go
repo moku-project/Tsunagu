@@ -28,6 +28,15 @@ func (q *Queries) DeleteDownload(ctx context.Context, id int64) error {
 	return err
 }
 
+const deleteDownloadByChapter = `-- name: DeleteDownloadByChapter :exec
+DELETE FROM downloads WHERE chapter_id = ?
+`
+
+func (q *Queries) DeleteDownloadByChapter(ctx context.Context, chapterID int64) error {
+	_, err := q.db.ExecContext(ctx, deleteDownloadByChapter, chapterID)
+	return err
+}
+
 const enqueueDownload = `-- name: EnqueueDownload :one
 INSERT INTO downloads (chapter_id, status)
 VALUES (?, 'queued')

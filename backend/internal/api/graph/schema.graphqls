@@ -61,6 +61,8 @@ type Chapter {
   number: Float
   uploadedAt: Time
   download: Download @goField(forceResolver: true)
+  pages: [String!] @goField(forceResolver: true)
+  videoUrl: String @goField(forceResolver: true)
 }
 
 enum DownloadStatus {
@@ -113,7 +115,26 @@ type SourceDetails {
   status: String
 }
 
+type AboutServer {
+  name: String!
+  version: String!
+  buildTime: String!
+}
+
+type Folder {
+  id: ID!
+  name: String!
+  kind: String!
+  systemKey: String
+  parentFolderId: ID
+  sortOrder: Int!
+}
+
 type Query {
+  about: AboutServer!
+  folders: [Folder!]!
+  folder(id: ID!): Folder
+  entriesInFolder(folderId: ID!): [LibraryEntry!]!
   repositories: [Repository!]!
   availableExtensions(repositoryId: ID!): [Extension!]!
   installedExtensions: [Extension!]!
@@ -126,6 +147,13 @@ type Query {
 }
 
 type Mutation {
+  createFolder(name: String!, parentFolderId: ID): Folder!
+  renameFolder(folderId: ID!, name: String!): Folder!
+  deleteFolder(folderId: ID!): Boolean!
+  addEntryToFolder(libraryEntryId: ID!, folderId: ID!): Boolean!
+  removeEntryFromFolder(libraryEntryId: ID!, folderId: ID!): Boolean!
+  markChaptersRead(libraryEntryId: ID!, chapterIds: [ID!]!, read: Boolean!): [ReadingProgress!]!
+  dequeueDownload(chapterId: ID!): Boolean!
   addRepository(indexUrl: String!, name: String): Repository!
   renameRepository(repositoryId: ID!, name: String!): Repository!
   deleteRepository(repositoryId: ID!): Boolean!

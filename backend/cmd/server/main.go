@@ -1,5 +1,6 @@
 package main
 
+
 import (
 	"context"
 	"log"
@@ -23,6 +24,12 @@ import (
 	"tsunagu/backend/internal/sandbox"
 	sandboxv1 "tsunagu/backend/internal/sandbox/gen/sandbox/v1"
 	"tsunagu/backend/internal/sync"
+)
+
+const (
+	serverName      = "Tsunagu"
+	serverVersion   = "0.1.0"
+	serverBuildTime = "dev"
 )
 
 func main() {
@@ -147,7 +154,7 @@ func logRequests(next http.Handler) http.Handler {
 }
 
 func registerGraphQL(mux *http.ServeMux, sc *sandbox.SupervisedClient, sy *sync.Syncer, dm *download.Manager, q *sqlcgen.Queries) {
-	resolver := &graph.Resolver{Sy: sy, Sc: sc, Dm: dm, Q: q}
+	resolver := &graph.Resolver{Sy: sy, Sc: sc, Dm: dm, Q: q, MediaDir: globalMediaDir, Name: serverName, Version: serverVersion, BuildTime: serverBuildTime}
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: resolver}))
 	mux.Handle("/api/graphql", srv)
 	mux.Handle("/api/graphql/playground", playground.Handler("Tsunagu GraphQL", "/api/graphql"))
@@ -647,6 +654,10 @@ func registerRoutes(mux *http.ServeMux, sc *sandbox.SupervisedClient, sy *sync.S
 		if !ok {
 			return
 		}
+		if localURL, found := localAnimeEpisodeStreamURL(r.Context(), q, params["extension_id"], params["source_entry_id"], params["source_episode_id"]); found {
+			httputil.JSON(w, map[string]any{"stream_url": localURL, "local": true})
+			return
+		}
 		client, err := sc.Ensure(r.Context())
 		if err != nil {
 			httputil.Error(w, "sandbox unavailable: "+err.Error(), http.StatusServiceUnavailable)
@@ -678,6 +689,18 @@ func localMangaPageURLs(ctx context.Context, q *sqlcgen.Queries, extensionID, so
 		urls = append(urls, localPathToMediaURL(p.LocalPath.String))
 	}
 	return urls, true
+}
+
+func localAnimeEpisodeStreamURL(ctx context.Context, q *sqlcgen.Queries, extensionID, sourceEntryID, sourceEpisodeID string) (string, bool) {
+	chapter, ok := resolveLocalChapter(ctx, q, extensionID, sourceEntryID, sourceEpisodeID)
+	if !ok {
+		return "", false
+	}
+	row, err := q.GetAnimeEpisodeStream(ctx, chapter.ID)
+	if err != nil || !row.LocalPath.Valid || row.LocalPath.String == "" {
+		return "", false
+	}
+	return localPathToMediaURL(row.LocalPath.String), true
 }
 
 func localNovelChapterContent(ctx context.Context, q *sqlcgen.Queries, extensionID, sourceEntryID, sourceChapterID string) (string, string, bool) {

@@ -20,6 +20,7 @@ type Querier interface {
 	CreateTag(ctx context.Context, name string) (Tag, error)
 	CreateTrackerLink(ctx context.Context, arg CreateTrackerLinkParams) (TrackerLink, error)
 	DeleteDownload(ctx context.Context, id int64) error
+	DeleteDownloadByChapter(ctx context.Context, chapterID int64) error
 	DeleteExtensionsByRepository(ctx context.Context, repositoryID int64) error
 	DeleteFolder(ctx context.Context, id int64) error
 	DeleteLibraryEntry(ctx context.Context, id int64) error
@@ -42,7 +43,6 @@ type Querier interface {
 	GetLibraryEntry(ctx context.Context, id int64) (LibraryEntry, error)
 	GetLibraryEntryByExtensionAndExternalID(ctx context.Context, arg GetLibraryEntryByExtensionAndExternalIDParams) (LibraryEntry, error)
 	GetNovelChapterContent(ctx context.Context, chapterID int64) (NovelChapterContent, error)
-	GetReadingProgress(ctx context.Context, arg GetReadingProgressParams) (ReadingProgress, error)
 	GetRepository(ctx context.Context, id int64) (Repository, error)
 	GetRepositoryByURL(ctx context.Context, indexUrl string) (Repository, error)
 	GetTrackerAccount(ctx context.Context, trackerType string) (TrackerAccount, error)
@@ -61,7 +61,6 @@ type Querier interface {
 	ListLibraryEntriesByContentType(ctx context.Context, contentType string) ([]LibraryEntry, error)
 	ListMangaPages(ctx context.Context, chapterID int64) ([]MangaPage, error)
 	ListQueuedDownloads(ctx context.Context) ([]Download, error)
-	ListReadingProgressByLibraryEntry(ctx context.Context, libraryEntryID int64) ([]ReadingProgress, error)
 	ListRepositories(ctx context.Context) ([]Repository, error)
 	ListTags(ctx context.Context) ([]Tag, error)
 	ListTagsForEntry(ctx context.Context, libraryEntryID int64) ([]Tag, error)
@@ -88,7 +87,6 @@ type Querier interface {
 	UpsertExtension(ctx context.Context, arg UpsertExtensionParams) (Extension, error)
 	UpsertMangaPage(ctx context.Context, arg UpsertMangaPageParams) error
 	UpsertNovelChapterContent(ctx context.Context, arg UpsertNovelChapterContentParams) error
-	UpsertReadingProgress(ctx context.Context, arg UpsertReadingProgressParams) (ReadingProgress, error)
 	UpsertTrackerAccount(ctx context.Context, arg UpsertTrackerAccountParams) (TrackerAccount, error)
 }
 
