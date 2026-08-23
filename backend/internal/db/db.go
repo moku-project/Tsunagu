@@ -29,6 +29,12 @@ var migration0005 string
 //go:embed migrations/0006_reading_progress_position.sql
 var migration0006 string
 
+//go:embed migrations/0007_download_bytes.sql
+var migration0007 string
+
+//go:embed migrations/0008_download_extras.sql
+var migration0008 string
+
 var migrations = []struct {
 	name string
 	sql  string
@@ -39,6 +45,8 @@ var migrations = []struct {
 	{"0004_library_organization.sql", migration0004},
 	{"0005_chapter_uploaded_at_epoch.sql", migration0005},
 	{"0006_reading_progress_position.sql", migration0006},
+	{"0007_download_bytes.sql", migration0007},
+	{"0008_download_extras.sql", migration0008},
 }
 
 func Open(path string) (*sql.DB, error) {

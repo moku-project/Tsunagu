@@ -31,7 +31,7 @@ func (q *Queries) DeleteDownload(ctx context.Context, id int64) error {
 const enqueueDownload = `-- name: EnqueueDownload :one
 INSERT INTO downloads (chapter_id, status)
 VALUES (?, 'queued')
-RETURNING id, chapter_id, status, progress, error, created_at, completed_at
+RETURNING id, chapter_id, status, progress, error, created_at, completed_at, downloaded_bytes, bytes_per_sec
 `
 
 func (q *Queries) EnqueueDownload(ctx context.Context, chapterID int64) (Download, error) {
@@ -45,6 +45,8 @@ func (q *Queries) EnqueueDownload(ctx context.Context, chapterID int64) (Downloa
 		&i.Error,
 		&i.CreatedAt,
 		&i.CompletedAt,
+		&i.DownloadedBytes,
+		&i.BytesPerSec,
 	)
 	return i, err
 }
@@ -64,7 +66,7 @@ func (q *Queries) FailDownload(ctx context.Context, arg FailDownloadParams) erro
 }
 
 const getDownload = `-- name: GetDownload :one
-SELECT id, chapter_id, status, progress, error, created_at, completed_at FROM downloads WHERE id = ?
+SELECT id, chapter_id, status, progress, error, created_at, completed_at, downloaded_bytes, bytes_per_sec FROM downloads WHERE id = ?
 `
 
 func (q *Queries) GetDownload(ctx context.Context, id int64) (Download, error) {
@@ -78,12 +80,35 @@ func (q *Queries) GetDownload(ctx context.Context, id int64) (Download, error) {
 		&i.Error,
 		&i.CreatedAt,
 		&i.CompletedAt,
+		&i.DownloadedBytes,
+		&i.BytesPerSec,
+	)
+	return i, err
+}
+
+const getLatestDownloadForChapter = `-- name: GetLatestDownloadForChapter :one
+SELECT id, chapter_id, status, progress, error, created_at, completed_at, downloaded_bytes, bytes_per_sec FROM downloads WHERE chapter_id = ? ORDER BY created_at DESC LIMIT 1
+`
+
+func (q *Queries) GetLatestDownloadForChapter(ctx context.Context, chapterID int64) (Download, error) {
+	row := q.db.QueryRowContext(ctx, getLatestDownloadForChapter, chapterID)
+	var i Download
+	err := row.Scan(
+		&i.ID,
+		&i.ChapterID,
+		&i.Status,
+		&i.Progress,
+		&i.Error,
+		&i.CreatedAt,
+		&i.CompletedAt,
+		&i.DownloadedBytes,
+		&i.BytesPerSec,
 	)
 	return i, err
 }
 
 const listDownloadsByStatus = `-- name: ListDownloadsByStatus :many
-SELECT id, chapter_id, status, progress, error, created_at, completed_at FROM downloads WHERE status = ? ORDER BY created_at
+SELECT id, chapter_id, status, progress, error, created_at, completed_at, downloaded_bytes, bytes_per_sec FROM downloads WHERE status = ? ORDER BY created_at
 `
 
 func (q *Queries) ListDownloadsByStatus(ctx context.Context, status string) ([]Download, error) {
@@ -103,6 +128,8 @@ func (q *Queries) ListDownloadsByStatus(ctx context.Context, status string) ([]D
 			&i.Error,
 			&i.CreatedAt,
 			&i.CompletedAt,
+			&i.DownloadedBytes,
+			&i.BytesPerSec,
 		); err != nil {
 			return nil, err
 		}
@@ -118,7 +145,7 @@ func (q *Queries) ListDownloadsByStatus(ctx context.Context, status string) ([]D
 }
 
 const listQueuedDownloads = `-- name: ListQueuedDownloads :many
-SELECT id, chapter_id, status, progress, error, created_at, completed_at FROM downloads WHERE status = 'queued' ORDER BY created_at
+SELECT id, chapter_id, status, progress, error, created_at, completed_at, downloaded_bytes, bytes_per_sec FROM downloads WHERE status = 'queued' ORDER BY created_at
 `
 
 func (q *Queries) ListQueuedDownloads(ctx context.Context) ([]Download, error) {
@@ -138,6 +165,8 @@ func (q *Queries) ListQueuedDownloads(ctx context.Context) ([]Download, error) {
 			&i.Error,
 			&i.CreatedAt,
 			&i.CompletedAt,
+			&i.DownloadedBytes,
+			&i.BytesPerSec,
 		); err != nil {
 			return nil, err
 		}
@@ -152,6 +181,59 @@ func (q *Queries) ListQueuedDownloads(ctx context.Context) ([]Download, error) {
 	return items, nil
 }
 
+const requeueOrphanedDownloads = `-- name: RequeueOrphanedDownloads :exec
+UPDATE downloads SET status = 'queued', progress = 0 WHERE status = 'downloading'
+`
+
+func (q *Queries) RequeueOrphanedDownloads(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, requeueOrphanedDownloads)
+	return err
+}
+
+const retryDownload = `-- name: RetryDownload :one
+UPDATE downloads SET status = 'queued', progress = 0, error = NULL, downloaded_bytes = NULL, bytes_per_sec = NULL
+WHERE id = ? AND status = 'failed'
+RETURNING id, chapter_id, status, progress, error, created_at, completed_at, downloaded_bytes, bytes_per_sec
+`
+
+func (q *Queries) RetryDownload(ctx context.Context, id int64) (Download, error) {
+	row := q.db.QueryRowContext(ctx, retryDownload, id)
+	var i Download
+	err := row.Scan(
+		&i.ID,
+		&i.ChapterID,
+		&i.Status,
+		&i.Progress,
+		&i.Error,
+		&i.CreatedAt,
+		&i.CompletedAt,
+		&i.DownloadedBytes,
+		&i.BytesPerSec,
+	)
+	return i, err
+}
+
+const updateDownloadBytes = `-- name: UpdateDownloadBytes :exec
+UPDATE downloads SET status = ?, progress = ?, downloaded_bytes = ? WHERE id = ?
+`
+
+type UpdateDownloadBytesParams struct {
+	Status          string        `json:"status"`
+	Progress        float64       `json:"progress"`
+	DownloadedBytes sql.NullInt64 `json:"downloaded_bytes"`
+	ID              int64         `json:"id"`
+}
+
+func (q *Queries) UpdateDownloadBytes(ctx context.Context, arg UpdateDownloadBytesParams) error {
+	_, err := q.db.ExecContext(ctx, updateDownloadBytes,
+		arg.Status,
+		arg.Progress,
+		arg.DownloadedBytes,
+		arg.ID,
+	)
+	return err
+}
+
 const updateDownloadProgress = `-- name: UpdateDownloadProgress :exec
 UPDATE downloads SET status = ?, progress = ? WHERE id = ?
 `
@@ -164,5 +246,28 @@ type UpdateDownloadProgressParams struct {
 
 func (q *Queries) UpdateDownloadProgress(ctx context.Context, arg UpdateDownloadProgressParams) error {
 	_, err := q.db.ExecContext(ctx, updateDownloadProgress, arg.Status, arg.Progress, arg.ID)
+	return err
+}
+
+const updateDownloadStats = `-- name: UpdateDownloadStats :exec
+UPDATE downloads SET status = ?, progress = ?, downloaded_bytes = ?, bytes_per_sec = ? WHERE id = ?
+`
+
+type UpdateDownloadStatsParams struct {
+	Status          string          `json:"status"`
+	Progress        float64         `json:"progress"`
+	DownloadedBytes sql.NullInt64   `json:"downloaded_bytes"`
+	BytesPerSec     sql.NullFloat64 `json:"bytes_per_sec"`
+	ID              int64           `json:"id"`
+}
+
+func (q *Queries) UpdateDownloadStats(ctx context.Context, arg UpdateDownloadStatsParams) error {
+	_, err := q.db.ExecContext(ctx, updateDownloadStats,
+		arg.Status,
+		arg.Progress,
+		arg.DownloadedBytes,
+		arg.BytesPerSec,
+		arg.ID,
+	)
 	return err
 }

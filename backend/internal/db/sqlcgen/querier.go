@@ -38,6 +38,7 @@ type Querier interface {
 	GetExtensionByPackageName(ctx context.Context, packageName string) (Extension, error)
 	GetFolder(ctx context.Context, id int64) (Folder, error)
 	GetFolderBySystemKey(ctx context.Context, systemKey sql.NullString) (Folder, error)
+	GetLatestDownloadForChapter(ctx context.Context, chapterID int64) (Download, error)
 	GetLibraryEntry(ctx context.Context, id int64) (LibraryEntry, error)
 	GetLibraryEntryByExtensionAndExternalID(ctx context.Context, arg GetLibraryEntryByExtensionAndExternalIDParams) (LibraryEntry, error)
 	GetNovelChapterContent(ctx context.Context, chapterID int64) (NovelChapterContent, error)
@@ -74,10 +75,14 @@ type Querier interface {
 	RemoveEntryFromFoldersByKind(ctx context.Context, arg RemoveEntryFromFoldersByKindParams) error
 	RemoveTagFromEntry(ctx context.Context, arg RemoveTagFromEntryParams) error
 	RenameFolder(ctx context.Context, arg RenameFolderParams) (Folder, error)
+	RequeueOrphanedDownloads(ctx context.Context) error
+	RetryDownload(ctx context.Context, id int64) (Download, error)
 	SetExtensionEnabled(ctx context.Context, arg SetExtensionEnabledParams) (Extension, error)
 	TouchRepositorySync(ctx context.Context, id int64) error
 	TouchTrackerLinkSync(ctx context.Context, id int64) error
+	UpdateDownloadBytes(ctx context.Context, arg UpdateDownloadBytesParams) error
 	UpdateDownloadProgress(ctx context.Context, arg UpdateDownloadProgressParams) error
+	UpdateDownloadStats(ctx context.Context, arg UpdateDownloadStatsParams) error
 	UpdateRepositoryName(ctx context.Context, arg UpdateRepositoryNameParams) (Repository, error)
 	UpsertAnimeEpisodeStream(ctx context.Context, arg UpsertAnimeEpisodeStreamParams) error
 	UpsertExtension(ctx context.Context, arg UpsertExtensionParams) (Extension, error)

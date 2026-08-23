@@ -21,13 +21,16 @@ type Chapter struct {
 }
 
 type Download struct {
-	ID          string         `json:"id"`
-	ChapterID   string         `json:"chapterId"`
-	Status      DownloadStatus `json:"status"`
-	Progress    float64        `json:"progress"`
-	Error       *string        `json:"error,omitempty"`
-	CreatedAt   time.Time      `json:"createdAt"`
-	CompletedAt *time.Time     `json:"completedAt,omitempty"`
+	ID              string         `json:"id"`
+	ChapterID       string         `json:"chapterId"`
+	Status          DownloadStatus `json:"status"`
+	Progress        float64        `json:"progress"`
+	DownloadedBytes *int32         `json:"downloadedBytes,omitempty"`
+	BytesPerSec     *float64       `json:"bytesPerSec,omitempty"`
+	FinalSizeBytes  *int32         `json:"finalSizeBytes,omitempty"`
+	Error           *string        `json:"error,omitempty"`
+	CreatedAt       time.Time      `json:"createdAt"`
+	CompletedAt     *time.Time     `json:"completedAt,omitempty"`
 }
 
 type Extension struct {

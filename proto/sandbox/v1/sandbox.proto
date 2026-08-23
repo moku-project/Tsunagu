@@ -133,6 +133,7 @@ message StreamInfo {
   string stream_url = 1;
   string quality = 2;
   repeated SubtitleTrack subtitles = 3;
+  map<string, string> headers = 4;
 }
 
 message SubtitleTrack {

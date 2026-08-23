@@ -44,6 +44,8 @@
 
             # Node for compiling LNReader plugin .ts sources (esbuild via npx)
             nodejs_22
+            # For muxing downloaded HLS anime streams into playable files
+            ffmpeg
           ];
 
           # Set JAVA_HOME to JDK 17

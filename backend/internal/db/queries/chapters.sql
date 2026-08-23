@@ -43,7 +43,10 @@ SELECT * FROM anime_episode_streams WHERE chapter_id = ?;
 SELECT
     c.id AS chapter_id,
     c.external_id AS source_chapter_id,
+    c.title AS chapter_title,
+    c.number AS chapter_number,
     le.external_id AS source_entry_id,
+    le.title AS library_title,
     le.content_type AS content_type,
     e.package_name AS extension_package_name
 FROM chapters c

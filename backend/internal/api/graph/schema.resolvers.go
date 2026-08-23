@@ -2,6 +2,8 @@ package graph
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"tsunagu/backend/internal/api/graph/model"
 	"tsunagu/backend/internal/sandbox"
 	sandboxv1 "tsunagu/backend/internal/sandbox/gen/sandbox/v1"
@@ -233,7 +235,6 @@ func (r *mutationResolver) MarkChapterRead(ctx context.Context, libraryEntryID s
 	return toReadingProgress(prog), nil
 }
 
-
 func (r *mutationResolver) EnqueueDownload(ctx context.Context, chapterID string) (*model.Download, error) {
 	id, err := parseID(chapterID)
 	if err != nil {
@@ -241,6 +242,26 @@ func (r *mutationResolver) EnqueueDownload(ctx context.Context, chapterID string
 	}
 	d, err := r.Q.EnqueueDownload(ctx, id)
 	if err != nil {
+		return nil, err
+	}
+	r.Dm.Wake()
+	return toDownload(d), nil
+}
+
+func (r *mutationResolver) RetryDownload(ctx context.Context, chapterID string) (*model.Download, error) {
+	id, err := parseID(chapterID)
+	if err != nil {
+		return nil, err
+	}
+	latest, err := r.Q.GetLatestDownloadForChapter(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	d, err := r.Q.RetryDownload(ctx, latest.ID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("cannot retry download in status %q: only failed downloads can be retried", latest.Status)
+		}
 		return nil, err
 	}
 	r.Dm.Wake()

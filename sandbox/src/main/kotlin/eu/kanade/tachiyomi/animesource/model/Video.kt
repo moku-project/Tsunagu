@@ -19,6 +19,11 @@ data class Video(
         get() = videoTitle
         set(value) { videoTitle = value }
 
+    val url: String
+        get() = videoPageUrl
+
+    private var videoPageUrl: String = ""
+
     constructor(
         url: String,
         quality: String,
@@ -27,18 +32,27 @@ data class Video(
         subtitleTracks: List<Track> = emptyList(),
         audioTracks: List<Track> = emptyList(),
     ) : this(
-        videoUrl = videoUrl ?: url,
         videoTitle = quality,
+        videoUrl = videoUrl ?: "null",
         headers = headers,
         subtitleTracks = subtitleTracks,
         audioTracks = audioTracks,
-    )
+    ) {
+        this.videoPageUrl = url
+    }
+
+    @Suppress("UNUSED_PARAMETER")
+    constructor(
+        url: String,
+        quality: String,
+        videoUrl: String?,
+        uri: Any? = null,
+        headers: Headers? = null,
+    ) : this(url, quality, videoUrl, headers)
 }
 
 data class Track(val url: String, val lang: String)
-
 data class TimeStamp(val start: Long, val end: Long, val name: String, val type: ChapterType)
-
 enum class ChapterType {
     OPENING,
     ENDING,

@@ -35,7 +35,7 @@ class NetworkHelper {
         userAgent
             .drop(1)
             .onEach {
-                GetSource.unregisterAllSources() // need to reset the headers
+                GetSource.unregisterAllSources()
             }.launchIn(GlobalScope)
     }
 
@@ -60,7 +60,7 @@ class NetworkHelper {
                     .cache(
                         Cache(
                             directory = networkCacheDir,
-                            maxSize = 5L * 1024 * 1024, // 5 MiB
+                            maxSize = 5L * 1024 * 1024,
                         ),
                     ).addInterceptor(UncaughtExceptionInterceptor())
                     .addInterceptor(UserAgentInterceptor(::defaultUserAgentProvider))

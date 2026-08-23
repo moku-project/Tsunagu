@@ -37,6 +37,14 @@ func nullTimePtr(v sql.NullTime) *time.Time {
 	return &v.Time
 }
 
+func nullInt64Int32Ptr(v sql.NullInt64) *int32 {
+	if !v.Valid {
+		return nil
+	}
+	n := int32(v.Int64)
+	return &n
+}
+
 func nullInt64Ptr(v sql.NullInt64) *string {
 	if !v.Valid {
 		return nil
@@ -168,14 +176,21 @@ func downloadStatus(s string) model.DownloadStatus {
 }
 
 func toDownload(d sqlcgen.Download) *model.Download {
+	var finalSize *int32
+	if d.Status == "done" {
+		finalSize = nullInt64Int32Ptr(d.DownloadedBytes)
+	}
 	return &model.Download{
-		ID:          strconv.FormatInt(d.ID, 10),
-		ChapterID:   strconv.FormatInt(d.ChapterID, 10),
-		Status:      downloadStatus(d.Status),
-		Progress:    d.Progress,
-		Error:       nullStringPtr(d.Error),
-		CreatedAt:   d.CreatedAt,
-		CompletedAt: nullTimePtr(d.CompletedAt),
+		ID:              strconv.FormatInt(d.ID, 10),
+		ChapterID:       strconv.FormatInt(d.ChapterID, 10),
+		Status:          downloadStatus(d.Status),
+		Progress:        d.Progress,
+		DownloadedBytes: nullInt64Int32Ptr(d.DownloadedBytes),
+		BytesPerSec:     nullFloat64Ptr(d.BytesPerSec),
+		FinalSizeBytes:  finalSize,
+		Error:           nullStringPtr(d.Error),
+		CreatedAt:       d.CreatedAt,
+		CompletedAt:     nullTimePtr(d.CompletedAt),
 	}
 }
 

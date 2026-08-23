@@ -25,13 +25,15 @@ type Chapter struct {
 }
 
 type Download struct {
-	ID          int64          `json:"id"`
-	ChapterID   int64          `json:"chapter_id"`
-	Status      string         `json:"status"`
-	Progress    float64        `json:"progress"`
-	Error       sql.NullString `json:"error"`
-	CreatedAt   time.Time      `json:"created_at"`
-	CompletedAt sql.NullTime   `json:"completed_at"`
+	ID              int64           `json:"id"`
+	ChapterID       int64           `json:"chapter_id"`
+	Status          string          `json:"status"`
+	Progress        float64         `json:"progress"`
+	Error           sql.NullString  `json:"error"`
+	CreatedAt       time.Time       `json:"created_at"`
+	CompletedAt     sql.NullTime    `json:"completed_at"`
+	DownloadedBytes sql.NullInt64   `json:"downloaded_bytes"`
+	BytesPerSec     sql.NullFloat64 `json:"bytes_per_sec"`
 }
 
 type Extension struct {

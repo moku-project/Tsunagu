@@ -104,7 +104,10 @@ const getChapterDownloadContext = `-- name: GetChapterDownloadContext :one
 SELECT
     c.id AS chapter_id,
     c.external_id AS source_chapter_id,
+    c.title AS chapter_title,
+    c.number AS chapter_number,
     le.external_id AS source_entry_id,
+    le.title AS library_title,
     le.content_type AS content_type,
     e.package_name AS extension_package_name
 FROM chapters c
@@ -114,11 +117,14 @@ WHERE c.id = ?
 `
 
 type GetChapterDownloadContextRow struct {
-	ChapterID            int64  `json:"chapter_id"`
-	SourceChapterID      string `json:"source_chapter_id"`
-	SourceEntryID        string `json:"source_entry_id"`
-	ContentType          string `json:"content_type"`
-	ExtensionPackageName string `json:"extension_package_name"`
+	ChapterID            int64           `json:"chapter_id"`
+	SourceChapterID      string          `json:"source_chapter_id"`
+	ChapterTitle         sql.NullString  `json:"chapter_title"`
+	ChapterNumber        sql.NullFloat64 `json:"chapter_number"`
+	SourceEntryID        string          `json:"source_entry_id"`
+	LibraryTitle         string          `json:"library_title"`
+	ContentType          string          `json:"content_type"`
+	ExtensionPackageName string          `json:"extension_package_name"`
 }
 
 func (q *Queries) GetChapterDownloadContext(ctx context.Context, id int64) (GetChapterDownloadContextRow, error) {
@@ -127,7 +133,10 @@ func (q *Queries) GetChapterDownloadContext(ctx context.Context, id int64) (GetC
 	err := row.Scan(
 		&i.ChapterID,
 		&i.SourceChapterID,
+		&i.ChapterTitle,
+		&i.ChapterNumber,
 		&i.SourceEntryID,
+		&i.LibraryTitle,
 		&i.ContentType,
 		&i.ExtensionPackageName,
 	)

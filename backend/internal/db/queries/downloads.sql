@@ -23,3 +23,20 @@ UPDATE downloads SET status = 'failed', error = ? WHERE id = ?;
 
 -- name: DeleteDownload :exec
 DELETE FROM downloads WHERE id = ?;
+
+-- name: UpdateDownloadBytes :exec
+UPDATE downloads SET status = ?, progress = ?, downloaded_bytes = ? WHERE id = ?;
+
+-- name: RequeueOrphanedDownloads :exec
+UPDATE downloads SET status = 'queued', progress = 0 WHERE status = 'downloading';
+
+-- name: UpdateDownloadStats :exec
+UPDATE downloads SET status = ?, progress = ?, downloaded_bytes = ?, bytes_per_sec = ? WHERE id = ?;
+
+-- name: GetLatestDownloadForChapter :one
+SELECT * FROM downloads WHERE chapter_id = ? ORDER BY created_at DESC LIMIT 1;
+
+-- name: RetryDownload :one
+UPDATE downloads SET status = 'queued', progress = 0, error = NULL, downloaded_bytes = NULL, bytes_per_sec = NULL
+WHERE id = ? AND status = 'failed'
+RETURNING *;

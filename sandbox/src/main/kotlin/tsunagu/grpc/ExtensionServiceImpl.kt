@@ -250,8 +250,12 @@ class ExtensionServiceImpl(
         handleAnime(responseObserver, request.extensionId) { source ->
             val episode: SEpisode = SEpisode.create().apply { url = request.sourceEpisodeId; name = "" }
             val videos = runBlocking { source.getVideoList(episode) }
-            val video = videos.firstOrNull()
-                ?: throw IllegalStateException("no videos returned for episode ${request.sourceEpisodeId}")
+            if (videos.isEmpty()) {
+                throw IllegalStateException("no videos returned for episode ${request.sourceEpisodeId}")
+            }
+            val video = videos.firstOrNull { it.preferred }
+                ?: videos.firstOrNull { it.videoUrl.contains("localhost") || it.videoUrl.contains("127.0.0.1") }
+                ?: videos.first()
             toStreamInfo(video)
         }
     }
@@ -422,6 +426,11 @@ class ExtensionServiceImpl(
                     .setLang(track.lang)
                     .build(),
             )
+        }
+        video.headers?.let { headers ->
+            for (name in headers.names()) {
+                builder.putHeaders(name, headers[name] ?: "")
+            }
         }
         return builder.build()
     }
