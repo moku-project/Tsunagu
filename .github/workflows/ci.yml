@@ -3,7 +3,19 @@ name: ci
 on:
   push:
     branches: [main]
+    paths:
+      - 'backend/**'
+      - 'sandbox/**'
+      - 'proto/**'
+      - 'flake.nix'
+      - 'flake.lock'
   pull_request:
+    paths:
+      - 'backend/**'
+      - 'sandbox/**'
+      - 'proto/**'
+      - 'flake.nix'
+      - 'flake.lock'
 
 jobs:
   backend:

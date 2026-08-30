@@ -1,9 +1,11 @@
 name: release
 
 on:
-  push:
-    tags: ['v*']
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (no leading v), e.g. 0.1.0"
+        required: true
 
 permissions:
   contents: write
@@ -17,8 +19,7 @@ jobs:
       - uses: DeterminateSystems/magic-nix-cache-action@main
       - name: build tsunagu (all targets)
         run: |
-          VER="${GITHUB_REF_NAME#v}"
-          [ "$VER" = "$GITHUB_REF_NAME" ] && VER="0.0.0-dev"
+          VER="${{ inputs.version }}"
           BT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           mkdir -p out
           nix develop -c bash -c "
@@ -52,10 +53,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-latest,  name: linux-amd64  }
-          - { os: macos-13,       name: darwin-amd64 }
-          - { os: macos-14,       name: darwin-arm64 }
-          - { os: windows-latest, name: windows-amd64 }
+          - { os: ubuntu-latest,    name: linux-amd64  }
+          - { os: macos-15-intel,   name: darwin-amd64 }
+          - { os: macos-14,         name: darwin-arm64 }
+          - { os: windows-latest,   name: windows-amd64 }
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -79,7 +80,9 @@ jobs:
             tar czf "out/runtime-${{ matrix.name }}.tar.gz" runtime
           fi
       - uses: actions/upload-artifact@v4
-        with: { name: runtime-${{ matrix.name }}, path: out/* }
+        with:
+          name: runtime-${{ matrix.name }}
+          path: out/*
 
   publish:
     needs: [binaries, jar, runtime]
@@ -92,8 +95,8 @@ jobs:
           mkdir rel
           find dl -type f -exec cp {} rel/ \;
           cd rel
-          sha256sum * > sha256sums.txt
-          VER="${GITHUB_REF_NAME#v}"
+          sha256sum -- * > sha256sums.txt
+          VER="${{ inputs.version }}"
           {
             echo "{"
             echo "  \"version\": \"$VER\","
@@ -114,5 +117,7 @@ jobs:
           } > manifest.json
       - uses: softprops/action-gh-release@v2
         with:
+          tag_name: v${{ inputs.version }}
+          name: Tsunagu v${{ inputs.version }}
           files: rel/*
           generate_release_notes: true
