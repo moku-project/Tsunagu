@@ -85,49 +85,6 @@ jobs:
           name: runtime-${{ matrix.name }}
           path: out/*
 
-  bundle:
-    needs: [binaries, jar, runtime]
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - { name: linux-amd64,   bin: tsunagu-linux-amd64,       ext: ""     }
-          - { name: darwin-amd64,  bin: tsunagu-darwin-amd64,      ext: ""     }
-          - { name: darwin-arm64,  bin: tsunagu-darwin-arm64,      ext: ""     }
-          - { name: windows-amd64, bin: tsunagu-windows-amd64.exe, ext: ".exe" }
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v4
-        with: { name: binaries, path: bin }
-      - uses: actions/download-artifact@v4
-        with: { name: jar, path: jar }
-      - uses: actions/download-artifact@v4
-        with:
-          name: runtime-${{ matrix.name }}
-          path: rt
-      - name: assemble run-ready bundle
-        run: |
-          set -eu
-          root="tsunagu-${{ matrix.name }}"
-          mkdir -p "$root/sandbox" out
-          cp "bin/${{ matrix.bin }}" "$root/tsunagu${{ matrix.ext }}"
-          chmod +x "$root/tsunagu${{ matrix.ext }}"
-          cp jar/sandbox.jar "$root/sandbox/sandbox.jar"
-          if [ -f "rt/runtime-${{ matrix.name }}.zip" ]; then
-            unzip -q "rt/runtime-${{ matrix.name }}.zip" -d "$root/sandbox/"
-          else
-            tar xzf "rt/runtime-${{ matrix.name }}.tar.gz" -C "$root/sandbox/"
-          fi
-          if [ "${{ matrix.name }}" = "windows-amd64" ]; then
-            zip -qr "out/$root.zip" "$root"
-          else
-            tar czf "out/$root.tar.gz" "$root"
-          fi
-      - uses: actions/upload-artifact@v4
-        with:
-          name: bundle-${{ matrix.name }}
-          path: out/*
-
   docker:
     permissions:
       contents: read
@@ -176,17 +133,43 @@ jobs:
           done
 
   publish:
-    needs: [binaries, jar, runtime, bundle, docker-manifest]
+    needs: [binaries, jar, runtime, docker-manifest]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
-        with: { path: dl }
-      - name: collect + checksums + manifest
+        with:
+          path: dl
+          merge-multiple: true
+      - name: assemble bundles + checksums + manifest
         run: |
+          set -eu
           mkdir rel
-          find dl -type f -exec cp {} rel/ \;
+          cp dl/tsunagu-* rel/
+          cp dl/sandbox.jar rel/
+          cp dl/runtime-* rel/
+          for t in linux-amd64 darwin-amd64 darwin-arm64 windows-amd64; do
+            case "$t" in
+              windows-amd64) bin=tsunagu-windows-amd64.exe; ext=.exe; arc="rel/runtime-$t.zip" ;;
+              *)             bin=tsunagu-$t;                 ext="";   arc="rel/runtime-$t.tar.gz" ;;
+            esac
+            root="tsunagu-$t"
+            mkdir -p "$root/sandbox"
+            cp "dl/$bin" "$root/tsunagu$ext"
+            chmod +x "$root/tsunagu$ext"
+            cp dl/sandbox.jar "$root/sandbox/sandbox.jar"
+            case "$arc" in
+              *.zip) unzip -q "$arc" -d "$root/sandbox/" ;;
+              *)     tar xzf "$arc" -C "$root/sandbox/" ;;
+            esac
+            if [ "$t" = windows-amd64 ]; then
+              zip -qr "rel/$root.zip" "$root"
+            else
+              tar czf "rel/$root.tar.gz" "$root"
+            fi
+            rm -rf "$root"
+          done
           cd rel
-          sha256sum -- * > sha256sums.txt
+          sha256sum -- tsunagu-* sandbox.jar runtime-* > sha256sums.txt
           VER="${{ inputs.version }}"
           IMG="ghcr.io/${{ github.repository_owner }}/tsunagu"
           {
