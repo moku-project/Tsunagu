@@ -132,7 +132,6 @@ tasks.register<Exec>("jlinkRuntime") {
         "--output", outputDir.absolutePath,
         "--strip-debug",
         "--no-header-files",
-        "--no-man-pages",
-        "--compress=zip-9"
+        "--no-man-pages"
     )
 }
