@@ -5,7 +5,7 @@ COPY proto/ ./proto/
 WORKDIR /src/sandbox
 RUN gradle shadowJar jlinkRuntime -x test --no-daemon
 
-FROM golang:1.23-bookworm AS backend-build
+FROM golang:1.25-bookworm AS backend-build
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential libvips-dev pkg-config \
     && rm -rf /var/lib/apt/lists/*
