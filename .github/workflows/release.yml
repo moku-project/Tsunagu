@@ -137,9 +137,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
-        with:
-          path: dl
-          merge-multiple: true
+        with: { name: binaries, path: dl }
+      - uses: actions/download-artifact@v4
+        with: { name: jar, path: dl }
+      - uses: actions/download-artifact@v4
+        with: { name: runtime-linux-amd64, path: dl }
+      - uses: actions/download-artifact@v4
+        with: { name: runtime-darwin-amd64, path: dl }
+      - uses: actions/download-artifact@v4
+        with: { name: runtime-darwin-arm64, path: dl }
+      - uses: actions/download-artifact@v4
+        with: { name: runtime-windows-amd64, path: dl }
       - name: assemble bundles + checksums + manifest
         run: |
           set -eu
