@@ -14,6 +14,19 @@ import (
 
 const defaultCallTimeout = 15 * time.Second
 
+func ContentTypeToProto(s string) sandboxv1.ContentType {
+	switch s {
+	case "manga":
+		return sandboxv1.ContentType_MANGA
+	case "novel":
+		return sandboxv1.ContentType_NOVEL
+	case "anime":
+		return sandboxv1.ContentType_ANIME
+	default:
+		return sandboxv1.ContentType_CONTENT_TYPE_UNSPECIFIED
+	}
+}
+
 type Client struct {
 	conn        *grpc.ClientConn
 	rpc         sandboxv1.ExtensionServiceClient
@@ -67,10 +80,10 @@ func (c *Client) UnloadExtension(ctx context.Context, extensionID string) (*sand
 	return c.rpc.UnloadExtension(ctx, &sandboxv1.ExtensionRequest{ExtensionId: extensionID})
 }
 
-func (c *Client) Search(ctx context.Context, extensionID, query string, page int32) (*sandboxv1.SearchResponse, error) {
+func (c *Client) Search(ctx context.Context, extensionID, query string, page int32, filters []*sandboxv1.FilterNode) (*sandboxv1.SearchResponse, error) {
 	ctx, cancel := c.withTimeout(ctx)
 	defer cancel()
-	return c.rpc.Search(ctx, &sandboxv1.SearchRequest{ExtensionId: extensionID, Query: query, Page: page})
+	return c.rpc.Search(ctx, &sandboxv1.SearchRequest{ExtensionId: extensionID, Query: query, Page: page, Filters: filters})
 }
 
 func (c *Client) GetDetails(ctx context.Context, extensionID, sourceEntryID string) (*sandboxv1.EntryDetails, error) {
@@ -115,10 +128,34 @@ func (c *Client) GetVideoStream(ctx context.Context, extensionID, sourceEntryID,
 	ctx, cancel := c.withTimeout(ctx)
 	defer cancel()
 	return c.rpc.GetVideoStream(ctx, &sandboxv1.EpisodeRequest{
-		ExtensionId:      extensionID,
-		SourceEntryId:    sourceEntryID,
-		SourceEpisodeId:  sourceEpisodeID,
+		ExtensionId:     extensionID,
+		SourceEntryId:   sourceEntryID,
+		SourceEpisodeId: sourceEpisodeID,
 	})
+}
+
+func (c *Client) GetPopularManga(ctx context.Context, extensionID string, page int32) (*sandboxv1.SearchResponse, error) {
+	ctx, cancel := c.withTimeout(ctx)
+	defer cancel()
+	return c.rpc.GetPopularManga(ctx, &sandboxv1.BrowseRequest{ExtensionId: extensionID, Page: page})
+}
+
+func (c *Client) GetLatestUpdates(ctx context.Context, extensionID string, page int32) (*sandboxv1.SearchResponse, error) {
+	ctx, cancel := c.withTimeout(ctx)
+	defer cancel()
+	return c.rpc.GetLatestUpdates(ctx, &sandboxv1.BrowseRequest{ExtensionId: extensionID, Page: page})
+}
+
+func (c *Client) GetFilterList(ctx context.Context, extensionID string) (*sandboxv1.GetFilterListResponse, error) {
+	ctx, cancel := c.withTimeout(ctx)
+	defer cancel()
+	return c.rpc.GetFilterList(ctx, &sandboxv1.GetFilterListRequest{ExtensionId: extensionID})
+}
+
+func (c *Client) PeekExtension(ctx context.Context, filePath string) (*sandboxv1.ExtensionMetadata, error) {
+	ctx, cancel := c.withTimeout(ctx)
+	defer cancel()
+	return c.rpc.PeekExtension(ctx, &sandboxv1.PeekExtensionRequest{FilePath: filePath})
 }
 
 func (c *Client) GetImageBytes(ctx context.Context, extensionID, imageURL string) (*sandboxv1.ImageData, error) {

@@ -1,0 +1,622 @@
+package sqlcgen
+
+import (
+	"context"
+	"database/sql"
+	"strings"
+)
+
+const addMediaToLibrary = `-- name: AddMediaToLibrary :one
+
+UPDATE media SET added_at = COALESCE(added_at, CURRENT_TIMESTAMP) WHERE id = ?
+RETURNING id, extension_id, extension_name, external_id, content_type, title, cover_path, cover_local_path, description, status, author, artist, extension_removed_at, added_at, last_viewed_at, details_fetched_at, updated_at, chapters_synced_at, cover_override
+`
+
+func (q *Queries) AddMediaToLibrary(ctx context.Context, id int64) (Medium, error) {
+	row := q.db.QueryRowContext(ctx, addMediaToLibrary, id)
+	var i Medium
+	err := row.Scan(
+		&i.ID,
+		&i.ExtensionID,
+		&i.ExtensionName,
+		&i.ExternalID,
+		&i.ContentType,
+		&i.Title,
+		&i.CoverPath,
+		&i.CoverLocalPath,
+		&i.Description,
+		&i.Status,
+		&i.Author,
+		&i.Artist,
+		&i.ExtensionRemovedAt,
+		&i.AddedAt,
+		&i.LastViewedAt,
+		&i.DetailsFetchedAt,
+		&i.UpdatedAt,
+		&i.ChaptersSyncedAt,
+		&i.CoverOverride,
+	)
+	return i, err
+}
+
+const clearMediaCoverPaths = `-- name: ClearMediaCoverPaths :exec
+UPDATE media SET cover_local_path = NULL
+`
+
+func (q *Queries) ClearMediaCoverPaths(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, clearMediaCoverPaths)
+	return err
+}
+
+const createLocalMedia = `-- name: CreateLocalMedia :one
+INSERT INTO media (
+    extension_id, extension_name, external_id, content_type, title,
+    cover_local_path, details_fetched_at, chapters_synced_at, added_at
+) VALUES (
+    NULL, 'Local', ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+)
+RETURNING id, extension_id, extension_name, external_id, content_type, title, cover_path, cover_local_path, description, status, author, artist, extension_removed_at, added_at, last_viewed_at, details_fetched_at, updated_at, chapters_synced_at, cover_override
+`
+
+type CreateLocalMediaParams struct {
+	ExternalID     string         `json:"external_id"`
+	ContentType    string         `json:"content_type"`
+	Title          string         `json:"title"`
+	CoverLocalPath sql.NullString `json:"cover_local_path"`
+}
+
+func (q *Queries) CreateLocalMedia(ctx context.Context, arg CreateLocalMediaParams) (Medium, error) {
+	row := q.db.QueryRowContext(ctx, createLocalMedia,
+		arg.ExternalID,
+		arg.ContentType,
+		arg.Title,
+		arg.CoverLocalPath,
+	)
+	var i Medium
+	err := row.Scan(
+		&i.ID,
+		&i.ExtensionID,
+		&i.ExtensionName,
+		&i.ExternalID,
+		&i.ContentType,
+		&i.Title,
+		&i.CoverPath,
+		&i.CoverLocalPath,
+		&i.Description,
+		&i.Status,
+		&i.Author,
+		&i.Artist,
+		&i.ExtensionRemovedAt,
+		&i.AddedAt,
+		&i.LastViewedAt,
+		&i.DetailsFetchedAt,
+		&i.UpdatedAt,
+		&i.ChaptersSyncedAt,
+		&i.CoverOverride,
+	)
+	return i, err
+}
+
+const getLocalMediaByExternalID = `-- name: GetLocalMediaByExternalID :one
+SELECT id, extension_id, extension_name, external_id, content_type, title, cover_path, cover_local_path, description, status, author, artist, extension_removed_at, added_at, last_viewed_at, details_fetched_at, updated_at, chapters_synced_at, cover_override FROM media WHERE extension_id IS NULL AND external_id = ?
+`
+
+func (q *Queries) GetLocalMediaByExternalID(ctx context.Context, externalID string) (Medium, error) {
+	row := q.db.QueryRowContext(ctx, getLocalMediaByExternalID, externalID)
+	var i Medium
+	err := row.Scan(
+		&i.ID,
+		&i.ExtensionID,
+		&i.ExtensionName,
+		&i.ExternalID,
+		&i.ContentType,
+		&i.Title,
+		&i.CoverPath,
+		&i.CoverLocalPath,
+		&i.Description,
+		&i.Status,
+		&i.Author,
+		&i.Artist,
+		&i.ExtensionRemovedAt,
+		&i.AddedAt,
+		&i.LastViewedAt,
+		&i.DetailsFetchedAt,
+		&i.UpdatedAt,
+		&i.ChaptersSyncedAt,
+		&i.CoverOverride,
+	)
+	return i, err
+}
+
+const getMedia = `-- name: GetMedia :one
+
+SELECT id, extension_id, extension_name, external_id, content_type, title, cover_path, cover_local_path, description, status, author, artist, extension_removed_at, added_at, last_viewed_at, details_fetched_at, updated_at, chapters_synced_at, cover_override FROM media WHERE id = ?
+`
+
+func (q *Queries) GetMedia(ctx context.Context, id int64) (Medium, error) {
+	row := q.db.QueryRowContext(ctx, getMedia, id)
+	var i Medium
+	err := row.Scan(
+		&i.ID,
+		&i.ExtensionID,
+		&i.ExtensionName,
+		&i.ExternalID,
+		&i.ContentType,
+		&i.Title,
+		&i.CoverPath,
+		&i.CoverLocalPath,
+		&i.Description,
+		&i.Status,
+		&i.Author,
+		&i.Artist,
+		&i.ExtensionRemovedAt,
+		&i.AddedAt,
+		&i.LastViewedAt,
+		&i.DetailsFetchedAt,
+		&i.UpdatedAt,
+		&i.ChaptersSyncedAt,
+		&i.CoverOverride,
+	)
+	return i, err
+}
+
+const getMediaByExtensionAndExternalID = `-- name: GetMediaByExtensionAndExternalID :one
+SELECT id, extension_id, extension_name, external_id, content_type, title, cover_path, cover_local_path, description, status, author, artist, extension_removed_at, added_at, last_viewed_at, details_fetched_at, updated_at, chapters_synced_at, cover_override FROM media WHERE extension_id = ? AND external_id = ?
+`
+
+type GetMediaByExtensionAndExternalIDParams struct {
+	ExtensionID sql.NullInt64 `json:"extension_id"`
+	ExternalID  string        `json:"external_id"`
+}
+
+func (q *Queries) GetMediaByExtensionAndExternalID(ctx context.Context, arg GetMediaByExtensionAndExternalIDParams) (Medium, error) {
+	row := q.db.QueryRowContext(ctx, getMediaByExtensionAndExternalID, arg.ExtensionID, arg.ExternalID)
+	var i Medium
+	err := row.Scan(
+		&i.ID,
+		&i.ExtensionID,
+		&i.ExtensionName,
+		&i.ExternalID,
+		&i.ContentType,
+		&i.Title,
+		&i.CoverPath,
+		&i.CoverLocalPath,
+		&i.Description,
+		&i.Status,
+		&i.Author,
+		&i.Artist,
+		&i.ExtensionRemovedAt,
+		&i.AddedAt,
+		&i.LastViewedAt,
+		&i.DetailsFetchedAt,
+		&i.UpdatedAt,
+		&i.ChaptersSyncedAt,
+		&i.CoverOverride,
+	)
+	return i, err
+}
+
+const listLocalMedia = `-- name: ListLocalMedia :many
+SELECT id, extension_id, extension_name, external_id, content_type, title, cover_path, cover_local_path, description, status, author, artist, extension_removed_at, added_at, last_viewed_at, details_fetched_at, updated_at, chapters_synced_at, cover_override FROM media WHERE extension_id IS NULL ORDER BY title
+`
+
+func (q *Queries) ListLocalMedia(ctx context.Context) ([]Medium, error) {
+	rows, err := q.db.QueryContext(ctx, listLocalMedia)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Medium{}
+	for rows.Next() {
+		var i Medium
+		if err := rows.Scan(
+			&i.ID,
+			&i.ExtensionID,
+			&i.ExtensionName,
+			&i.ExternalID,
+			&i.ContentType,
+			&i.Title,
+			&i.CoverPath,
+			&i.CoverLocalPath,
+			&i.Description,
+			&i.Status,
+			&i.Author,
+			&i.Artist,
+			&i.ExtensionRemovedAt,
+			&i.AddedAt,
+			&i.LastViewedAt,
+			&i.DetailsFetchedAt,
+			&i.UpdatedAt,
+			&i.ChaptersSyncedAt,
+			&i.CoverOverride,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listMediaByIDs = `-- name: ListMediaByIDs :many
+SELECT id, extension_id, extension_name, external_id, content_type, title, cover_path, cover_local_path, description, status, author, artist, extension_removed_at, added_at, last_viewed_at, details_fetched_at, updated_at, chapters_synced_at, cover_override FROM media WHERE id IN (/*SLICE:ids*/?)
+`
+
+func (q *Queries) ListMediaByIDs(ctx context.Context, ids []int64) ([]Medium, error) {
+	query := listMediaByIDs
+	var queryParams []interface{}
+	if len(ids) > 0 {
+		for _, v := range ids {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(ids))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Medium{}
+	for rows.Next() {
+		var i Medium
+		if err := rows.Scan(
+			&i.ID,
+			&i.ExtensionID,
+			&i.ExtensionName,
+			&i.ExternalID,
+			&i.ContentType,
+			&i.Title,
+			&i.CoverPath,
+			&i.CoverLocalPath,
+			&i.Description,
+			&i.Status,
+			&i.Author,
+			&i.Artist,
+			&i.ExtensionRemovedAt,
+			&i.AddedAt,
+			&i.LastViewedAt,
+			&i.DetailsFetchedAt,
+			&i.UpdatedAt,
+			&i.ChaptersSyncedAt,
+			&i.CoverOverride,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUpdateTargetMediaIDs = `-- name: ListUpdateTargetMediaIDs :many
+
+SELECT m.id FROM media m
+WHERE (
+    EXISTS (
+      SELECT 1 FROM media_folders mf
+      JOIN folders f ON f.id = mf.folder_id
+      WHERE mf.media_id = m.id AND f.include_in_update = 1
+    )
+    OR (
+      m.added_at IS NOT NULL
+      AND NOT EXISTS (SELECT 1 FROM media_folders mf2 WHERE mf2.media_id = m.id)
+    )
+  )
+  AND NOT EXISTS (
+    SELECT 1 FROM media_folders mfx
+    JOIN folders fx ON fx.id = mfx.folder_id
+    WHERE mfx.media_id = m.id AND fx.include_in_update = 0
+  )
+ORDER BY m.title
+`
+
+func (q *Queries) ListUpdateTargetMediaIDs(ctx context.Context) ([]int64, error) {
+	rows, err := q.db.QueryContext(ctx, listUpdateTargetMediaIDs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []int64{}
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const markChaptersSynced = `-- name: MarkChaptersSynced :exec
+
+UPDATE media SET chapters_synced_at = CURRENT_TIMESTAMP WHERE id = ?
+`
+
+func (q *Queries) MarkChaptersSynced(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, markChaptersSynced, id)
+	return err
+}
+
+const markMediaExtensionRemoved = `-- name: MarkMediaExtensionRemoved :exec
+UPDATE media
+SET extension_removed_at = CURRENT_TIMESTAMP
+WHERE extension_id = ? AND extension_removed_at IS NULL
+`
+
+func (q *Queries) MarkMediaExtensionRemoved(ctx context.Context, extensionID sql.NullInt64) error {
+	_, err := q.db.ExecContext(ctx, markMediaExtensionRemoved, extensionID)
+	return err
+}
+
+const removeMediaFromLibrary = `-- name: RemoveMediaFromLibrary :one
+
+UPDATE media SET added_at = NULL WHERE id = ?
+RETURNING id, extension_id, extension_name, external_id, content_type, title, cover_path, cover_local_path, description, status, author, artist, extension_removed_at, added_at, last_viewed_at, details_fetched_at, updated_at, chapters_synced_at, cover_override
+`
+
+func (q *Queries) RemoveMediaFromLibrary(ctx context.Context, id int64) (Medium, error) {
+	row := q.db.QueryRowContext(ctx, removeMediaFromLibrary, id)
+	var i Medium
+	err := row.Scan(
+		&i.ID,
+		&i.ExtensionID,
+		&i.ExtensionName,
+		&i.ExternalID,
+		&i.ContentType,
+		&i.Title,
+		&i.CoverPath,
+		&i.CoverLocalPath,
+		&i.Description,
+		&i.Status,
+		&i.Author,
+		&i.Artist,
+		&i.ExtensionRemovedAt,
+		&i.AddedAt,
+		&i.LastViewedAt,
+		&i.DetailsFetchedAt,
+		&i.UpdatedAt,
+		&i.ChaptersSyncedAt,
+		&i.CoverOverride,
+	)
+	return i, err
+}
+
+const setMediaCoverOverride = `-- name: SetMediaCoverOverride :one
+
+UPDATE media SET cover_override = ?, cover_local_path = NULL WHERE id = ? RETURNING id, extension_id, extension_name, external_id, content_type, title, cover_path, cover_local_path, description, status, author, artist, extension_removed_at, added_at, last_viewed_at, details_fetched_at, updated_at, chapters_synced_at, cover_override
+`
+
+type SetMediaCoverOverrideParams struct {
+	CoverOverride sql.NullString `json:"cover_override"`
+	ID            int64          `json:"id"`
+}
+
+func (q *Queries) SetMediaCoverOverride(ctx context.Context, arg SetMediaCoverOverrideParams) (Medium, error) {
+	row := q.db.QueryRowContext(ctx, setMediaCoverOverride, arg.CoverOverride, arg.ID)
+	var i Medium
+	err := row.Scan(
+		&i.ID,
+		&i.ExtensionID,
+		&i.ExtensionName,
+		&i.ExternalID,
+		&i.ContentType,
+		&i.Title,
+		&i.CoverPath,
+		&i.CoverLocalPath,
+		&i.Description,
+		&i.Status,
+		&i.Author,
+		&i.Artist,
+		&i.ExtensionRemovedAt,
+		&i.AddedAt,
+		&i.LastViewedAt,
+		&i.DetailsFetchedAt,
+		&i.UpdatedAt,
+		&i.ChaptersSyncedAt,
+		&i.CoverOverride,
+	)
+	return i, err
+}
+
+const touchMediaViewed = `-- name: TouchMediaViewed :exec
+
+UPDATE media SET last_viewed_at = CURRENT_TIMESTAMP WHERE id = ?
+`
+
+func (q *Queries) TouchMediaViewed(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, touchMediaViewed, id)
+	return err
+}
+
+const updateLocalMedia = `-- name: UpdateLocalMedia :one
+UPDATE media SET title = ?, cover_local_path = COALESCE(?, cover_local_path) WHERE id = ? RETURNING id, extension_id, extension_name, external_id, content_type, title, cover_path, cover_local_path, description, status, author, artist, extension_removed_at, added_at, last_viewed_at, details_fetched_at, updated_at, chapters_synced_at, cover_override
+`
+
+type UpdateLocalMediaParams struct {
+	Title          string         `json:"title"`
+	CoverLocalPath sql.NullString `json:"cover_local_path"`
+	ID             int64          `json:"id"`
+}
+
+func (q *Queries) UpdateLocalMedia(ctx context.Context, arg UpdateLocalMediaParams) (Medium, error) {
+	row := q.db.QueryRowContext(ctx, updateLocalMedia, arg.Title, arg.CoverLocalPath, arg.ID)
+	var i Medium
+	err := row.Scan(
+		&i.ID,
+		&i.ExtensionID,
+		&i.ExtensionName,
+		&i.ExternalID,
+		&i.ContentType,
+		&i.Title,
+		&i.CoverPath,
+		&i.CoverLocalPath,
+		&i.Description,
+		&i.Status,
+		&i.Author,
+		&i.Artist,
+		&i.ExtensionRemovedAt,
+		&i.AddedAt,
+		&i.LastViewedAt,
+		&i.DetailsFetchedAt,
+		&i.UpdatedAt,
+		&i.ChaptersSyncedAt,
+		&i.CoverOverride,
+	)
+	return i, err
+}
+
+const updateMediaCoverLocalPath = `-- name: UpdateMediaCoverLocalPath :exec
+UPDATE media SET cover_local_path = ? WHERE id = ?
+`
+
+type UpdateMediaCoverLocalPathParams struct {
+	CoverLocalPath sql.NullString `json:"cover_local_path"`
+	ID             int64          `json:"id"`
+}
+
+func (q *Queries) UpdateMediaCoverLocalPath(ctx context.Context, arg UpdateMediaCoverLocalPathParams) error {
+	_, err := q.db.ExecContext(ctx, updateMediaCoverLocalPath, arg.CoverLocalPath, arg.ID)
+	return err
+}
+
+const upsertMediaBare = `-- name: UpsertMediaBare :one
+
+INSERT INTO media (
+    extension_id, extension_name, external_id, content_type, title, cover_path
+) VALUES (?, ?, ?, ?, ?, ?)
+ON CONFLICT(extension_id, external_id) DO UPDATE SET
+    title = excluded.title,
+    extension_name = excluded.extension_name,
+    cover_path = COALESCE(excluded.cover_path, media.cover_path)
+RETURNING id, extension_id, extension_name, external_id, content_type, title, cover_path, cover_local_path, description, status, author, artist, extension_removed_at, added_at, last_viewed_at, details_fetched_at, updated_at, chapters_synced_at, cover_override
+`
+
+type UpsertMediaBareParams struct {
+	ExtensionID   sql.NullInt64  `json:"extension_id"`
+	ExtensionName string         `json:"extension_name"`
+	ExternalID    string         `json:"external_id"`
+	ContentType   string         `json:"content_type"`
+	Title         string         `json:"title"`
+	CoverPath     sql.NullString `json:"cover_path"`
+}
+
+func (q *Queries) UpsertMediaBare(ctx context.Context, arg UpsertMediaBareParams) (Medium, error) {
+	row := q.db.QueryRowContext(ctx, upsertMediaBare,
+		arg.ExtensionID,
+		arg.ExtensionName,
+		arg.ExternalID,
+		arg.ContentType,
+		arg.Title,
+		arg.CoverPath,
+	)
+	var i Medium
+	err := row.Scan(
+		&i.ID,
+		&i.ExtensionID,
+		&i.ExtensionName,
+		&i.ExternalID,
+		&i.ContentType,
+		&i.Title,
+		&i.CoverPath,
+		&i.CoverLocalPath,
+		&i.Description,
+		&i.Status,
+		&i.Author,
+		&i.Artist,
+		&i.ExtensionRemovedAt,
+		&i.AddedAt,
+		&i.LastViewedAt,
+		&i.DetailsFetchedAt,
+		&i.UpdatedAt,
+		&i.ChaptersSyncedAt,
+		&i.CoverOverride,
+	)
+	return i, err
+}
+
+const upsertMediaDetails = `-- name: UpsertMediaDetails :one
+
+INSERT INTO media (
+    extension_id, extension_name, external_id, content_type, title, cover_path,
+    description, status, author, artist, details_fetched_at
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+
+ON CONFLICT(extension_id, external_id) DO UPDATE SET
+    title       = COALESCE(NULLIF(excluded.title, ''),       media.title),
+    cover_path  = COALESCE(NULLIF(excluded.cover_path, ''),  media.cover_path),
+    description = COALESCE(NULLIF(excluded.description, ''),  media.description),
+    status      = COALESCE(NULLIF(excluded.status, ''),      media.status),
+    author      = COALESCE(NULLIF(excluded.author, ''),      media.author),
+    artist      = COALESCE(NULLIF(excluded.artist, ''),      media.artist),
+    details_fetched_at = CURRENT_TIMESTAMP
+RETURNING id, extension_id, extension_name, external_id, content_type, title, cover_path, cover_local_path, description, status, author, artist, extension_removed_at, added_at, last_viewed_at, details_fetched_at, updated_at, chapters_synced_at, cover_override
+`
+
+type UpsertMediaDetailsParams struct {
+	ExtensionID   sql.NullInt64  `json:"extension_id"`
+	ExtensionName string         `json:"extension_name"`
+	ExternalID    string         `json:"external_id"`
+	ContentType   string         `json:"content_type"`
+	Title         string         `json:"title"`
+	CoverPath     sql.NullString `json:"cover_path"`
+	Description   sql.NullString `json:"description"`
+	Status        sql.NullString `json:"status"`
+	Author        sql.NullString `json:"author"`
+	Artist        sql.NullString `json:"artist"`
+}
+
+func (q *Queries) UpsertMediaDetails(ctx context.Context, arg UpsertMediaDetailsParams) (Medium, error) {
+	row := q.db.QueryRowContext(ctx, upsertMediaDetails,
+		arg.ExtensionID,
+		arg.ExtensionName,
+		arg.ExternalID,
+		arg.ContentType,
+		arg.Title,
+		arg.CoverPath,
+		arg.Description,
+		arg.Status,
+		arg.Author,
+		arg.Artist,
+	)
+	var i Medium
+	err := row.Scan(
+		&i.ID,
+		&i.ExtensionID,
+		&i.ExtensionName,
+		&i.ExternalID,
+		&i.ContentType,
+		&i.Title,
+		&i.CoverPath,
+		&i.CoverLocalPath,
+		&i.Description,
+		&i.Status,
+		&i.Author,
+		&i.Artist,
+		&i.ExtensionRemovedAt,
+		&i.AddedAt,
+		&i.LastViewedAt,
+		&i.DetailsFetchedAt,
+		&i.UpdatedAt,
+		&i.ChaptersSyncedAt,
+		&i.CoverOverride,
+	)
+	return i, err
+}

@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -9,10 +10,12 @@ import (
 )
 
 type Config struct {
-	HTTPAddr          string `toml:"http_addr"`
-	DBPath            string `toml:"db_path"`
-	JarCacheDir       string `toml:"jar_cache_dir"`
-	MediaDir          string `toml:"media_dir"`
+	DataDir string `toml:"data_dir"`
+
+	HTTPAddr    string `toml:"http_addr"`
+	DBPath      string `toml:"db_path"`
+	JarCacheDir string `toml:"jar_cache_dir"`
+	MediaDir    string `toml:"media_dir"`
 
 	SandboxJarPath    string `toml:"sandbox_jar_path"`
 	SandboxAddr       string `toml:"sandbox_addr"`
@@ -22,6 +25,23 @@ type Config struct {
 	NovelEnabled      bool   `toml:"novel_enabled"`
 	IdleReapEnabled   bool   `toml:"idle_reap_enabled"`
 	IdleTimeoutMin    int    `toml:"idle_timeout_minutes"`
+
+	AniListClientID string `toml:"anilist_client_id"`
+
+	PublicURL string `toml:"public_url"`
+
+	MALClientID     string `toml:"mal_client_id"`
+	MALClientSecret string `toml:"mal_client_secret"`
+
+	TrackerPollHours int `toml:"tracker_poll_hours"`
+
+	MetadataBackfill bool `toml:"metadata_backfill"`
+
+	PprofAddr string `toml:"pprof_addr"`
+
+	SandboxHeapMB int `toml:"sandbox_heap_mb"`
+
+	APIToken string `toml:"api_token"`
 }
 
 func (c *Config) IdleTimeout() time.Duration {
@@ -33,7 +53,7 @@ func (c *Config) IdleTimeout() time.Duration {
 
 func defaults() Config {
 	return Config{
-		HTTPAddr:          ":8080",
+		HTTPAddr:          ":6007",
 		DBPath:            "tsunagu.db",
 		JarCacheDir:       "./jar-cache",
 		MediaDir:          "./media",
@@ -45,6 +65,13 @@ func defaults() Config {
 		NovelEnabled:      false,
 		IdleReapEnabled:   true,
 		IdleTimeoutMin:    15,
+		TrackerPollHours:  6,
+		MetadataBackfill:  true,
+
+		AniListClientID: "49724",
+
+		MALClientID: "611c821aee93c5e51411bfa86ca32597",
+		PublicURL:   "http://localhost:6007",
 	}
 }
 
@@ -62,7 +89,24 @@ func Load() (*Config, error) {
 	}
 
 	applyEnvOverrides(&cfg)
+	cfg.applyDataDir()
 	return &cfg, nil
+}
+
+func (c *Config) applyDataDir() {
+	if c.DataDir == "" {
+		return
+	}
+	set := func(dst *string, env, name string) {
+		if os.Getenv(env) == "" {
+			*dst = filepath.Join(c.DataDir, name)
+		}
+	}
+	set(&c.DBPath, "TSUNAGU_DB_PATH", "tsunagu.db")
+	set(&c.JarCacheDir, "TSUNAGU_JAR_CACHE_DIR", "jar-cache")
+	set(&c.MediaDir, "TSUNAGU_MEDIA_DIR", "media")
+	set(&c.SandboxExtDir, "SANDBOX_EXTENSIONS_DIR", "extensions")
+	set(&c.SandboxStorageDir, "SANDBOX_STORAGE_DIR", "plugin-storage")
 }
 
 func applyEnvOverrides(cfg *Config) {
@@ -104,5 +148,41 @@ func applyEnvOverrides(cfg *Config) {
 		if m, err := strconv.Atoi(v); err == nil {
 			cfg.IdleTimeoutMin = m
 		}
+	}
+	if v := os.Getenv("TSUNAGU_ANILIST_CLIENT_ID"); v != "" {
+		cfg.AniListClientID = v
+	}
+	if v := os.Getenv("TSUNAGU_PUBLIC_URL"); v != "" {
+		cfg.PublicURL = v
+	}
+	if v := os.Getenv("TSUNAGU_MAL_CLIENT_ID"); v != "" {
+		cfg.MALClientID = v
+	}
+	if v := os.Getenv("TSUNAGU_MAL_CLIENT_SECRET"); v != "" {
+		cfg.MALClientSecret = v
+	}
+	if v := os.Getenv("TSUNAGU_TRACKER_POLL_HOURS"); v != "" {
+		if h, err := strconv.Atoi(v); err == nil {
+			cfg.TrackerPollHours = h
+		}
+	}
+	if v := os.Getenv("TSUNAGU_METADATA_BACKFILL"); v != "" {
+		if b, err := strconv.ParseBool(v); err == nil {
+			cfg.MetadataBackfill = b
+		}
+	}
+	if v := os.Getenv("TSUNAGU_PPROF_ADDR"); v != "" {
+		cfg.PprofAddr = v
+	}
+	if v := os.Getenv("TSUNAGU_API_TOKEN"); v != "" {
+		cfg.APIToken = v
+	}
+	if v := os.Getenv("TSUNAGU_SANDBOX_HEAP_MB"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			cfg.SandboxHeapMB = n
+		}
+	}
+	if v := os.Getenv("TSUNAGU_DATA_DIR"); v != "" {
+		cfg.DataDir = v
 	}
 }

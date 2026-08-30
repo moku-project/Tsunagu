@@ -1,22 +1,22 @@
 package download
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"crypto/sha1"
-	"bytes"
-	"bufio"
 	"database/sql"
 	"encoding/hex"
 	"fmt"
-	"log"
 	"io"
-	"net/http"
+	"log"
 	"math"
+	"net/http"
 	"net/url"
-	"regexp"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -34,11 +34,14 @@ type Manager struct {
 	pollInterval time.Duration
 	workers      int
 
-	wakeCh chan struct{}
-	stopCh chan struct{}
-	wg     sync.WaitGroup
+	wakeCh    chan struct{}
+	stopCh    chan struct{}
+	wg        sync.WaitGroup
 	runningMu sync.Mutex
 	running   map[int64]context.CancelFunc
+
+	pausedMu sync.RWMutex
+	paused   bool
 }
 
 func New(q *sqlcgen.Queries, sc *sandbox.SupervisedClient, mediaDir string) *Manager {
@@ -86,9 +89,13 @@ func (m *Manager) workerLoop() {
 		case <-m.stopCh:
 			return
 		case <-ticker.C:
-			m.processOne()
+			if !m.IsPaused() {
+				m.processOne()
+			}
 		case <-m.wakeCh:
-			m.processOne()
+			if !m.IsPaused() {
+				m.processOne()
+			}
 		}
 	}
 }
@@ -126,8 +133,17 @@ func (m *Manager) processOne() {
 		cancel()
 	}()
 
-	if err := m.runJob(jobCtx, job.ID, job.ChapterID); err != nil {
+	err = m.runJob(jobCtx, job.ID, job.ChapterID)
+	if jobCtx.Err() != nil {
+
+		log.Printf("download: job %d (chapter %d) cancelled; discarding partial output", job.ID, job.ChapterID)
+		m.discardPartial(job.ChapterID)
+		_ = m.q.DeleteDownloadByChapter(context.Background(), job.ChapterID)
+		return
+	}
+	if err != nil {
 		log.Printf("download: job %d (chapter %d) failed: %v", job.ID, job.ChapterID, err)
+		m.discardPartial(job.ChapterID)
 		_ = m.q.FailDownload(ctx, sqlcgen.FailDownloadParams{
 			Error: sql.NullString{String: err.Error(), Valid: true},
 			ID:    job.ID,
@@ -163,6 +179,53 @@ func (m *Manager) runJob(ctx context.Context, jobID, chapterID int64) error {
 	}
 }
 
+func contentTypeDir(contentType string) string {
+	switch contentType {
+	case "novel":
+		return "novels"
+	default:
+		return contentType
+	}
+}
+
+func folderSegment(primary, fallback string) string {
+	if name := sanitizeFilename(primary); name != "" {
+		return name
+	}
+	return safeSegment(fallback)
+}
+
+func extensionFolderName(pkg string) string {
+	return folderSegment(pkg, pkg)
+}
+
+func titleFolderName(title, fallbackID string) string {
+	return folderSegment(title, fallbackID)
+}
+
+func (m *Manager) buildChapterDir(dctx sqlcgen.GetChapterDownloadContextRow) string {
+	return filepath.Join(
+		m.mediaDir,
+		contentTypeDir(dctx.ContentType),
+		extensionFolderName(dctx.ExtensionPackageName),
+		titleFolderName(dctx.LibraryTitle, dctx.SourceEntryID),
+		chapterFolderName(dctx.ContentType, dctx.ChapterTitle, dctx.ChapterNumber, dctx.SourceChapterID),
+	)
+}
+
+func (m *Manager) removeEmptyDirs(dir string) {
+	for {
+		clean := filepath.Clean(dir)
+		if clean == filepath.Clean(m.mediaDir) || clean == "." || clean == string(filepath.Separator) {
+			return
+		}
+		if err := os.Remove(dir); err != nil {
+			return
+		}
+		dir = filepath.Dir(dir)
+	}
+}
+
 func (m *Manager) downloadManga(ctx context.Context, jobID int64, client *sandbox.Client, dctx sqlcgen.GetChapterDownloadContextRow) error {
 	pages, err := client.GetPages(ctx, dctx.ExtensionPackageName, dctx.SourceEntryID, dctx.SourceChapterID)
 	if err != nil {
@@ -173,11 +236,7 @@ func (m *Manager) downloadManga(ctx context.Context, jobID int64, client *sandbo
 		return fmt.Errorf("source returned no pages")
 	}
 
-	chapterDir := filepath.Join(
-		m.mediaDir, "manga",
-		libraryFolderName(dctx.LibraryTitle, dctx.SourceEntryID),
-		chapterLabel("manga", dctx.ChapterTitle, dctx.ChapterNumber, dctx.SourceChapterID),
-	)
+	chapterDir := m.buildChapterDir(dctx)
 	if err := os.MkdirAll(chapterDir, 0o755); err != nil {
 		return fmt.Errorf("creating chapter dir: %w", err)
 	}
@@ -223,19 +282,16 @@ func (m *Manager) downloadNovel(ctx context.Context, jobID int64, client *sandbo
 		return fmt.Errorf("fetching chapter text: %w", err)
 	}
 
-	novelDir := filepath.Join(
-		m.mediaDir, "novels",
-		libraryFolderName(dctx.LibraryTitle, dctx.SourceEntryID),
-	)
-	if err := os.MkdirAll(novelDir, 0o755); err != nil {
-		return fmt.Errorf("creating novel dir: %w", err)
+	chapterDir := m.buildChapterDir(dctx)
+	if err := os.MkdirAll(chapterDir, 0o755); err != nil {
+		return fmt.Errorf("creating chapter dir: %w", err)
 	}
 
 	ext := ".html"
 	if text.GetFormat() != "" && text.GetFormat() != "html" {
 		ext = "." + text.GetFormat()
 	}
-	localPath := filepath.Join(novelDir, chapterLabel("novel", dctx.ChapterTitle, dctx.ChapterNumber, dctx.SourceChapterID)+ext)
+	localPath := filepath.Join(chapterDir, "content"+ext)
 	if err := os.WriteFile(localPath, []byte(text.GetContent()), 0o644); err != nil {
 		return fmt.Errorf("writing chapter content: %w", err)
 	}
@@ -269,9 +325,14 @@ func safeSegment(raw string) string {
 	return hex.EncodeToString(sum[:])
 }
 
-var illegalFilenameChars = regexp.MustCompile(`[<>:"/\\|?*\x00-\x1f]`)
+var illegalFilenameChars = regexp.MustCompile(`[<>:"/\\|?*{}\x00-\x1f]`)
+
+var looksLikeStructuredDataRe = regexp.MustCompile(`^\\s*[\\{\\[]`)
 
 func sanitizeFilename(s string) string {
+	if looksLikeStructuredDataRe.MatchString(s) {
+		return ""
+	}
 	s = strings.TrimSpace(s)
 	s = illegalFilenameChars.ReplaceAllString(s, "_")
 	s = strings.Trim(s, " .")
@@ -284,13 +345,6 @@ func sanitizeFilename(s string) string {
 	return s
 }
 
-func libraryFolderName(title, fallbackID string) string {
-	if name := sanitizeFilename(title); name != "" {
-		return name
-	}
-	return safeSegment(fallbackID)
-}
-
 func formatChapterNumber(n float64) string {
 	if n == math.Trunc(n) {
 		return strconv.FormatFloat(n, 'f', 0, 64)
@@ -298,7 +352,7 @@ func formatChapterNumber(n float64) string {
 	return strconv.FormatFloat(n, 'f', -1, 64)
 }
 
-func chapterLabel(contentType string, title sql.NullString, number sql.NullFloat64, fallbackID string) string {
+func chapterFolderName(contentType string, title sql.NullString, number sql.NullFloat64, fallbackID string) string {
 	noun := "Chapter"
 	if contentType == "anime" {
 		noun = "Episode"
@@ -349,14 +403,11 @@ func (m *Manager) downloadAnime(ctx context.Context, jobID int64, client *sandbo
 		return fmt.Errorf("source returned no video stream")
 	}
 
-	animeDir := filepath.Join(
-		m.mediaDir, "anime",
-		libraryFolderName(dctx.LibraryTitle, dctx.SourceEntryID),
-	)
-	if err := os.MkdirAll(animeDir, 0o755); err != nil {
-		return fmt.Errorf("creating anime dir: %w", err)
+	chapterDir := m.buildChapterDir(dctx)
+	if err := os.MkdirAll(chapterDir, 0o755); err != nil {
+		return fmt.Errorf("creating chapter dir: %w", err)
 	}
-	outputPath := filepath.Join(animeDir, chapterLabel("anime", dctx.ChapterTitle, dctx.ChapterNumber, dctx.SourceChapterID)+".mp4")
+	outputPath := filepath.Join(chapterDir, "episode.mp4")
 
 	keepaliveCtx, stopKeepalive := context.WithCancel(ctx)
 	defer stopKeepalive()
@@ -371,18 +422,34 @@ func (m *Manager) downloadAnime(ctx context.Context, jobID int64, client *sandbo
 	}
 
 	args := []string{"-y"}
+
 	if headers := stream.GetHeaders(); len(headers) > 0 {
 		var sb strings.Builder
 		for k, v := range headers {
-			sb.WriteString(k)
-			sb.WriteString(": ")
-			sb.WriteString(v)
-			sb.WriteString("\r\n")
+			switch strings.ToLower(k) {
+			case "user-agent":
+				args = append(args, "-user_agent", v)
+			case "referer", "referrer":
+				args = append(args, "-referer", v)
+			default:
+				sb.WriteString(k)
+				sb.WriteString(": ")
+				sb.WriteString(v)
+				sb.WriteString("\r\n")
+			}
 		}
-		args = append(args, "-headers", sb.String())
+		if sb.Len() > 0 {
+			args = append(args, "-headers", sb.String())
+		}
 	}
+
 	if strings.Contains(streamURL, ".m3u8") {
-		args = append(args, "-allowed_extensions", "ALL", "-allowed_segment_extensions", "ALL")
+
+		args = append(args,
+			"-protocol_whitelist", "file,http,https,tcp,tls,crypto,data",
+			"-allowed_extensions", "ALL",
+			"-allowed_segment_extensions", "ALL",
+		)
 	}
 
 	args = append(args,
@@ -554,5 +621,161 @@ func (m *Manager) Cancel(ctx context.Context, chapterID int64) error {
 	if ok {
 		cancel()
 	}
+	return nil
+}
+
+func (m *Manager) discardPartial(chapterID int64) {
+	ctx := context.Background()
+	dctx, err := m.q.GetChapterDownloadContext(ctx, chapterID)
+	if err != nil {
+		log.Printf("download: cleanup for chapter %d: %v", chapterID, err)
+		return
+	}
+	dir := m.buildChapterDir(dctx)
+	if err := os.RemoveAll(dir); err != nil {
+		log.Printf("download: cleanup: removing %s: %v", dir, err)
+	}
+	m.removeEmptyDirs(filepath.Dir(dir))
+	_ = m.q.DeleteMangaPages(ctx, chapterID)
+	_ = m.q.DeleteNovelChapterContent(ctx, chapterID)
+	_ = m.q.DeleteAnimeEpisodeStream(ctx, chapterID)
+}
+
+func (m *Manager) Pause() {
+	m.pausedMu.Lock()
+	m.paused = true
+	m.pausedMu.Unlock()
+}
+
+func (m *Manager) Resume() {
+	m.pausedMu.Lock()
+	m.paused = false
+	m.pausedMu.Unlock()
+	m.Wake()
+}
+
+func (m *Manager) IsPaused() bool {
+	m.pausedMu.RLock()
+	defer m.pausedMu.RUnlock()
+	return m.paused
+}
+
+func (m *Manager) Reorder(ctx context.Context, chapterID int64, newPosition int64) error {
+	target, err := m.q.GetQueuedDownloadByChapter(ctx, chapterID)
+	if err != nil {
+		return fmt.Errorf("chapter %d has no queued download: %w", chapterID, err)
+	}
+
+	queued, err := m.q.ListQueuedDownloads(ctx)
+	if err != nil {
+		return fmt.Errorf("listing queued downloads: %w", err)
+	}
+
+	reordered := make([]int64, 0, len(queued))
+	for _, d := range queued {
+		if d.ID != target.ID {
+			reordered = append(reordered, d.ID)
+		}
+	}
+
+	if newPosition < 1 {
+		newPosition = 1
+	}
+	if newPosition > int64(len(reordered))+1 {
+		newPosition = int64(len(reordered)) + 1
+	}
+	insertAt := int(newPosition) - 1
+
+	final := make([]int64, 0, len(reordered)+1)
+	final = append(final, reordered[:insertAt]...)
+	final = append(final, target.ID)
+	final = append(final, reordered[insertAt:]...)
+
+	for i, id := range final {
+		if err := m.q.SetDownloadPosition(ctx, sqlcgen.SetDownloadPositionParams{
+			Position: sql.NullInt64{Int64: int64(i + 1), Valid: true},
+			ID:       id,
+		}); err != nil {
+			return fmt.Errorf("updating position for download %d: %w", id, err)
+		}
+	}
+
+	return nil
+}
+
+func (m *Manager) ClearQueue(ctx context.Context) error {
+	return m.q.ClearDownloads(ctx)
+}
+
+func (m *Manager) DeleteChapterFiles(ctx context.Context, chapterID int64) error {
+	dctx, err := m.q.GetChapterDownloadContext(ctx, chapterID)
+	if err != nil {
+		return fmt.Errorf("resolving chapter context: %w", err)
+	}
+
+	switch dctx.ContentType {
+	case "manga":
+		pages, err := m.q.ListMangaPages(ctx, chapterID)
+		if err != nil {
+			return fmt.Errorf("listing manga pages: %w", err)
+		}
+		var chapterDir string
+		for _, p := range pages {
+			if p.LocalPath.Valid {
+				if chapterDir == "" {
+					chapterDir = filepath.Dir(p.LocalPath.String)
+				}
+				if err := os.Remove(p.LocalPath.String); err != nil && !os.IsNotExist(err) {
+					log.Printf("download: failed removing page file %s: %v", p.LocalPath.String, err)
+				}
+			}
+		}
+		if chapterDir != "" {
+			m.removeEmptyDirs(chapterDir)
+		}
+		if err := m.q.DeleteMangaPages(ctx, chapterID); err != nil {
+			return fmt.Errorf("deleting manga page rows: %w", err)
+		}
+
+	case "novel":
+		content, err := m.q.GetNovelChapterContent(ctx, chapterID)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				return nil
+			}
+			return fmt.Errorf("fetching novel content: %w", err)
+		}
+		if content.LocalPath.Valid {
+			if err := os.Remove(content.LocalPath.String); err != nil && !os.IsNotExist(err) {
+				log.Printf("download: failed removing novel file %s: %v", content.LocalPath.String, err)
+			}
+			m.removeEmptyDirs(filepath.Dir(content.LocalPath.String))
+		}
+		if err := m.q.DeleteNovelChapterContent(ctx, chapterID); err != nil {
+			return fmt.Errorf("deleting novel content row: %w", err)
+		}
+
+	case "anime":
+		stream, err := m.q.GetAnimeEpisodeStream(ctx, chapterID)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				return nil
+			}
+			return fmt.Errorf("fetching anime stream: %w", err)
+		}
+		if stream.LocalPath.Valid {
+			if err := os.Remove(stream.LocalPath.String); err != nil && !os.IsNotExist(err) {
+				log.Printf("download: failed removing anime file %s: %v", stream.LocalPath.String, err)
+			}
+			m.removeEmptyDirs(filepath.Dir(stream.LocalPath.String))
+		}
+		if err := m.q.DeleteAnimeEpisodeStream(ctx, chapterID); err != nil {
+			return fmt.Errorf("deleting anime stream row: %w", err)
+		}
+
+	default:
+		return fmt.Errorf("unsupported content type for delete: %s", dctx.ContentType)
+	}
+
 	return nil
 }

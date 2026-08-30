@@ -1,8 +1,8 @@
 -- name: UpsertExtension :one
 INSERT INTO extensions (
     repository_id, package_name, name, version, content_type, lang,
-    icon_url, apk_url, jar_url
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    icon_url, apk_url, jar_url, is_nsfw
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 ON CONFLICT(package_name) DO UPDATE SET
     name = excluded.name,
     version = excluded.version,
@@ -10,7 +10,8 @@ ON CONFLICT(package_name) DO UPDATE SET
     lang = excluded.lang,
     icon_url = excluded.icon_url,
     apk_url = excluded.apk_url,
-    jar_url = excluded.jar_url
+    jar_url = excluded.jar_url,
+    is_nsfw = excluded.is_nsfw
 RETURNING *;
 
 -- name: GetExtension :one
@@ -24,9 +25,6 @@ SELECT * FROM extensions WHERE repository_id = ? ORDER BY name;
 
 -- name: ListInstalledExtensions :many
 SELECT * FROM extensions WHERE installed = TRUE AND enabled = TRUE ORDER BY name;
-
--- name: ListExtensionsNeedingUpdate :many
-SELECT * FROM extensions WHERE needs_update = TRUE ORDER BY name;
 
 -- name: MarkExtensionInstalled :one
 UPDATE extensions
@@ -50,5 +48,16 @@ RETURNING *;
 UPDATE extensions SET enabled = ? WHERE id = ?
 RETURNING *;
 
--- name: DeleteExtensionsByRepository :exec
-DELETE FROM extensions WHERE repository_id = ?;
+-- name: UpdateExtensionIconLocalPath :exec
+UPDATE extensions SET icon_local_path = ? WHERE id = ?;
+
+-- name: ClearExtensionIconPaths :exec
+UPDATE extensions SET icon_local_path = NULL;
+
+-- name: UpdateExtensionSupportsLatest :one
+UPDATE extensions SET supports_latest = ? WHERE id = ?
+RETURNING *;
+
+-- name: GetExtensionsByIDs :many
+
+SELECT * FROM extensions WHERE id IN (sqlc.slice('ids'));

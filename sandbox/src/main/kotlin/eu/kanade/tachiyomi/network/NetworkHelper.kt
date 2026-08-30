@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import okhttp3.Cache
+import okhttp3.ConnectionSpec
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import tsunagu.source.GetSource
@@ -62,7 +63,17 @@ class NetworkHelper {
                             directory = networkCacheDir,
                             maxSize = 5L * 1024 * 1024,
                         ),
-                    ).addInterceptor(UncaughtExceptionInterceptor())
+                    ).dns(buildSandboxDns(System.getenv("SANDBOX_DOH") ?: "off"))
+
+                    .connectionSpecs(
+                        listOf(
+                            ConnectionSpec.RESTRICTED_TLS,
+                            ConnectionSpec.MODERN_TLS,
+                            ConnectionSpec.COMPATIBLE_TLS,
+                            ConnectionSpec.CLEARTEXT,
+                        ),
+                    )
+                    .addInterceptor(UncaughtExceptionInterceptor())
                     .addInterceptor(UserAgentInterceptor(::defaultUserAgentProvider))
 
             val httpLoggingInterceptor =

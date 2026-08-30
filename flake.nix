@@ -10,7 +10,10 @@
     flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
 
-      perSystem = { pkgs, system, ... }: {
+      perSystem = { pkgs, lib, ... }: {
+
+        packages = import ./nix/packages.nix { inherit pkgs lib; };
+
         devShells.default = pkgs.mkShell {
           name = "tsunagu-dev";
 
@@ -55,8 +58,6 @@
             echo "Java 21 ready: $(java -version 2>&1 | head -n1)"
           '';
         };
-
-        packages = { };
       };
 
       flake = { };

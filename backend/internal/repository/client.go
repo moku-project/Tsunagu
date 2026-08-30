@@ -8,8 +8,15 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
+	"os"
+	"path/filepath"
+	"regexp"
 	"strings"
+	"time"
 )
+
+var repoClient = &http.Client{Timeout: 60 * time.Second}
 
 type FetchError struct {
 	msg string
@@ -19,6 +26,74 @@ func (e *FetchError) Error() string { return e.msg }
 
 func fetchErrorf(format string, args ...any) error {
 	return &FetchError{msg: fmt.Sprintf(format, args...)}
+}
+
+var validPackageName = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$`)
+
+func IsValidPackageName(s string) bool { return validPackageName.MatchString(s) }
+
+func ClassifyContentType(packageName string) string {
+	if strings.HasPrefix(packageName, "eu.kanade.tachiyomi.animeextension.") {
+		return "anime"
+	}
+	return "manga"
+}
+
+func DeriveRepoName(indexURL string) string {
+	u, err := url.Parse(indexURL)
+	if err != nil || u.Host == "" {
+		return indexURL
+	}
+	if u.Host == "raw.githubusercontent.com" {
+		parts := strings.Split(strings.Trim(u.Path, "/"), "/")
+		if len(parts) >= 2 {
+			return parts[0] + "/" + parts[1]
+		}
+	}
+	return u.Host
+}
+
+func DownloadExtensionFile(cacheDir, packageName, version, downloadURL, ext string) (string, error) {
+	if downloadURL == "" {
+		return "", fetchErrorf("no download url available for %s", packageName)
+	}
+	if err := os.MkdirAll(cacheDir, 0o755); err != nil {
+		return "", fmt.Errorf("create cache dir %s: %w", cacheDir, err)
+	}
+
+	dest := filepath.Join(cacheDir, fmt.Sprintf("%s-%s.%s", packageName, version, ext))
+	if _, err := os.Stat(dest); err == nil {
+		return dest, nil
+	}
+
+	resp, err := repoClient.Get(downloadURL)
+	if err != nil {
+		return "", fetchErrorf("failed to fetch %s %s: %v", ext, downloadURL, err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return "", fetchErrorf("failed to fetch %s %s: HTTP %d", ext, downloadURL, resp.StatusCode)
+	}
+
+	tmp := dest + ".tmp"
+	f, err := os.Create(tmp)
+	if err != nil {
+		return "", fmt.Errorf("create temp file: %w", err)
+	}
+	if _, err := io.Copy(f, resp.Body); err != nil {
+		f.Close()
+		os.Remove(tmp)
+		return "", fmt.Errorf("write %s to %s: %w", ext, tmp, err)
+	}
+	if err := f.Close(); err != nil {
+		os.Remove(tmp)
+		return "", fmt.Errorf("close %s file: %w", ext, err)
+	}
+	if err := os.Rename(tmp, dest); err != nil {
+		os.Remove(tmp)
+		return "", fmt.Errorf("finalize %s at %s: %w", ext, dest, err)
+	}
+	return dest, nil
 }
 
 func filterValid(exts []ParsedExtension) []ParsedExtension {
@@ -34,7 +109,7 @@ func filterValid(exts []ParsedExtension) []ParsedExtension {
 }
 
 func FetchIndex(indexURL string) ([]ParsedExtension, error) {
-	resp, err := http.Get(indexURL)
+	resp, err := repoClient.Get(indexURL)
 	if err != nil {
 		return nil, fetchErrorf("failed to fetch %s: %v", indexURL, err)
 	}

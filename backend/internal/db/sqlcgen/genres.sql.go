@@ -1,0 +1,220 @@
+package sqlcgen
+
+import (
+	"context"
+	"strings"
+)
+
+const addGenreToMedia = `-- name: AddGenreToMedia :exec
+INSERT INTO media_genres (media_id, genre_id) VALUES (?, ?)
+ON CONFLICT DO NOTHING
+`
+
+type AddGenreToMediaParams struct {
+	MediaID int64 `json:"media_id"`
+	GenreID int64 `json:"genre_id"`
+}
+
+func (q *Queries) AddGenreToMedia(ctx context.Context, arg AddGenreToMediaParams) error {
+	_, err := q.db.ExecContext(ctx, addGenreToMedia, arg.MediaID, arg.GenreID)
+	return err
+}
+
+const clearGenresForMedia = `-- name: ClearGenresForMedia :exec
+DELETE FROM media_genres WHERE media_id = ?
+`
+
+func (q *Queries) ClearGenresForMedia(ctx context.Context, mediaID int64) error {
+	_, err := q.db.ExecContext(ctx, clearGenresForMedia, mediaID)
+	return err
+}
+
+const createGenre = `-- name: CreateGenre :one
+INSERT INTO genres (name) VALUES (?)
+ON CONFLICT(name) DO UPDATE SET name = excluded.name
+RETURNING id, name
+`
+
+func (q *Queries) CreateGenre(ctx context.Context, name string) (Genre, error) {
+	row := q.db.QueryRowContext(ctx, createGenre, name)
+	var i Genre
+	err := row.Scan(&i.ID, &i.Name)
+	return i, err
+}
+
+const deleteGenre = `-- name: DeleteGenre :exec
+DELETE FROM genres WHERE id = ?
+`
+
+func (q *Queries) DeleteGenre(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteGenre, id)
+	return err
+}
+
+const listGenres = `-- name: ListGenres :many
+SELECT id, name FROM genres ORDER BY name
+`
+
+func (q *Queries) ListGenres(ctx context.Context) ([]Genre, error) {
+	rows, err := q.db.QueryContext(ctx, listGenres)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Genre{}
+	for rows.Next() {
+		var i Genre
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listGenresByMediaIDs = `-- name: ListGenresByMediaIDs :many
+
+SELECT mg.media_id, g.name
+FROM genres g
+JOIN media_genres mg ON mg.genre_id = g.id
+WHERE mg.media_id IN (/*SLICE:media_ids*/?)
+ORDER BY mg.media_id, g.name
+`
+
+type ListGenresByMediaIDsRow struct {
+	MediaID int64  `json:"media_id"`
+	Name    string `json:"name"`
+}
+
+func (q *Queries) ListGenresByMediaIDs(ctx context.Context, mediaIds []int64) ([]ListGenresByMediaIDsRow, error) {
+	query := listGenresByMediaIDs
+	var queryParams []interface{}
+	if len(mediaIds) > 0 {
+		for _, v := range mediaIds {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:media_ids*/?", strings.Repeat(",?", len(mediaIds))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:media_ids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListGenresByMediaIDsRow{}
+	for rows.Next() {
+		var i ListGenresByMediaIDsRow
+		if err := rows.Scan(&i.MediaID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listGenresForMedia = `-- name: ListGenresForMedia :many
+SELECT g.id, g.name FROM genres g
+JOIN media_genres mg ON mg.genre_id = g.id
+WHERE mg.media_id = ?
+ORDER BY g.name
+`
+
+func (q *Queries) ListGenresForMedia(ctx context.Context, mediaID int64) ([]Genre, error) {
+	rows, err := q.db.QueryContext(ctx, listGenresForMedia, mediaID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Genre{}
+	for rows.Next() {
+		var i Genre
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listMediaForGenre = `-- name: ListMediaForGenre :many
+SELECT m.id, m.extension_id, m.extension_name, m.external_id, m.content_type, m.title, m.cover_path, m.cover_local_path, m.description, m.status, m.author, m.artist, m.extension_removed_at, m.added_at, m.last_viewed_at, m.details_fetched_at, m.updated_at, m.chapters_synced_at, m.cover_override FROM media m
+JOIN media_genres mg ON mg.media_id = m.id
+WHERE mg.genre_id = ?
+ORDER BY m.added_at DESC
+`
+
+func (q *Queries) ListMediaForGenre(ctx context.Context, genreID int64) ([]Medium, error) {
+	rows, err := q.db.QueryContext(ctx, listMediaForGenre, genreID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Medium{}
+	for rows.Next() {
+		var i Medium
+		if err := rows.Scan(
+			&i.ID,
+			&i.ExtensionID,
+			&i.ExtensionName,
+			&i.ExternalID,
+			&i.ContentType,
+			&i.Title,
+			&i.CoverPath,
+			&i.CoverLocalPath,
+			&i.Description,
+			&i.Status,
+			&i.Author,
+			&i.Artist,
+			&i.ExtensionRemovedAt,
+			&i.AddedAt,
+			&i.LastViewedAt,
+			&i.DetailsFetchedAt,
+			&i.UpdatedAt,
+			&i.ChaptersSyncedAt,
+			&i.CoverOverride,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const removeGenreFromMedia = `-- name: RemoveGenreFromMedia :exec
+DELETE FROM media_genres WHERE media_id = ? AND genre_id = ?
+`
+
+type RemoveGenreFromMediaParams struct {
+	MediaID int64 `json:"media_id"`
+	GenreID int64 `json:"genre_id"`
+}
+
+func (q *Queries) RemoveGenreFromMedia(ctx context.Context, arg RemoveGenreFromMediaParams) error {
+	_, err := q.db.ExecContext(ctx, removeGenreFromMedia, arg.MediaID, arg.GenreID)
+	return err
+}

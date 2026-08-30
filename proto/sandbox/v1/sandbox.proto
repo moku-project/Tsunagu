@@ -16,6 +16,10 @@ service ExtensionService {
   rpc GetEpisodes(EntryRequest) returns (EpisodeList);
   rpc GetVideoStream(EpisodeRequest) returns (StreamInfo);
   rpc GetImageBytes(ImageRequest) returns (ImageData);
+  rpc PeekExtension(PeekExtensionRequest) returns (ExtensionMetadata);
+  rpc GetFilterList(GetFilterListRequest) returns (GetFilterListResponse);
+  rpc GetPopularManga(BrowseRequest) returns (SearchResponse);
+  rpc GetLatestUpdates(BrowseRequest) returns (SearchResponse);
 }
 
 enum ContentType {
@@ -48,6 +52,7 @@ message Extension {
   string version = 3;
   ContentType content_type = 4;
   string lang = 5;
+  bool supports_latest = 6;
 }
 
 message ExtensionList {
@@ -58,6 +63,12 @@ message SearchRequest {
   string extension_id = 1;
   string query = 2;
   int32 page = 3;
+  repeated FilterNode filters = 4;
+}
+
+message BrowseRequest {
+  string extension_id = 1;
+  int32 page = 2;
 }
 
 message SearchResponse {
@@ -84,6 +95,7 @@ message EntryDetails {
   repeated string authors = 5;
   repeated string genres = 6;
   string status = 7;
+  repeated string artists = 8;
 }
 
 message ChapterList {
@@ -130,10 +142,37 @@ message EpisodeRequest {
 }
 
 message StreamInfo {
+
   string stream_url = 1;
   string quality = 2;
   repeated SubtitleTrack subtitles = 3;
   map<string, string> headers = 4;
+
+  repeated VideoSource sources = 5;
+  repeated AudioTrack audio_tracks = 6;
+
+  repeated SkipTimestamp timestamps = 7;
+}
+
+message VideoSource {
+  string url = 1;
+  string label = 2;
+  int32 resolution = 3;
+  bool preferred = 4;
+  map<string, string> headers = 5;
+  repeated SubtitleTrack subtitles = 6;
+}
+
+message AudioTrack {
+  string url = 1;
+  string lang = 2;
+}
+
+message SkipTimestamp {
+  int64 start_ms = 1;
+  int64 end_ms = 2;
+  string name = 3;
+  string type = 4;
 }
 
 message SubtitleTrack {
@@ -149,4 +188,69 @@ message ImageRequest {
 message ImageData {
   bytes data = 1;
   string content_type = 2;
+}
+
+message PeekExtensionRequest {
+  string file_path = 1;
+}
+
+message ExtensionMetadata {
+  string package_name = 1;
+  string name = 2;
+  ContentType content_type = 3;
+  string lang = 4;
+}
+
+message GetFilterListRequest {
+  string extension_id = 1;
+}
+
+message GetFilterListResponse {
+  repeated FilterNode filters = 1;
+}
+
+message FilterNode {
+  string name = 1;
+  oneof kind {
+    HeaderFilter header = 2;
+    SeparatorFilter separator = 3;
+    SelectFilter select = 4;
+    TextFilter text = 5;
+    CheckBoxFilter checkbox = 6;
+    TriStateFilter tristate = 7;
+    GroupFilter group = 8;
+    SortFilter sort = 9;
+  }
+}
+
+message HeaderFilter {}
+
+message SeparatorFilter {}
+
+message SelectFilter {
+  repeated string values = 1;
+  int32 state = 2;
+}
+
+message TextFilter {
+  string state = 1;
+}
+
+message CheckBoxFilter {
+  bool state = 1;
+}
+
+message TriStateFilter {
+  int32 state = 1;
+}
+
+message GroupFilter {
+  repeated FilterNode children = 1;
+}
+
+message SortFilter {
+  repeated string values = 1;
+  bool has_state = 2;
+  int32 index = 3;
+  bool ascending = 4;
 }

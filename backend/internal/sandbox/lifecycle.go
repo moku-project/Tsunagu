@@ -6,11 +6,19 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
-	"syscall"
 	"time"
 )
+
+type logWriter struct{ prefix string }
+
+func (w *logWriter) Write(p []byte) (int, error) {
+	log.Print(w.prefix + string(p))
+	return len(p), nil
+}
 
 type SupervisedClient struct {
 	jarPath      string
@@ -20,6 +28,7 @@ type SupervisedClient struct {
 	novelEnabled bool
 	addr         string
 	idleTimeout  time.Duration
+	heapMB       int
 
 	mu         sync.Mutex
 	cmd        *exec.Cmd
@@ -37,6 +46,7 @@ type SupervisedConfig struct {
 	NovelEnabled  bool
 	Addr          string
 	IdleTimeout   time.Duration
+	HeapMB        int
 }
 
 func NewSupervised(cfg SupervisedConfig) *SupervisedClient {
@@ -48,6 +58,7 @@ func NewSupervised(cfg SupervisedConfig) *SupervisedClient {
 		novelEnabled: cfg.NovelEnabled,
 		addr:         cfg.Addr,
 		idleTimeout:  cfg.IdleTimeout,
+		heapMB:       cfg.HeapMB,
 		stopReaper:   make(chan struct{}),
 	}
 	go sc.reapLoop()
@@ -80,22 +91,51 @@ func (sc *SupervisedClient) processAlive() bool {
 	if sc.cmd.ProcessState != nil {
 		return false
 	}
-	return sc.cmd.Process.Signal(syscall.Signal(0)) == nil
+	return processAlive(sc.cmd)
+}
+
+func (sc *SupervisedClient) pidFile() string {
+	return filepath.Join(sc.storageDir, "sandbox.pid")
+}
+
+func (sc *SupervisedClient) killStalePid() {
+	b, err := os.ReadFile(sc.pidFile())
+	if err != nil {
+		return
+	}
+	pid, err := strconv.Atoi(strings.TrimSpace(string(b)))
+	if err != nil || pid <= 0 {
+		return
+	}
+	if p, err := os.FindProcess(pid); err == nil {
+		_ = p.Kill()
+	}
+	_ = os.Remove(sc.pidFile())
 }
 
 func (sc *SupervisedClient) spawnLocked() error {
+	sc.killStalePid()
 	resolved, err := resolveRuntime(sc.jarPath)
 	if err != nil {
 		return fmt.Errorf("resolving sandbox runtime: %w", err)
 	}
 	log.Printf("sandbox: spawning %s -cp %s tsunagu.MainKt (source: %s)",
 		resolved.JavaBin, resolved.JarPath, resolved.Source)
+	heap := sc.heapMB
+	if heap <= 0 {
+		heap = 512
+	}
 	cmd := exec.Command(resolved.JavaBin,
 		"-Dpolyglot.engine.WarnInterpreterOnly=false",
+		fmt.Sprintf("-Xmx%dm", heap),
+		"-XX:+UseSerialGC",
+		"-XX:TieredStopAtLevel=1",
+		"-XX:+ExitOnOutOfMemoryError",
+		"-Xss512k",
 		"-cp", resolved.JarPath,
 		"tsunagu.MainKt",
 	)
-	cmd.SysProcAttr = &syscall.SysProcAttr{Pdeathsig: syscall.SIGKILL}
+	cmd.SysProcAttr = childSysProcAttr()
 	cmd.Env = append(os.Environ(),
 		"SANDBOX_PORT="+strconv.Itoa(sc.port),
 		"SANDBOX_EXTENSIONS_DIR="+sc.extDir,
@@ -107,6 +147,11 @@ func (sc *SupervisedClient) spawnLocked() error {
 	if err := cmd.Start(); err != nil {
 		return fmt.Errorf("spawning sandbox process: %w", err)
 	}
+	if err := afterStart(cmd); err != nil {
+		log.Printf("sandbox: afterStart: %v", err)
+	}
+	_ = os.MkdirAll(sc.storageDir, 0o755)
+	_ = os.WriteFile(sc.pidFile(), []byte(strconv.Itoa(cmd.Process.Pid)), 0o644)
 	sc.cmd = cmd
 	return nil
 }
@@ -181,6 +226,7 @@ func (sc *SupervisedClient) killLocked() {
 		_ = sc.cmd.Wait()
 	}
 	sc.cmd = nil
+	_ = os.Remove(sc.pidFile())
 }
 
 func (sc *SupervisedClient) Shutdown() {

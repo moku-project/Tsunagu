@@ -24,6 +24,12 @@ func resolveRuntime(jarRelPath string) (*ResolvedRuntime, error) {
 		exeDir = filepath.Dir(exePath)
 	}
 
+	if jar := os.Getenv("TSUNAGU_SANDBOX_JAR"); jar != "" && fileExists(jar) {
+		if javaBin := javaFromEnvOrPath(javaExeName); javaBin != "" {
+			return &ResolvedRuntime{JavaBin: javaBin, JarPath: jar, Source: "TSUNAGU_SANDBOX_JAR"}, nil
+		}
+	}
+
 	if resourceDir := os.Getenv("TSUNAGU_RESOURCE_DIR"); resourceDir != "" {
 		javaBin := filepath.Join(resourceDir, "sandbox", "runtime", "bin", javaExeName)
 		jarPath := filepath.Join(resourceDir, "sandbox", jarRelPath)
@@ -40,22 +46,25 @@ func resolveRuntime(jarRelPath string) (*ResolvedRuntime, error) {
 		}
 	}
 
-	jarPath := locateSandboxJar(exeDir, jarRelPath)
+	if jarPath := locateSandboxJar(exeDir, jarRelPath); jarPath != "" {
+		if javaBin := javaFromEnvOrPath(javaExeName); javaBin != "" {
+			return &ResolvedRuntime{JavaBin: javaBin, JarPath: jarPath, Source: "JAVA_HOME/PATH"}, nil
+		}
+	}
 
+	return nil, fmt.Errorf("no usable Java runtime + sandbox jar found (tried TSUNAGU_SANDBOX_JAR, TSUNAGU_RESOURCE_DIR, bundled dir, JAVA_HOME, PATH)")
+}
+
+func javaFromEnvOrPath(javaExeName string) string {
 	if javaHome := os.Getenv("JAVA_HOME"); javaHome != "" {
-		javaBin := filepath.Join(javaHome, "bin", javaExeName)
-		if fileExists(javaBin) && jarPath != "" {
-			return &ResolvedRuntime{JavaBin: javaBin, JarPath: jarPath, Source: "JAVA_HOME"}, nil
+		if c := filepath.Join(javaHome, "bin", javaExeName); fileExists(c) {
+			return c
 		}
 	}
-
 	if p, err := exec.LookPath(javaExeName); err == nil {
-		if jarPath != "" {
-			return &ResolvedRuntime{JavaBin: p, JarPath: jarPath, Source: "PATH"}, nil
-		}
+		return p
 	}
-
-	return nil, fmt.Errorf("no usable Java runtime + sandbox jar found (tried TSUNAGU_RESOURCE_DIR, bundled dir, JAVA_HOME, PATH)")
+	return ""
 }
 
 func locateSandboxJar(exeDir, jarRelPath string) string {

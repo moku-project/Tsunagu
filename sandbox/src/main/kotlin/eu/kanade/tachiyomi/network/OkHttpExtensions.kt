@@ -77,7 +77,7 @@ private suspend fun Call.await(callStack: Array<StackTraceElement>): Response {
             try {
                 this.cancel()
             } catch (_: Throwable) {
-                // ignore
+
             }
         }
 

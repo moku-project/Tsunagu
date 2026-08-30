@@ -1,5 +1,7 @@
 package repository
 
+import "strings"
+
 type ParsedExtension struct {
 	Name        string
 	PackageName string
@@ -9,14 +11,15 @@ type ParsedExtension struct {
 	VersionName string
 	Lang        string
 	ContentType string
+	IsNsfw      bool
 }
 
 type repoIndex struct {
-	Name            string
-	BadgeLabel      string
-	SigningKey      string
-	Contact         contact
-	ExtensionList   *extensionList
+	Name             string
+	BadgeLabel       string
+	SigningKey       string
+	Contact          contact
+	ExtensionList    *extensionList
 	ExtensionListURL string
 }
 
@@ -30,14 +33,14 @@ type extensionList struct {
 }
 
 type extension struct {
-	Name          string
-	PackageName   string
-	Resources     resources
-	ExtensionLib  string
-	VersionCode   int64
-	VersionName   string
+	Name           string
+	PackageName    string
+	Resources      resources
+	ExtensionLib   string
+	VersionCode    int64
+	VersionName    string
 	ContentWarning int32
-	Sources       []source
+	Sources        []source
 }
 
 type resources struct {
@@ -73,6 +76,64 @@ type novelRepoEntry struct {
 	IconURL string `json:"iconUrl"`
 }
 
+var langNormalizationMap = map[string]string{
+	"english":          "en",
+	"français":         "fr",
+	"العربية":          "ar",
+	"中文":               "zh",
+	"汉语":               "zh",
+	"漢語":               "zh",
+	"bahasa indonesia": "id",
+	"日本語":              "ja",
+	"조선말":              "ko",
+	"한국어":              "ko",
+	"polski":           "pl",
+	"português":        "pt",
+	"русский":          "ru",
+	"español":          "es",
+	"ไทย":              "th",
+	"türkçe":           "tr",
+	"українська":       "uk",
+	"tiếng việt":       "vi",
+	"multi":            "all",
+	"other":            "all",
+	"all":              "all",
+	"zh-hant":          "zh-Hant",
+	"zh-hans":          "zh-Hans",
+}
+
+func normalizeLang(raw string) string {
+	parts := strings.Split(raw, ",")
+	seen := map[string]struct{}{}
+	var normalized string
+	for _, part := range parts {
+		key := stripDirectionalMarks(strings.ToLower(strings.TrimSpace(part)))
+		if key == "" {
+			continue
+		}
+		if mapped, ok := langNormalizationMap[key]; ok {
+			key = mapped
+		}
+		seen[key] = struct{}{}
+		normalized = key
+	}
+	if len(seen) == 1 {
+		return normalized
+	}
+	return "all"
+}
+
+func stripDirectionalMarks(s string) string {
+	return strings.Map(func(r rune) rune {
+		switch r {
+		case '‎', '‏', '؜':
+			return -1
+		default:
+			return r
+		}
+	}, s)
+}
+
 func (idx *repoIndex) toParsedExtensions(baseRawURL string) []ParsedExtension {
 	if idx.ExtensionList == nil {
 		return nil
@@ -81,7 +142,7 @@ func (idx *repoIndex) toParsedExtensions(baseRawURL string) []ParsedExtension {
 	for _, ext := range idx.ExtensionList.Extensions {
 		langs := map[string]struct{}{}
 		for _, s := range ext.Sources {
-			langs[s.Language] = struct{}{}
+			langs[normalizeLang(s.Language)] = struct{}{}
 		}
 		lang := "all"
 		if len(langs) == 1 {
@@ -97,6 +158,8 @@ func (idx *repoIndex) toParsedExtensions(baseRawURL string) []ParsedExtension {
 			IconURL:     ext.Resources.IconURL,
 			VersionName: ext.VersionName,
 			Lang:        lang,
+
+			IsNsfw: ext.ContentWarning > 0,
 		})
 	}
 	return out

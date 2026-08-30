@@ -1,5 +1,6 @@
 package tsunagu.novel
 
+import eu.kanade.tachiyomi.network.buildSandboxDns
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -22,7 +23,10 @@ import org.jsoup.nodes.TextNode
 
 object NovelJsBridge {
 
-    private val client = OkHttpClient()
+    private val client =
+        OkHttpClient.Builder()
+            .dns(buildSandboxDns(System.getenv("SANDBOX_DOH") ?: "off"))
+            .build()
 
     const val REQUIRE_GLUE = """
         function __require(name) {
@@ -45,8 +49,113 @@ object NovelJsBridge {
             "@libs/utils" -> utilsModule()
             "@libs/filterInputs" -> filterInputsModule()
             "@libs/storage" -> storageModule(storageNamespace)
+            "dayjs" -> dayjsModule()
             else -> null
         }
+    }
+
+    private val DAYJS_FORMATS: List<java.time.format.DateTimeFormatter> = listOf(
+        java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME,
+        java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME,
+        java.time.format.DateTimeFormatter.ISO_LOCAL_DATE,
+        java.time.format.DateTimeFormatter.ofPattern("MMMM d, yyyy", java.util.Locale.ENGLISH),
+        java.time.format.DateTimeFormatter.ofPattern("MMM d, yyyy", java.util.Locale.ENGLISH),
+        java.time.format.DateTimeFormatter.ofPattern("d MMMM yyyy", java.util.Locale.ENGLISH),
+        java.time.format.DateTimeFormatter.ofPattern("yyyy/MM/dd", java.util.Locale.ENGLISH),
+        java.time.format.DateTimeFormatter.ofPattern("MM/dd/yyyy", java.util.Locale.ENGLISH),
+        java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy", java.util.Locale.ENGLISH),
+    )
+
+    private fun dayjsModule(): ProxyExecutable = ProxyExecutable { args ->
+        dayjsObject(parseDayjsInput(args.getOrNull(0)))
+    }
+
+    private fun parseDayjsInput(v: Value?): java.time.LocalDateTime? {
+        if (v == null || v.isNull) return java.time.LocalDateTime.now()
+        if (v.isNumber) return java.time.LocalDateTime.ofInstant(
+            java.time.Instant.ofEpochMilli(v.asLong()), java.time.ZoneOffset.UTC,
+        )
+        val s = (if (v.isString) v.asString() else v.toString()).trim()
+        if (s.isEmpty()) return java.time.LocalDateTime.now()
+        for (f in DAYJS_FORMATS) {
+            val parsed = try {
+                java.time.LocalDateTime.parse(s, f)
+            } catch (_: Exception) {
+                try { java.time.LocalDate.parse(s, f).atStartOfDay() } catch (_: Exception) { null }
+            }
+            if (parsed != null) return parsed
+        }
+        return null
+    }
+
+    private fun dayjsUnit(args: Array<Value>): String =
+        (args.getOrNull(1)?.takeIf { !it.isNull }?.asString() ?: "millisecond")
+            .lowercase().removeSuffix("s")
+
+    private fun dayjsShift(dt: java.time.LocalDateTime, n: Long, unit: String): java.time.LocalDateTime =
+        when (unit) {
+            "year" -> dt.plusYears(n)
+            "month" -> dt.plusMonths(n)
+            "week" -> dt.plusWeeks(n)
+            "day" -> dt.plusDays(n)
+            "hour" -> dt.plusHours(n)
+            "minute" -> dt.plusMinutes(n)
+            "second" -> dt.plusSeconds(n)
+            "millisecond" -> dt.plusNanos(n * 1_000_000)
+            else -> dt
+        }
+
+    private fun dayjsFormat(dt: java.time.LocalDateTime, fmt: String): String = when (fmt) {
+        "LL" -> dt.format(java.time.format.DateTimeFormatter.ofPattern("MMMM d, yyyy", java.util.Locale.ENGLISH))
+        "LLL" -> dt.format(java.time.format.DateTimeFormatter.ofPattern("MMMM d, yyyy h:mm a", java.util.Locale.ENGLISH))
+        "LLLL" -> dt.format(java.time.format.DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy h:mm a", java.util.Locale.ENGLISH))
+        "L" -> dt.format(java.time.format.DateTimeFormatter.ofPattern("MM/dd/yyyy", java.util.Locale.ENGLISH))
+        "LT" -> dt.format(java.time.format.DateTimeFormatter.ofPattern("h:mm a", java.util.Locale.ENGLISH))
+        else -> {
+            val javaPattern = fmt
+                .replace("YYYY", "yyyy").replace("YY", "yy")
+                .replace("DD", "dd").replace("D", "d")
+                .replace("Z", "XXX")
+            try {
+                dt.format(java.time.format.DateTimeFormatter.ofPattern(javaPattern, java.util.Locale.ENGLISH))
+            } catch (_: Exception) {
+                dt.toString()
+            }
+        }
+    }
+
+    private fun dayjsObject(dt: java.time.LocalDateTime?): ProxyObject {
+        val valid = dt != null
+        val map = HashMap<String, Any>()
+        map["isValid"] = ProxyExecutable { valid }
+        map["valueOf"] = ProxyExecutable {
+            if (valid) dt!!.toInstant(java.time.ZoneOffset.UTC).toEpochMilli() else Double.NaN
+        }
+        map["unix"] = ProxyExecutable {
+            if (valid) dt!!.toEpochSecond(java.time.ZoneOffset.UTC) else Double.NaN
+        }
+        map["toISOString"] = ProxyExecutable {
+            if (valid) dt!!.atOffset(java.time.ZoneOffset.UTC)
+                .format(java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+            else "Invalid Date"
+        }
+        map["year"] = ProxyExecutable { if (valid) dt!!.year else Double.NaN }
+        map["month"] = ProxyExecutable { if (valid) dt!!.monthValue - 1 else Double.NaN }
+        map["date"] = ProxyExecutable { if (valid) dt!!.dayOfMonth else Double.NaN }
+        map["format"] = ProxyExecutable { fargs ->
+            if (!valid) return@ProxyExecutable "Invalid Date"
+            val fmt = fargs.getOrNull(0)?.takeIf { !it.isNull }?.asString() ?: "yyyy-MM-dd'T'HH:mm:ssXXX"
+            dayjsFormat(dt!!, fmt)
+        }
+        map["subtract"] = ProxyExecutable { sargs ->
+            if (!valid) dayjsObject(null)
+            else dayjsObject(dayjsShift(dt!!, -sargs[0].asLong(), dayjsUnit(sargs)))
+        }
+        map["add"] = ProxyExecutable { sargs ->
+            if (!valid) dayjsObject(null)
+            else dayjsObject(dayjsShift(dt!!, sargs[0].asLong(), dayjsUnit(sargs)))
+        }
+        return ProxyObject.fromMap(map)
     }
 
     private fun cheerioModule(): ProxyObject = ProxyObject.fromMap(mapOf(

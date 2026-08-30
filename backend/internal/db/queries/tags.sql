@@ -9,21 +9,29 @@ SELECT * FROM tags ORDER BY name;
 -- name: DeleteTag :exec
 DELETE FROM tags WHERE id = ?;
 
--- name: AddTagToEntry :exec
-INSERT INTO library_entry_tags (library_entry_id, tag_id) VALUES (?, ?)
+-- name: AddTagToMedia :exec
+INSERT INTO media_tags (media_id, tag_id) VALUES (?, ?)
 ON CONFLICT DO NOTHING;
 
--- name: RemoveTagFromEntry :exec
-DELETE FROM library_entry_tags WHERE library_entry_id = ? AND tag_id = ?;
+-- name: RemoveTagFromMedia :exec
+DELETE FROM media_tags WHERE media_id = ? AND tag_id = ?;
 
--- name: ListTagsForEntry :many
+-- name: ListTagsForMedia :many
 SELECT t.* FROM tags t
-JOIN library_entry_tags let ON let.tag_id = t.id
-WHERE let.library_entry_id = ?
+JOIN media_tags mt ON mt.tag_id = t.id
+WHERE mt.media_id = ?
 ORDER BY t.name;
 
--- name: ListEntriesForTag :many
-SELECT le.* FROM library_entries le
-JOIN library_entry_tags let ON let.library_entry_id = le.id
-WHERE let.tag_id = ?
-ORDER BY le.added_at DESC;
+-- name: ListTagsByMediaIDs :many
+
+SELECT mt.media_id, t.name
+FROM tags t
+JOIN media_tags mt ON mt.tag_id = t.id
+WHERE mt.media_id IN (sqlc.slice('media_ids'))
+ORDER BY mt.media_id, t.name;
+
+-- name: ListMediaForTag :many
+SELECT m.* FROM media m
+JOIN media_tags mt ON mt.media_id = m.id
+WHERE mt.tag_id = ?
+ORDER BY m.added_at DESC;

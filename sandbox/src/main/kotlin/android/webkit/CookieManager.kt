@@ -5,7 +5,7 @@ import java.util.concurrent.ConcurrentHashMap
 class CookieManager private constructor() {
     private val cookies = ConcurrentHashMap<String, String>()
 
-    fun setAcceptCookie(accept: Boolean) { /* no-op, no WebView to configure */ }
+    fun setAcceptCookie(accept: Boolean) {  }
 
     fun acceptCookie(): Boolean = true
 
@@ -25,11 +25,11 @@ class CookieManager private constructor() {
         callback?.onReceiveValue(true)
     }
 
-    fun removeSessionCookie() { /* no persistence distinction in this stub */ }
+    fun removeSessionCookie() {  }
 
     fun hasCookies(): Boolean = cookies.isNotEmpty()
 
-    fun flush() { /* no-op, nothing to flush */ }
+    fun flush() {  }
 
     companion object {
         private val instance = CookieManager()

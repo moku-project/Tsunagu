@@ -1,5 +1,6 @@
 package eu.kanade.tachiyomi.animesource.model
 
+import android.net.Uri
 import okhttp3.Headers
 
 data class Video(
@@ -46,7 +47,7 @@ data class Video(
         url: String,
         quality: String,
         videoUrl: String?,
-        uri: Any? = null,
+        uri: Uri? = null,
         headers: Headers? = null,
     ) : this(url, quality, videoUrl, headers)
 }

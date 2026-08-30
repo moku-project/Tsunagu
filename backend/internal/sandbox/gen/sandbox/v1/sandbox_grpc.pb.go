@@ -1,0 +1,624 @@
+package sandboxv1
+
+import (
+	context "context"
+	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
+)
+
+const _ = grpc.SupportPackageIsVersion9
+
+const (
+	ExtensionService_LoadExtensions_FullMethodName       = "/sandbox.v1.ExtensionService/LoadExtensions"
+	ExtensionService_ListLoadedExtensions_FullMethodName = "/sandbox.v1.ExtensionService/ListLoadedExtensions"
+	ExtensionService_UnloadExtension_FullMethodName      = "/sandbox.v1.ExtensionService/UnloadExtension"
+	ExtensionService_Search_FullMethodName               = "/sandbox.v1.ExtensionService/Search"
+	ExtensionService_GetDetails_FullMethodName           = "/sandbox.v1.ExtensionService/GetDetails"
+	ExtensionService_GetChapters_FullMethodName          = "/sandbox.v1.ExtensionService/GetChapters"
+	ExtensionService_GetPages_FullMethodName             = "/sandbox.v1.ExtensionService/GetPages"
+	ExtensionService_GetChapterText_FullMethodName       = "/sandbox.v1.ExtensionService/GetChapterText"
+	ExtensionService_GetEpisodes_FullMethodName          = "/sandbox.v1.ExtensionService/GetEpisodes"
+	ExtensionService_GetVideoStream_FullMethodName       = "/sandbox.v1.ExtensionService/GetVideoStream"
+	ExtensionService_GetImageBytes_FullMethodName        = "/sandbox.v1.ExtensionService/GetImageBytes"
+	ExtensionService_PeekExtension_FullMethodName        = "/sandbox.v1.ExtensionService/PeekExtension"
+	ExtensionService_GetFilterList_FullMethodName        = "/sandbox.v1.ExtensionService/GetFilterList"
+	ExtensionService_GetPopularManga_FullMethodName      = "/sandbox.v1.ExtensionService/GetPopularManga"
+	ExtensionService_GetLatestUpdates_FullMethodName     = "/sandbox.v1.ExtensionService/GetLatestUpdates"
+)
+
+type ExtensionServiceClient interface {
+	LoadExtensions(ctx context.Context, in *LoadExtensionsRequest, opts ...grpc.CallOption) (*ExtensionList, error)
+	ListLoadedExtensions(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ExtensionList, error)
+	UnloadExtension(ctx context.Context, in *ExtensionRequest, opts ...grpc.CallOption) (*Empty, error)
+	Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error)
+	GetDetails(ctx context.Context, in *EntryRequest, opts ...grpc.CallOption) (*EntryDetails, error)
+	GetChapters(ctx context.Context, in *EntryRequest, opts ...grpc.CallOption) (*ChapterList, error)
+	GetPages(ctx context.Context, in *ChapterRequest, opts ...grpc.CallOption) (*PageList, error)
+	GetChapterText(ctx context.Context, in *ChapterRequest, opts ...grpc.CallOption) (*TextContent, error)
+	GetEpisodes(ctx context.Context, in *EntryRequest, opts ...grpc.CallOption) (*EpisodeList, error)
+	GetVideoStream(ctx context.Context, in *EpisodeRequest, opts ...grpc.CallOption) (*StreamInfo, error)
+	GetImageBytes(ctx context.Context, in *ImageRequest, opts ...grpc.CallOption) (*ImageData, error)
+	PeekExtension(ctx context.Context, in *PeekExtensionRequest, opts ...grpc.CallOption) (*ExtensionMetadata, error)
+	GetFilterList(ctx context.Context, in *GetFilterListRequest, opts ...grpc.CallOption) (*GetFilterListResponse, error)
+	GetPopularManga(ctx context.Context, in *BrowseRequest, opts ...grpc.CallOption) (*SearchResponse, error)
+	GetLatestUpdates(ctx context.Context, in *BrowseRequest, opts ...grpc.CallOption) (*SearchResponse, error)
+}
+
+type extensionServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewExtensionServiceClient(cc grpc.ClientConnInterface) ExtensionServiceClient {
+	return &extensionServiceClient{cc}
+}
+
+func (c *extensionServiceClient) LoadExtensions(ctx context.Context, in *LoadExtensionsRequest, opts ...grpc.CallOption) (*ExtensionList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ExtensionList)
+	err := c.cc.Invoke(ctx, ExtensionService_LoadExtensions_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extensionServiceClient) ListLoadedExtensions(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ExtensionList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ExtensionList)
+	err := c.cc.Invoke(ctx, ExtensionService_ListLoadedExtensions_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extensionServiceClient) UnloadExtension(ctx context.Context, in *ExtensionRequest, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, ExtensionService_UnloadExtension_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extensionServiceClient) Search(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SearchResponse)
+	err := c.cc.Invoke(ctx, ExtensionService_Search_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extensionServiceClient) GetDetails(ctx context.Context, in *EntryRequest, opts ...grpc.CallOption) (*EntryDetails, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EntryDetails)
+	err := c.cc.Invoke(ctx, ExtensionService_GetDetails_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extensionServiceClient) GetChapters(ctx context.Context, in *EntryRequest, opts ...grpc.CallOption) (*ChapterList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ChapterList)
+	err := c.cc.Invoke(ctx, ExtensionService_GetChapters_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extensionServiceClient) GetPages(ctx context.Context, in *ChapterRequest, opts ...grpc.CallOption) (*PageList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PageList)
+	err := c.cc.Invoke(ctx, ExtensionService_GetPages_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extensionServiceClient) GetChapterText(ctx context.Context, in *ChapterRequest, opts ...grpc.CallOption) (*TextContent, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(TextContent)
+	err := c.cc.Invoke(ctx, ExtensionService_GetChapterText_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extensionServiceClient) GetEpisodes(ctx context.Context, in *EntryRequest, opts ...grpc.CallOption) (*EpisodeList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EpisodeList)
+	err := c.cc.Invoke(ctx, ExtensionService_GetEpisodes_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extensionServiceClient) GetVideoStream(ctx context.Context, in *EpisodeRequest, opts ...grpc.CallOption) (*StreamInfo, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StreamInfo)
+	err := c.cc.Invoke(ctx, ExtensionService_GetVideoStream_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extensionServiceClient) GetImageBytes(ctx context.Context, in *ImageRequest, opts ...grpc.CallOption) (*ImageData, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ImageData)
+	err := c.cc.Invoke(ctx, ExtensionService_GetImageBytes_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extensionServiceClient) PeekExtension(ctx context.Context, in *PeekExtensionRequest, opts ...grpc.CallOption) (*ExtensionMetadata, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ExtensionMetadata)
+	err := c.cc.Invoke(ctx, ExtensionService_PeekExtension_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extensionServiceClient) GetFilterList(ctx context.Context, in *GetFilterListRequest, opts ...grpc.CallOption) (*GetFilterListResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetFilterListResponse)
+	err := c.cc.Invoke(ctx, ExtensionService_GetFilterList_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extensionServiceClient) GetPopularManga(ctx context.Context, in *BrowseRequest, opts ...grpc.CallOption) (*SearchResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SearchResponse)
+	err := c.cc.Invoke(ctx, ExtensionService_GetPopularManga_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extensionServiceClient) GetLatestUpdates(ctx context.Context, in *BrowseRequest, opts ...grpc.CallOption) (*SearchResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SearchResponse)
+	err := c.cc.Invoke(ctx, ExtensionService_GetLatestUpdates_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+type ExtensionServiceServer interface {
+	LoadExtensions(context.Context, *LoadExtensionsRequest) (*ExtensionList, error)
+	ListLoadedExtensions(context.Context, *Empty) (*ExtensionList, error)
+	UnloadExtension(context.Context, *ExtensionRequest) (*Empty, error)
+	Search(context.Context, *SearchRequest) (*SearchResponse, error)
+	GetDetails(context.Context, *EntryRequest) (*EntryDetails, error)
+	GetChapters(context.Context, *EntryRequest) (*ChapterList, error)
+	GetPages(context.Context, *ChapterRequest) (*PageList, error)
+	GetChapterText(context.Context, *ChapterRequest) (*TextContent, error)
+	GetEpisodes(context.Context, *EntryRequest) (*EpisodeList, error)
+	GetVideoStream(context.Context, *EpisodeRequest) (*StreamInfo, error)
+	GetImageBytes(context.Context, *ImageRequest) (*ImageData, error)
+	PeekExtension(context.Context, *PeekExtensionRequest) (*ExtensionMetadata, error)
+	GetFilterList(context.Context, *GetFilterListRequest) (*GetFilterListResponse, error)
+	GetPopularManga(context.Context, *BrowseRequest) (*SearchResponse, error)
+	GetLatestUpdates(context.Context, *BrowseRequest) (*SearchResponse, error)
+	mustEmbedUnimplementedExtensionServiceServer()
+}
+
+type UnimplementedExtensionServiceServer struct{}
+
+func (UnimplementedExtensionServiceServer) LoadExtensions(context.Context, *LoadExtensionsRequest) (*ExtensionList, error) {
+	return nil, status.Error(codes.Unimplemented, "method LoadExtensions not implemented")
+}
+func (UnimplementedExtensionServiceServer) ListLoadedExtensions(context.Context, *Empty) (*ExtensionList, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListLoadedExtensions not implemented")
+}
+func (UnimplementedExtensionServiceServer) UnloadExtension(context.Context, *ExtensionRequest) (*Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method UnloadExtension not implemented")
+}
+func (UnimplementedExtensionServiceServer) Search(context.Context, *SearchRequest) (*SearchResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Search not implemented")
+}
+func (UnimplementedExtensionServiceServer) GetDetails(context.Context, *EntryRequest) (*EntryDetails, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetDetails not implemented")
+}
+func (UnimplementedExtensionServiceServer) GetChapters(context.Context, *EntryRequest) (*ChapterList, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetChapters not implemented")
+}
+func (UnimplementedExtensionServiceServer) GetPages(context.Context, *ChapterRequest) (*PageList, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetPages not implemented")
+}
+func (UnimplementedExtensionServiceServer) GetChapterText(context.Context, *ChapterRequest) (*TextContent, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetChapterText not implemented")
+}
+func (UnimplementedExtensionServiceServer) GetEpisodes(context.Context, *EntryRequest) (*EpisodeList, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetEpisodes not implemented")
+}
+func (UnimplementedExtensionServiceServer) GetVideoStream(context.Context, *EpisodeRequest) (*StreamInfo, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetVideoStream not implemented")
+}
+func (UnimplementedExtensionServiceServer) GetImageBytes(context.Context, *ImageRequest) (*ImageData, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetImageBytes not implemented")
+}
+func (UnimplementedExtensionServiceServer) PeekExtension(context.Context, *PeekExtensionRequest) (*ExtensionMetadata, error) {
+	return nil, status.Error(codes.Unimplemented, "method PeekExtension not implemented")
+}
+func (UnimplementedExtensionServiceServer) GetFilterList(context.Context, *GetFilterListRequest) (*GetFilterListResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetFilterList not implemented")
+}
+func (UnimplementedExtensionServiceServer) GetPopularManga(context.Context, *BrowseRequest) (*SearchResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetPopularManga not implemented")
+}
+func (UnimplementedExtensionServiceServer) GetLatestUpdates(context.Context, *BrowseRequest) (*SearchResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetLatestUpdates not implemented")
+}
+func (UnimplementedExtensionServiceServer) mustEmbedUnimplementedExtensionServiceServer() {}
+func (UnimplementedExtensionServiceServer) testEmbeddedByValue()                          {}
+
+type UnsafeExtensionServiceServer interface {
+	mustEmbedUnimplementedExtensionServiceServer()
+}
+
+func RegisterExtensionServiceServer(s grpc.ServiceRegistrar, srv ExtensionServiceServer) {
+
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&ExtensionService_ServiceDesc, srv)
+}
+
+func _ExtensionService_LoadExtensions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LoadExtensionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtensionServiceServer).LoadExtensions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ExtensionService_LoadExtensions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtensionServiceServer).LoadExtensions(ctx, req.(*LoadExtensionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtensionService_ListLoadedExtensions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtensionServiceServer).ListLoadedExtensions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ExtensionService_ListLoadedExtensions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtensionServiceServer).ListLoadedExtensions(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtensionService_UnloadExtension_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ExtensionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtensionServiceServer).UnloadExtension(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ExtensionService_UnloadExtension_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtensionServiceServer).UnloadExtension(ctx, req.(*ExtensionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtensionService_Search_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SearchRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtensionServiceServer).Search(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ExtensionService_Search_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtensionServiceServer).Search(ctx, req.(*SearchRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtensionService_GetDetails_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EntryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtensionServiceServer).GetDetails(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ExtensionService_GetDetails_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtensionServiceServer).GetDetails(ctx, req.(*EntryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtensionService_GetChapters_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EntryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtensionServiceServer).GetChapters(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ExtensionService_GetChapters_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtensionServiceServer).GetChapters(ctx, req.(*EntryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtensionService_GetPages_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ChapterRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtensionServiceServer).GetPages(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ExtensionService_GetPages_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtensionServiceServer).GetPages(ctx, req.(*ChapterRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtensionService_GetChapterText_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ChapterRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtensionServiceServer).GetChapterText(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ExtensionService_GetChapterText_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtensionServiceServer).GetChapterText(ctx, req.(*ChapterRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtensionService_GetEpisodes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EntryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtensionServiceServer).GetEpisodes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ExtensionService_GetEpisodes_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtensionServiceServer).GetEpisodes(ctx, req.(*EntryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtensionService_GetVideoStream_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EpisodeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtensionServiceServer).GetVideoStream(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ExtensionService_GetVideoStream_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtensionServiceServer).GetVideoStream(ctx, req.(*EpisodeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtensionService_GetImageBytes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ImageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtensionServiceServer).GetImageBytes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ExtensionService_GetImageBytes_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtensionServiceServer).GetImageBytes(ctx, req.(*ImageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtensionService_PeekExtension_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PeekExtensionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtensionServiceServer).PeekExtension(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ExtensionService_PeekExtension_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtensionServiceServer).PeekExtension(ctx, req.(*PeekExtensionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtensionService_GetFilterList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetFilterListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtensionServiceServer).GetFilterList(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ExtensionService_GetFilterList_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtensionServiceServer).GetFilterList(ctx, req.(*GetFilterListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtensionService_GetPopularManga_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BrowseRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtensionServiceServer).GetPopularManga(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ExtensionService_GetPopularManga_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtensionServiceServer).GetPopularManga(ctx, req.(*BrowseRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtensionService_GetLatestUpdates_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BrowseRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtensionServiceServer).GetLatestUpdates(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ExtensionService_GetLatestUpdates_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtensionServiceServer).GetLatestUpdates(ctx, req.(*BrowseRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+var ExtensionService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "sandbox.v1.ExtensionService",
+	HandlerType: (*ExtensionServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "LoadExtensions",
+			Handler:    _ExtensionService_LoadExtensions_Handler,
+		},
+		{
+			MethodName: "ListLoadedExtensions",
+			Handler:    _ExtensionService_ListLoadedExtensions_Handler,
+		},
+		{
+			MethodName: "UnloadExtension",
+			Handler:    _ExtensionService_UnloadExtension_Handler,
+		},
+		{
+			MethodName: "Search",
+			Handler:    _ExtensionService_Search_Handler,
+		},
+		{
+			MethodName: "GetDetails",
+			Handler:    _ExtensionService_GetDetails_Handler,
+		},
+		{
+			MethodName: "GetChapters",
+			Handler:    _ExtensionService_GetChapters_Handler,
+		},
+		{
+			MethodName: "GetPages",
+			Handler:    _ExtensionService_GetPages_Handler,
+		},
+		{
+			MethodName: "GetChapterText",
+			Handler:    _ExtensionService_GetChapterText_Handler,
+		},
+		{
+			MethodName: "GetEpisodes",
+			Handler:    _ExtensionService_GetEpisodes_Handler,
+		},
+		{
+			MethodName: "GetVideoStream",
+			Handler:    _ExtensionService_GetVideoStream_Handler,
+		},
+		{
+			MethodName: "GetImageBytes",
+			Handler:    _ExtensionService_GetImageBytes_Handler,
+		},
+		{
+			MethodName: "PeekExtension",
+			Handler:    _ExtensionService_PeekExtension_Handler,
+		},
+		{
+			MethodName: "GetFilterList",
+			Handler:    _ExtensionService_GetFilterList_Handler,
+		},
+		{
+			MethodName: "GetPopularManga",
+			Handler:    _ExtensionService_GetPopularManga_Handler,
+		},
+		{
+			MethodName: "GetLatestUpdates",
+			Handler:    _ExtensionService_GetLatestUpdates_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "sandbox/v1/sandbox.proto",
+}

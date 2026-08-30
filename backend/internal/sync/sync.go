@@ -9,11 +9,13 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"tsunagu/backend/internal/chapternum"
 	"tsunagu/backend/internal/db/sqlcgen"
 	"tsunagu/backend/internal/image"
 	"tsunagu/backend/internal/repository"
@@ -29,10 +31,130 @@ type Syncer struct {
 
 	installMu sync.Mutex
 	locks     map[string]*sync.Mutex
+
+	updateMu   sync.Mutex
+	updateProg LibraryUpdateProgress
+
+	enricher Enricher
 }
+
+type Enricher interface {
+	AutoEnrich(ctx context.Context, mediaID int64) error
+}
+
+func (s *Syncer) SetEnricher(e Enricher) { s.enricher = e }
 
 func New(db *sql.DB, q *sqlcgen.Queries, cacheDir, mediaDir string) *Syncer {
 	return &Syncer{db: db, q: q, cacheDir: cacheDir, mediaDir: mediaDir, locks: make(map[string]*sync.Mutex)}
+}
+
+type LibraryUpdateProgress struct {
+	Running      bool
+	Total        int
+	Done         int
+	CurrentTitle string
+	NewChapters  int
+	FailedTitles []string
+	StartedAt    time.Time
+	FinishedAt   time.Time
+}
+
+func (s *Syncer) LibraryUpdateStatus() LibraryUpdateProgress {
+	s.updateMu.Lock()
+	defer s.updateMu.Unlock()
+	p := s.updateProg
+	p.FailedTitles = append([]string(nil), s.updateProg.FailedTitles...)
+	return p
+}
+
+func (s *Syncer) StartLibraryUpdate(sc *sandbox.SupervisedClient, folderID *int64) (bool, error) {
+	s.updateMu.Lock()
+	if s.updateProg.Running {
+		s.updateMu.Unlock()
+		return false, nil
+	}
+
+	var ids []int64
+	var err error
+	if folderID != nil {
+		var rows []sqlcgen.Medium
+		rows, err = s.q.ListMediaInFolder(context.Background(), *folderID)
+		for _, m := range rows {
+			ids = append(ids, m.ID)
+		}
+	} else {
+		ids, err = s.q.ListUpdateTargetMediaIDs(context.Background())
+	}
+	if err != nil {
+		s.updateMu.Unlock()
+		return false, err
+	}
+
+	s.updateProg = LibraryUpdateProgress{
+		Running:   true,
+		Total:     len(ids),
+		StartedAt: time.Now(),
+	}
+	s.updateMu.Unlock()
+
+	go s.runLibraryUpdate(sc, ids)
+	return true, nil
+}
+
+func (s *Syncer) runLibraryUpdate(sc *sandbox.SupervisedClient, ids []int64) {
+	ctx := context.Background()
+	defer func() {
+		s.updateMu.Lock()
+		s.updateProg.Running = false
+		s.updateProg.CurrentTitle = ""
+		s.updateProg.FinishedAt = time.Now()
+		s.updateMu.Unlock()
+	}()
+
+	c, err := sc.Ensure(ctx)
+	if err != nil {
+		s.updateMu.Lock()
+		s.updateProg.FailedTitles = append(s.updateProg.FailedTitles, "sandbox unavailable: "+err.Error())
+		s.updateMu.Unlock()
+		return
+	}
+
+	for _, id := range ids {
+		m, err := s.q.GetMedia(ctx, id)
+		if err != nil {
+			continue
+		}
+
+		s.updateMu.Lock()
+		s.updateProg.CurrentTitle = m.Title
+		s.updateMu.Unlock()
+
+		before, _ := s.q.ListChapterExternalIDsByMedia(ctx, id)
+		known := make(map[string]struct{}, len(before))
+		for _, e := range before {
+			known[e] = struct{}{}
+		}
+
+		after, err := s.SyncChapters(ctx, c, id)
+		newCount := 0
+		if err != nil {
+			s.updateMu.Lock()
+			s.updateProg.FailedTitles = append(s.updateProg.FailedTitles, m.Title)
+			s.updateProg.Done++
+			s.updateMu.Unlock()
+			continue
+		}
+		for _, ch := range after {
+			if _, ok := known[ch.ExternalID]; !ok {
+				newCount++
+			}
+		}
+
+		s.updateMu.Lock()
+		s.updateProg.NewChapters += newCount
+		s.updateProg.Done++
+		s.updateMu.Unlock()
+	}
 }
 
 func (s *Syncer) lockFor(packageName string) *sync.Mutex {
@@ -112,9 +234,6 @@ func (s *Syncer) ListRepositories(ctx context.Context) ([]sqlcgen.Repository, er
 
 const sideloadRepoURL = "local:sideload"
 
-// getOrCreateSideloadRepo returns the singleton pseudo-repository used to
-// satisfy extensions.repository_id's NOT NULL constraint for extensions
-// installed by direct URL rather than from a real repository index.
 func (s *Syncer) getOrCreateSideloadRepo(ctx context.Context) (sqlcgen.Repository, error) {
 	repo, err := s.q.GetRepositoryByURL(ctx, sideloadRepoURL)
 	if err == nil {
@@ -127,11 +246,6 @@ func (s *Syncer) getOrCreateSideloadRepo(ctx context.Context) (sqlcgen.Repositor
 	})
 }
 
-// InstallExternalExtension downloads an extension package (.apk/.jar/.js)
-// from an arbitrary URL, has the sandbox load it to discover its real
-// package name/content type/language, and registers it in the DB under a
-// singleton "Sideloaded" pseudo-repository. Unlike InstallExtension, no
-// prior repository index entry is required.
 func (s *Syncer) InstallExternalExtension(ctx context.Context, c *sandbox.Client, url string) (sqlcgen.Extension, error) {
 	ext := "apk"
 	switch {
@@ -168,9 +282,7 @@ func (s *Syncer) InstallExternalExtension(ctx context.Context, c *sandbox.Client
 		RepositoryID: repo.ID,
 		PackageName:  meta.PackageName,
 		Name:         meta.Name,
-		// Version metadata is not available for sideloaded packages (jars
-		// have no version field, and apk versionName is discarded by the
-		// sandbox's loader); this is a known limitation, not a bug.
+
 		Version:     "unknown",
 		ContentType: contentType,
 		Lang:        meta.Lang,
@@ -179,9 +291,6 @@ func (s *Syncer) InstallExternalExtension(ctx context.Context, c *sandbox.Client
 		return sqlcgen.Extension{}, fmt.Errorf("upsert extension: %w", err)
 	}
 
-	// The sandbox's PeekExtension call already copies the file into the
-	// extensions dir and loads it (via registry.install), so the extension
-	// is already installed/running at this point. Just record that fact.
 	return s.q.MarkExtensionInstalled(ctx, sqlcgen.MarkExtensionInstalledParams{
 		JarPath: sql.NullString{String: "", Valid: false},
 		ID:      saved.ID,
@@ -220,8 +329,8 @@ func (s *Syncer) DeleteRepository(ctx context.Context, id int64) error {
 	}
 
 	for _, ext := range exts {
-		if err := s.q.MarkLibraryEntriesExtensionRemoved(ctx, sql.NullInt64{Int64: ext.ID, Valid: true}); err != nil {
-			return fmt.Errorf("mark library entries for extension %s: %w", ext.PackageName, err)
+		if err := s.q.MarkMediaExtensionRemoved(ctx, sql.NullInt64{Int64: ext.ID, Valid: true}); err != nil {
+			return fmt.Errorf("mark media for extension %s: %w", ext.PackageName, err)
 		}
 	}
 	return s.q.DeleteRepository(ctx, id)
@@ -294,18 +403,31 @@ func (s *Syncer) UninstallExtension(ctx context.Context, packageName string) (sq
 	if err != nil {
 		return sqlcgen.Extension{}, err
 	}
-	if ext.JarPath.Valid {
-		_ = os.Remove(ext.JarPath.String)
-	}
+	s.removeExtensionFiles(ext)
 	return updated, nil
+}
+
+func (s *Syncer) removeExtensionFiles(ext sqlcgen.Extension) {
+	if ext.JarPath.Valid && ext.JarPath.String != "" {
+		if err := os.Remove(ext.JarPath.String); err != nil && !os.IsNotExist(err) {
+			log.Printf("uninstall: removing %s: %v", ext.JarPath.String, err)
+		}
+	}
+	for _, e := range []string{"jar", "apk", "js"} {
+		matches, _ := filepath.Glob(filepath.Join(s.cacheDir, ext.PackageName+"-*."+e))
+		also, _ := filepath.Glob(filepath.Join(s.cacheDir, ext.PackageName+"."+e))
+		for _, p := range append(matches, also...) {
+			if err := os.Remove(p); err != nil && !os.IsNotExist(err) {
+				log.Printf("uninstall: removing %s: %v", p, err)
+			} else if err == nil {
+				log.Printf("uninstall: removed cached %s", filepath.Base(p))
+			}
+		}
+	}
 }
 
 func (s *Syncer) ListInstalledExtensions(ctx context.Context) ([]sqlcgen.Extension, error) {
 	return s.q.ListInstalledExtensions(ctx)
-}
-
-func (s *Syncer) CheckForUpdates(ctx context.Context) ([]sqlcgen.Extension, error) {
-	return s.q.ListExtensionsNeedingUpdate(ctx)
 }
 
 func (s *Syncer) UpdateExtension(ctx context.Context, packageName string) (sqlcgen.Extension, error) {
@@ -371,14 +493,14 @@ func (s *Syncer) SetReadingStatus(ctx context.Context, libraryEntryID int64, sys
 		return fmt.Errorf("folder %q is not a reading-status folder (kind=%s)", systemKey, folder.Kind)
 	}
 
-	if err := qtx.RemoveEntryFromFoldersByKind(ctx, sqlcgen.RemoveEntryFromFoldersByKindParams{
+	if err := qtx.RemoveMediaFromFoldersByKind(ctx, sqlcgen.RemoveMediaFromFoldersByKindParams{
 		MediaID: libraryEntryID,
 		Kind:    "reading_status",
 	}); err != nil {
 		return fmt.Errorf("remove existing reading status: %w", err)
 	}
 
-	if err := qtx.AddEntryToFolder(ctx, sqlcgen.AddEntryToFolderParams{
+	if err := qtx.AddMediaToFolder(ctx, sqlcgen.AddMediaToFolderParams{
 		MediaID:  libraryEntryID,
 		FolderID: folder.ID,
 	}); err != nil {
@@ -391,32 +513,25 @@ func (s *Syncer) SetReadingStatus(ctx context.Context, libraryEntryID int64, sys
 	return nil
 }
 
-// EnsureMediaShadow finds-or-creates a media row for a source entry the
-// user is interacting with (reading, downloading, marking read) but has
-// not explicitly added to the library. This is the same upsert
-// AddToLibrary uses, just without the SetMediaAddedAt step -- the row's
-// added_at stays NULL, so it remains invisible to library()/inLibrary
-// checks, exactly like RefreshMetadata's upsert. Chapters are synced so
-// every downstream resolver (Pages, Completed, Download, etc.) can treat
-// this exactly like any other library entry -- no more separate live/DB
-// branching for "not yet in library" content.
-func (s *Syncer) EnsureMediaShadow(ctx context.Context, c *sandbox.Client, packageName, sourceEntryID string) (sqlcgen.Medium, error) {
+func (s *Syncer) ResolveMedia(ctx context.Context, c *sandbox.Client, packageName, sourceEntryID string, syncChapters bool) (sqlcgen.Medium, error) {
 	ext, err := s.q.GetExtensionByPackageName(ctx, packageName)
 	if err != nil {
 		return sqlcgen.Medium{}, fmt.Errorf("lookup extension %s: %w", packageName, err)
 	}
 
-	if existing, err := s.q.GetMediaByExtensionIDAndExternalID(ctx, sqlcgen.GetMediaByExtensionIDAndExternalIDParams{
+	existing, err := s.q.GetMediaByExtensionAndExternalID(ctx, sqlcgen.GetMediaByExtensionAndExternalIDParams{
 		ExtensionID: sql.NullInt64{Int64: ext.ID, Valid: true},
 		ExternalID:  sourceEntryID,
-	}); err == nil {
-		// Row already exists (shadow or real library entry) -- reuse it.
-		// Chapters are synced unconditionally here; SyncChapters/CreateChapter
-		// upsert, so repeat views just refresh rather than duplicate.
-		if _, err := s.SyncChapters(ctx, c, existing.ID); err != nil {
-			return sqlcgen.Medium{}, fmt.Errorf("sync chapters for shadow media %d: %w", existing.ID, err)
+	})
+	if err == nil && existing.DetailsFetchedAt.Valid {
+
+		if syncChapters {
+			if _, err := s.SyncChapters(ctx, c, existing.ID); err != nil {
+				return sqlcgen.Medium{}, fmt.Errorf("sync chapters for media %d: %w", existing.ID, err)
+			}
 		}
-		return s.q.GetLibraryEntry(ctx, existing.ID)
+		_ = s.q.TouchMediaViewed(ctx, existing.ID)
+		return s.q.GetMedia(ctx, existing.ID)
 	}
 
 	details, err := c.GetDetails(ctx, packageName, sourceEntryID)
@@ -429,43 +544,43 @@ func (s *Syncer) EnsureMediaShadow(ctx context.Context, c *sandbox.Client, packa
 		return sqlcgen.Medium{}, err
 	}
 
-	if _, err := s.SyncChapters(ctx, c, entry.ID); err != nil {
-		return sqlcgen.Medium{}, fmt.Errorf("sync chapters for new shadow media %d: %w", entry.ID, err)
+	if syncChapters {
+		if _, err := s.SyncChapters(ctx, c, entry.ID); err != nil {
+			return sqlcgen.Medium{}, fmt.Errorf("sync chapters for media %d: %w", entry.ID, err)
+		}
 	}
+	_ = s.q.TouchMediaViewed(ctx, entry.ID)
 
-	return s.q.GetLibraryEntry(ctx, entry.ID)
+	return s.q.GetMedia(ctx, entry.ID)
 }
 
-func (s *Syncer) AddToLibrary(ctx context.Context, c *sandbox.Client, packageName, sourceEntryID string) (sqlcgen.Medium, error) {
-	ext, err := s.q.GetExtensionByPackageName(ctx, packageName)
+func (s *Syncer) SetInLibrary(ctx context.Context, c *sandbox.Client, mediaID int64, inLibrary bool) (sqlcgen.Medium, error) {
+	m, err := s.q.GetMedia(ctx, mediaID)
 	if err != nil {
-		return sqlcgen.Medium{}, fmt.Errorf("lookup extension %s: %w", packageName, err)
+		return sqlcgen.Medium{}, fmt.Errorf("get media %d: %w", mediaID, err)
 	}
 
-	details, err := c.GetDetails(ctx, packageName, sourceEntryID)
-	if err != nil {
-		return sqlcgen.Medium{}, fmt.Errorf("get details for %s/%s: %w", packageName, sourceEntryID, err)
+	if inLibrary && !m.DetailsFetchedAt.Valid && m.ExtensionID.Valid {
+		ext, err := s.q.GetExtension(ctx, m.ExtensionID.Int64)
+		if err != nil {
+			return sqlcgen.Medium{}, fmt.Errorf("get extension %d: %w", m.ExtensionID.Int64, err)
+		}
+		if _, err := s.ResolveMedia(ctx, c, ext.PackageName, m.ExternalID, true); err != nil {
+			return sqlcgen.Medium{}, err
+		}
 	}
 
-	entry, err := s.upsertEntryFromDetails(ctx, c, ext, details)
-	if err != nil {
-		return sqlcgen.Medium{}, err
+	if inLibrary {
+		return s.q.AddMediaToLibrary(ctx, mediaID)
 	}
-	// upsertEntryFromDetails is shared with RefreshMetadata, which must
-	// never touch added_at, so marking the item as added is a deliberate
-	// separate step done only on this path.
-	return s.q.SetMediaAddedAt(ctx, entry.ID)
+
+	return s.q.RemoveMediaFromLibrary(ctx, mediaID)
 }
 
-// RefreshMetadata re-fetches title/description/status/author/genres/cover
-// from the source extension for an existing library entry and updates it
-// in place. By default (syncChapters true) it also calls SyncChapters
-// afterward to pick up new chapters; pass syncChapters false for a
-// metadata-only refresh.
 func (s *Syncer) RefreshMetadata(ctx context.Context, c *sandbox.Client, libraryEntryID int64, syncChapters bool) (sqlcgen.Medium, error) {
-	entry, err := s.q.GetLibraryEntry(ctx, libraryEntryID)
+	entry, err := s.q.GetMedia(ctx, libraryEntryID)
 	if err != nil {
-		return sqlcgen.Medium{}, fmt.Errorf("get library entry %d: %w", libraryEntryID, err)
+		return sqlcgen.Medium{}, fmt.Errorf("get media %d: %w", libraryEntryID, err)
 	}
 	if !entry.ExtensionID.Valid {
 		return sqlcgen.Medium{}, fmt.Errorf("library entry %d has no extension (extension was removed)", libraryEntryID)
@@ -497,7 +612,7 @@ func (s *Syncer) RefreshMetadata(ctx context.Context, c *sandbox.Client, library
 func (s *Syncer) upsertEntryFromDetails(ctx context.Context, c *sandbox.Client, ext sqlcgen.Extension, details *sandboxv1.EntryDetails) (sqlcgen.Medium, error) {
 	author := strings.Join(details.GetAuthors(), ", ")
 
-	entry, err := s.q.CreateLibraryEntry(ctx, sqlcgen.CreateLibraryEntryParams{
+	entry, err := s.q.UpsertMediaDetails(ctx, sqlcgen.UpsertMediaDetailsParams{
 		ExtensionID:   sql.NullInt64{Int64: ext.ID, Valid: true},
 		ExtensionName: ext.Name,
 		ExternalID:    details.SourceEntryId,
@@ -507,22 +622,24 @@ func (s *Syncer) upsertEntryFromDetails(ctx context.Context, c *sandbox.Client, 
 		Description:   sql.NullString{String: details.Description, Valid: details.Description != ""},
 		Status:        sql.NullString{String: details.Status, Valid: details.Status != ""},
 		Author:        sql.NullString{String: author, Valid: author != ""},
-		// Artist is not currently provided by the extension proto (only
-		// Authors is available), so it is left unset here.
 	})
 	if err != nil {
-		return sqlcgen.Medium{}, fmt.Errorf("upsert library entry: %w", err)
+		return sqlcgen.Medium{}, fmt.Errorf("upsert media details: %w", err)
 	}
 
-	if details.CoverUrl != "" {
-		img, err := c.GetImageBytes(ctx, ext.PackageName, details.CoverUrl)
+	coverURL := details.CoverUrl
+	if coverURL == "" && entry.CoverPath.Valid {
+		coverURL = entry.CoverPath.String
+	}
+	if coverURL != "" && !entry.CoverLocalPath.Valid {
+		img, err := c.GetImageBytes(ctx, ext.PackageName, coverURL)
 		if err != nil {
 			log.Printf("sync: caching cover for entry %d failed: %v", entry.ID, err)
 		} else {
 			coverPath, err := image.SaveBytesToFile(img.GetData(), img.GetContentType(), filepath.Join(s.mediaDir, "covers"), strconv.FormatInt(entry.ID, 10))
 			if err != nil {
 				log.Printf("sync: saving cover for entry %d failed: %v", entry.ID, err)
-			} else if err := s.q.UpdateLibraryEntryCoverLocalPath(ctx, sqlcgen.UpdateLibraryEntryCoverLocalPathParams{
+			} else if err := s.q.UpdateMediaCoverLocalPath(ctx, sqlcgen.UpdateMediaCoverLocalPathParams{
 				CoverLocalPath: sql.NullString{String: coverPath, Valid: true},
 				ID:             entry.ID,
 			}); err != nil {
@@ -531,50 +648,251 @@ func (s *Syncer) upsertEntryFromDetails(ctx context.Context, c *sandbox.Client, 
 		}
 	}
 
-	if err := s.q.ClearGenresForEntry(ctx, entry.ID); err != nil {
-		return sqlcgen.Medium{}, fmt.Errorf("clear genres for entry %d: %w", entry.ID, err)
-	}
-	for _, name := range details.GetGenres() {
-		if name == "" {
-			continue
+	if genres := nonEmpty(details.GetGenres()); len(genres) > 0 {
+		if err := s.q.ClearGenresForMedia(ctx, entry.ID); err != nil {
+			return sqlcgen.Medium{}, fmt.Errorf("clear genres for media %d: %w", entry.ID, err)
 		}
-		genre, err := s.q.CreateGenre(ctx, name)
-		if err != nil {
-			return sqlcgen.Medium{}, fmt.Errorf("create genre %q: %w", name, err)
-		}
-		if err := s.q.AddGenreToEntry(ctx, sqlcgen.AddGenreToEntryParams{
-			MediaID: entry.ID,
-			GenreID: genre.ID,
-		}); err != nil {
-			return sqlcgen.Medium{}, fmt.Errorf("add genre %q to entry %d: %w", name, entry.ID, err)
+		for _, name := range genres {
+			genre, err := s.q.CreateGenre(ctx, name)
+			if err != nil {
+				return sqlcgen.Medium{}, fmt.Errorf("create genre %q: %w", name, err)
+			}
+			if err := s.q.AddGenreToMedia(ctx, sqlcgen.AddGenreToMediaParams{
+				MediaID: entry.ID,
+				GenreID: genre.ID,
+			}); err != nil {
+				return sqlcgen.Medium{}, fmt.Errorf("add genre %q to media %d: %w", name, entry.ID, err)
+			}
 		}
 	}
 
+	s.maybeEnrich(ctx, entry.ID)
+	if refreshed, err := s.q.GetMedia(ctx, entry.ID); err == nil {
+		entry = refreshed
+	}
 	return entry, nil
 }
 
-func (s *Syncer) GetLibraryEntry(ctx context.Context, id int64) (sqlcgen.Medium, error) {
-	return s.q.GetLibraryEntry(ctx, id)
+func (s *Syncer) maybeEnrich(ctx context.Context, mediaID int64) {
+	if s.enricher == nil {
+		return
+	}
+	ec, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+	if err := s.enricher.AutoEnrich(ec, mediaID); err != nil {
+		log.Printf("sync: metadata auto-enrich for media %d: %v", mediaID, err)
+	}
 }
 
-func (s *Syncer) ListLibraryEntries(ctx context.Context, contentType string) ([]sqlcgen.Medium, error) {
-	if contentType == "" {
-		return s.q.ListLibraryEntries(ctx)
+func nonEmpty(s []string) []string {
+	out := s[:0:0]
+	for _, v := range s {
+		if strings.TrimSpace(v) != "" {
+			out = append(out, v)
+		}
 	}
-	return s.q.ListLibraryEntriesByContentType(ctx, contentType)
+	return out
 }
 
-// RemoveFromLibrary detaches a media item from the library without
-// destroying it: added_at is cleared (library() queries and inLibrary
-// checks stop returning it) and its folder memberships are dropped (folders
-// are library organization, meaningless once removed). Chapters, reading
-// progress, and downloaded files are left untouched — re-adding the item
-// later brings all of that history back automatically.
-func (s *Syncer) RemoveFromLibrary(ctx context.Context, libraryEntryID int64) error {
-	if err := s.q.ClearFoldersForMedia(ctx, libraryEntryID); err != nil {
-		return fmt.Errorf("clear folders for media %d: %w", libraryEntryID, err)
+func (s *Syncer) GetMedia(ctx context.Context, id int64) (sqlcgen.Medium, error) {
+	return s.q.GetMedia(ctx, id)
+}
+
+func (s *Syncer) EnsureHydrated(ctx context.Context, sc *sandbox.SupervisedClient, id int64) (sqlcgen.Medium, error) {
+	m, err := s.q.GetMedia(ctx, id)
+	if err != nil {
+		return sqlcgen.Medium{}, err
 	}
-	return s.q.ClearMediaAddedAt(ctx, libraryEntryID)
+	if m.DetailsFetchedAt.Valid || !m.ExtensionID.Valid {
+		return m, nil
+	}
+
+	lk := s.lockFor(fmt.Sprintf("hydrate:%d", id))
+	lk.Lock()
+	defer lk.Unlock()
+
+	m, err = s.q.GetMedia(ctx, id)
+	if err != nil {
+		return sqlcgen.Medium{}, err
+	}
+	if m.DetailsFetchedAt.Valid {
+		return m, nil
+	}
+
+	ext, err := s.q.GetExtension(ctx, m.ExtensionID.Int64)
+	if err != nil {
+		return sqlcgen.Medium{}, fmt.Errorf("get extension %d: %w", m.ExtensionID.Int64, err)
+	}
+	c, err := sc.Ensure(ctx)
+	if err != nil {
+		return sqlcgen.Medium{}, err
+	}
+	details, err := c.GetDetails(ctx, ext.PackageName, m.ExternalID)
+	if err != nil {
+		return sqlcgen.Medium{}, fmt.Errorf("get details for %s/%s: %w", ext.PackageName, m.ExternalID, err)
+	}
+	return s.upsertEntryFromDetails(ctx, c, ext, details)
+}
+
+func (s *Syncer) EnsureChapters(ctx context.Context, sc *sandbox.SupervisedClient, id int64) ([]sqlcgen.Chapter, error) {
+	m, err := s.q.GetMedia(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if m.ChaptersSyncedAt.Valid || !m.ExtensionID.Valid {
+		return s.q.ListChaptersByMedia(ctx, id)
+	}
+
+	lk := s.lockFor(fmt.Sprintf("chapters:%d", id))
+	lk.Lock()
+	defer lk.Unlock()
+
+	m, err = s.q.GetMedia(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if m.ChaptersSyncedAt.Valid {
+		return s.q.ListChaptersByMedia(ctx, id)
+	}
+	c, err := sc.Ensure(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return s.SyncChapters(ctx, c, id)
+}
+
+type LibraryQuery struct {
+	ContentType    string
+	InLibrary      *bool
+	UnreadOnly     bool
+	DownloadedOnly bool
+	TagIDs         []int64
+	FolderID       *int64
+	Search         string
+	SortBy         string
+	Ascending      bool
+	Limit          int
+	Offset         int
+}
+
+func (s *Syncer) QueryLibrary(ctx context.Context, q LibraryQuery) ([]sqlcgen.Medium, int, error) {
+	var where []string
+	var args []interface{}
+
+	switch {
+	case q.InLibrary != nil && *q.InLibrary:
+		where = append(where, "m.added_at IS NOT NULL")
+	case q.InLibrary != nil && !*q.InLibrary:
+		where = append(where, "m.added_at IS NULL")
+	}
+	if q.ContentType != "" {
+		where = append(where, "m.content_type = ?")
+		args = append(args, q.ContentType)
+	}
+	if q.Search != "" {
+		where = append(where, "m.title LIKE '%' || ? || '%'")
+		args = append(args, q.Search)
+	}
+	if q.FolderID != nil {
+		where = append(where, "m.id IN (SELECT media_id FROM media_folders WHERE folder_id = ?)")
+		args = append(args, *q.FolderID)
+	}
+	if len(q.TagIDs) > 0 {
+		ph := strings.TrimSuffix(strings.Repeat("?,", len(q.TagIDs)), ",")
+		where = append(where, "m.id IN (SELECT media_id FROM media_tags WHERE tag_id IN ("+ph+"))")
+		for _, id := range q.TagIDs {
+			args = append(args, id)
+		}
+	}
+	if q.UnreadOnly {
+		where = append(where, `EXISTS (
+			SELECT 1 FROM chapters c
+			LEFT JOIN reading_progress rp ON rp.chapter_id = c.id AND rp.media_id = c.media_id
+			WHERE c.media_id = m.id AND (rp.completed IS NULL OR rp.completed = 0))`)
+	}
+	if q.DownloadedOnly {
+		where = append(where, `EXISTS (
+			SELECT 1 FROM downloads d JOIN chapters c ON c.id = d.chapter_id
+			WHERE c.media_id = m.id AND d.status = 'done')`)
+	}
+
+	whereSQL := ""
+	if len(where) > 0 {
+		whereSQL = " WHERE " + strings.Join(where, " AND ")
+	}
+
+	dir := "DESC"
+	if q.Ascending {
+		dir = "ASC"
+	}
+	var orderJoin, orderSQL string
+	switch q.SortBy {
+	case "title":
+		orderSQL = "ORDER BY m.title COLLATE NOCASE " + dir
+	case "last_read_at":
+		orderJoin = "LEFT JOIN (SELECT media_id, MAX(updated_at) v FROM reading_progress GROUP BY media_id) rp ON rp.media_id = m.id"
+		orderSQL = "ORDER BY rp.v " + dir
+	case "latest_chapter_at":
+		orderJoin = "LEFT JOIN (SELECT media_id, MAX(uploaded_at) v FROM chapters GROUP BY media_id) ch ON ch.media_id = m.id"
+		orderSQL = "ORDER BY ch.v " + dir
+	case "unread_count":
+		orderJoin = `LEFT JOIN (
+			SELECT c.media_id, COUNT(*) v FROM chapters c
+			LEFT JOIN reading_progress rp2 ON rp2.chapter_id = c.id AND rp2.media_id = c.media_id
+			WHERE rp2.completed IS NULL OR rp2.completed = 0
+			GROUP BY c.media_id) uc ON uc.media_id = m.id`
+		orderSQL = "ORDER BY uc.v " + dir
+	default:
+		orderSQL = "ORDER BY m.added_at " + dir
+	}
+
+	var total int
+	if err := s.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM media m"+whereSQL, args...).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("count library: %w", err)
+	}
+
+	limit := q.Limit
+	if limit <= 0 {
+		limit = 100
+	}
+	pageArgs := append(append([]interface{}{}, args...), limit, q.Offset)
+	idSQL := "SELECT m.id FROM media m " + orderJoin + whereSQL + " " + orderSQL + " LIMIT ? OFFSET ?"
+	rows, err := s.db.QueryContext(ctx, idSQL, pageArgs...)
+	if err != nil {
+		return nil, 0, fmt.Errorf("query library: %w", err)
+	}
+	var ids []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			rows.Close()
+			return nil, 0, err
+		}
+		ids = append(ids, id)
+	}
+	rows.Close()
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
+	if len(ids) == 0 {
+		return nil, total, nil
+	}
+
+	fetched, err := s.q.ListMediaByIDs(ctx, ids)
+	if err != nil {
+		return nil, 0, fmt.Errorf("hydrate library page: %w", err)
+	}
+	byID := make(map[int64]sqlcgen.Medium, len(fetched))
+	for _, m := range fetched {
+		byID[m.ID] = m
+	}
+	ordered := make([]sqlcgen.Medium, 0, len(ids))
+	for _, id := range ids {
+		if m, ok := byID[id]; ok {
+			ordered = append(ordered, m)
+		}
+	}
+	return ordered, total, nil
 }
 
 type chapterSummary struct {
@@ -584,9 +902,31 @@ type chapterSummary struct {
 	UploadTS int64
 }
 
-// fetchChapterSummaries hits the extension directly for its chapter/episode
-// list, with no DB reads or writes. Shared by SyncChapters (which persists
-// the result) and PreviewChapters (which does not).
+func (s *Syncer) BackfillChapterNumbers(ctx context.Context) (int, error) {
+	rows, err := s.q.ListChaptersMissingNumber(ctx)
+	if err != nil {
+		return 0, err
+	}
+	fixed := 0
+	for _, r := range rows {
+		if !r.Title.Valid {
+			continue
+		}
+		n := chapternum.FromTitle(r.Title.String)
+		if n <= 0 {
+			continue
+		}
+		if err := s.q.SetChapterNumber(ctx, sqlcgen.SetChapterNumberParams{
+			Number: sql.NullFloat64{Float64: n, Valid: true},
+			ID:     r.ID,
+		}); err != nil {
+			return fixed, err
+		}
+		fixed++
+	}
+	return fixed, nil
+}
+
 func (s *Syncer) fetchChapterSummaries(ctx context.Context, c *sandbox.Client, packageName, contentType, sourceEntryID string) ([]chapterSummary, error) {
 	var summaries []chapterSummary
 	switch contentType {
@@ -598,7 +938,7 @@ func (s *Syncer) fetchChapterSummaries(ctx context.Context, c *sandbox.Client, p
 		for _, e := range list.Episodes {
 			summaries = append(summaries, chapterSummary{e.SourceEpisodeId, e.Name, e.Number, e.UploadTimestamp})
 		}
-	default: // manga, novel
+	default:
 		list, err := c.GetChapters(ctx, packageName, sourceEntryID)
 		if err != nil {
 			return nil, fmt.Errorf("get chapters for %s/%s: %w", packageName, sourceEntryID, err)
@@ -607,36 +947,89 @@ func (s *Syncer) fetchChapterSummaries(ctx context.Context, c *sandbox.Client, p
 			summaries = append(summaries, chapterSummary{ch.SourceChapterId, ch.Name, ch.Number, ch.UploadTimestamp})
 		}
 	}
-	// Tachiyomi extensions conventionally return chapters newest-first.
-	// sourceOrder (assigned by callers as the index into this slice) is
-	// meant to mean "reading order" everywhere downstream, so reverse once
-	// here rather than in every consumer. NOTE: unconfirmed whether this
-	// holds for every source -- if some extension already returns
-	// oldest-first, that source's order will come out backwards instead.
-	for i, j := 0, len(summaries)-1; i < j; i, j = i+1, j-1 {
-		summaries[i], summaries[j] = summaries[j], summaries[i]
+
+	if chaptersAreNewestFirst(summaries) {
+		for i, j := 0, len(summaries)-1; i < j; i, j = i+1, j-1 {
+			summaries[i], summaries[j] = summaries[j], summaries[i]
+		}
 	}
 	return summaries, nil
 }
 
-// PreviewChapters fetches the chapter/episode list for a source entry that
-// is not (yet) in the library, without writing anything to the DB. Used to
-// preview chapter count/overlap before committing to addToLibrary.
-func (s *Syncer) PreviewChapters(ctx context.Context, c *sandbox.Client, packageName, sourceEntryID string) ([]chapterSummary, error) {
-	ext, err := s.q.GetExtensionByPackageName(ctx, packageName)
-	if err != nil {
-		return nil, fmt.Errorf("lookup extension %s: %w", packageName, err)
+func chaptersAreNewestFirst(s []chapterSummary) bool {
+	if len(s) < 2 {
+		return false
 	}
-	return s.fetchChapterSummaries(ctx, c, packageName, ext.ContentType, sourceEntryID)
+	asc, desc := 0, 0
+	prev, havePrev := 0.0, false
+	for _, c := range s {
+		if c.Number <= 0 {
+			continue
+		}
+		if havePrev {
+			switch {
+			case c.Number > prev:
+				asc++
+			case c.Number < prev:
+				desc++
+			}
+		}
+		prev, havePrev = c.Number, true
+	}
+	if asc != desc {
+		return desc > asc
+	}
+	if a, b := s[0].UploadTS, s[len(s)-1].UploadTS; a > 0 && b > 0 && a != b {
+		return a > b
+	}
+	return true
+}
+
+var wsRun = regexp.MustCompile(`\s+`)
+
+func deriveScanlators(summaries []chapterSummary) []string {
+	out := make([]string, len(summaries))
+	groups := map[string][]int{}
+	for i, s := range summaries {
+		k := chapterGroupKey(s)
+		groups[k] = append(groups[k], i)
+	}
+	for _, idxs := range groups {
+		if len(idxs) < 2 {
+			continue
+		}
+		for pos, i := range idxs {
+			out[i] = strconv.Itoa(pos + 1)
+		}
+	}
+	return out
+}
+
+func chapterGroupKey(s chapterSummary) string {
+	if s.Number > 0 {
+		return "n:" + strconv.FormatFloat(s.Number, 'f', 4, 64)
+	}
+	base := strings.TrimSpace(s.Name)
+	if i := strings.IndexAny(base, ":|"); i >= 0 {
+		base = strings.TrimSpace(base[:i])
+	}
+	if i := strings.IndexAny(base, "[("); i >= 0 {
+		base = strings.TrimSpace(base[:i])
+	}
+	base = wsRun.ReplaceAllString(strings.ToLower(base), " ")
+	if base == "" {
+		return "i:" + s.SourceID
+	}
+	return "t:" + base
 }
 
 func (s *Syncer) SyncChapters(ctx context.Context, c *sandbox.Client, libraryEntryID int64) ([]sqlcgen.Chapter, error) {
-	entry, err := s.q.GetLibraryEntry(ctx, libraryEntryID)
+	entry, err := s.q.GetMedia(ctx, libraryEntryID)
 	if err != nil {
-		return nil, fmt.Errorf("get library entry %d: %w", libraryEntryID, err)
+		return nil, fmt.Errorf("get media %d: %w", libraryEntryID, err)
 	}
 	if !entry.ExtensionID.Valid {
-		return nil, fmt.Errorf("library entry %d has no extension (extension was removed)", libraryEntryID)
+		return nil, fmt.Errorf("media %d has no extension (extension was removed)", libraryEntryID)
 	}
 	ext, err := s.q.GetExtension(ctx, entry.ExtensionID.Int64)
 	if err != nil {
@@ -648,24 +1041,46 @@ func (s *Syncer) SyncChapters(ctx context.Context, c *sandbox.Client, libraryEnt
 		return nil, err
 	}
 
+	for i := range summaries {
+		summaries[i].Number = chapternum.Resolve(summaries[i].Number, summaries[i].Name)
+	}
+
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("begin chapter sync tx: %w", err)
+	}
+	defer tx.Rollback()
+	qtx := s.q.WithTx(tx)
+
+	scanlators := deriveScanlators(summaries)
+
 	chapters := make([]sqlcgen.Chapter, 0, len(summaries))
 	for idx, sm := range summaries {
 		var uploadedAt sql.NullInt64
 		if sm.UploadTS > 0 {
 			uploadedAt = sql.NullInt64{Int64: sm.UploadTS / 1000, Valid: true}
 		}
-		chapter, err := s.q.CreateChapter(ctx, sqlcgen.CreateChapterParams{
+		chapter, err := qtx.CreateChapter(ctx, sqlcgen.CreateChapterParams{
 			MediaID:     libraryEntryID,
 			ExternalID:  sm.SourceID,
 			Title:       sql.NullString{String: sm.Name, Valid: sm.Name != ""},
 			Number:      sql.NullFloat64{Float64: sm.Number, Valid: true},
 			UploadedAt:  uploadedAt,
 			SourceOrder: sql.NullInt64{Int64: int64(idx), Valid: true},
+			Scanlator:   scanlators[idx],
 		})
 		if err != nil {
 			return nil, fmt.Errorf("upsert chapter %s: %w", sm.SourceID, err)
 		}
 		chapters = append(chapters, chapter)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("commit chapter sync tx: %w", err)
+	}
+
+	if err := s.q.MarkChaptersSynced(ctx, libraryEntryID); err != nil {
+		log.Printf("sync: marking chapters synced for media %d failed: %v", libraryEntryID, err)
 	}
 
 	return chapters, nil
@@ -692,5 +1107,5 @@ func (s *Syncer) MarkChapterRead(ctx context.Context, libraryEntryID, chapterID 
 }
 
 func (s *Syncer) ListReadingProgress(ctx context.Context, libraryEntryID int64) ([]sqlcgen.ReadingProgress, error) {
-	return s.q.ListReadingProgressByLibraryEntry(ctx, libraryEntryID)
+	return s.q.ListReadingProgressByMedia(ctx, libraryEntryID)
 }

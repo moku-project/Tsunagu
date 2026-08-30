@@ -1,6 +1,7 @@
 package tsunagu
 
 import eu.kanade.tachiyomi.network.NetworkHelper
+import eu.kanade.tachiyomi.network.installConscrypt
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder
 import io.grpc.protobuf.services.ProtoReflectionService
 import java.util.concurrent.TimeUnit
@@ -14,6 +15,7 @@ import tsunagu.source.GetSource
 import java.io.File
 
 fun main() {
+    installConscrypt()
     startKoin {
         modules(
             module {

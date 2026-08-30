@@ -35,34 +35,177 @@ type Extension {
   installedAt: Time
   installedVersion: String
   needsUpdate: Boolean
+  isNsfw: Boolean!
+  displayName: String!
+  supportsLatest: Boolean!
 }
 
-type LibraryEntry {
+type Media {
   id: ID!
   extensionId: ID
   extensionName: String!
+
+  sourceName: String!
   externalId: String!
   contentType: ContentType!
   title: String!
-  coverPath: String
+  thumbnailUrl: String
   description: String
   status: String
+  author: String
+  artist: String
+  detailsFetchedAt: Time
   extensionRemovedAt: Time
-  addedAt: Time!
+  addedAt: Time
+  lastViewedAt: Time
+  inLibrary: Boolean!
   chapters: [Chapter!]! @goField(forceResolver: true)
+  chapterCount: Int! @goField(forceResolver: true)
+  unreadCount: Int! @goField(forceResolver: true)
+  downloadedCount: Int! @goField(forceResolver: true)
+  nextUnreadChapter: Chapter @goField(forceResolver: true)
+  latestChapter: Chapter @goField(forceResolver: true)
   readingProgress: [ReadingProgress!]! @goField(forceResolver: true)
+  tags: [String!]! @goField(forceResolver: true)
+  genres: [String!]! @goField(forceResolver: true)
+  folders: [Folder!]! @goField(forceResolver: true)
+  trackLinks: [TrackLink!]! @goField(forceResolver: true)
+  metadata: MetadataMatch @goField(forceResolver: true)
+  source: Extension @goField(forceResolver: true)
+}
+
+type MetadataMatch {
+  provider: String!
+  providerId: String!
+  url: String!
+  confidence: Float!
+  locked: Boolean!
+  matchedAt: Time!
+}
+
+type MetadataCandidate {
+  provider: String!
+  providerId: String!
+  title: String!
+  url: String!
+  coverUrl: String
+  description: String
+  status: String
+  genres: [String!]!
+  startYear: Int
+}
+
+type Tracker {
+  key: String!
+  name: String!
+  configured: Boolean!
+  isLoggedIn: Boolean!
+  authUrl: String
+  username: String
+  scoreOptions: [String!]!
+
+  statusOptions: [TrackStatus!]!
+
+  iconUrl: String
+}
+
+type TrackStatus {
+  value: Int!
+
+  name: String!
+
+  animeName: String!
+}
+
+type TrackSearchResult {
+  remoteId: String!
+  title: String!
+  url: String!
+  coverUrl: String
+  summary: String
+
+  totalChapters: Int
+  publishingStatus: String
+
+  mediaType: String
+}
+
+type TrackLink {
+  id: ID!
+  mediaId: ID!
+  trackerKey: String!
+  remoteId: String!
+  title: String!
+  url: String!
+  status: Int!
+  statusName: String!
+  lastChapterRead: Float!
+  totalChapters: Int!
+  score: Float!
+  startedAt: Time
+  finishedAt: Time
+  private: Boolean!
+  lastSyncedAt: Time
 }
 
 type Chapter {
   id: ID!
-  libraryEntryId: ID!
+  mediaId: ID!
   externalId: String!
   title: String
   number: Float
+  sourceOrder: Int
+
+  scanlator: String
   uploadedAt: Time
+  readingProgress: ReadingProgress @goField(forceResolver: true)
+  completed: Boolean! @goField(forceResolver: true)
+  downloaded: Boolean! @goField(forceResolver: true)
   download: Download @goField(forceResolver: true)
   pages: [String!] @goField(forceResolver: true)
+  pageCount: Int @goField(forceResolver: true)
   videoUrl: String @goField(forceResolver: true)
+
+  videoStream: VideoStream @goField(forceResolver: true)
+}
+
+type VideoStream {
+
+  url: String!
+  sources: [VideoSource!]!
+  subtitles: [SubtitleTrack!]!
+  audioTracks: [AudioTrack!]!
+  skipMarkers: [SkipMarker!]!
+}
+
+type VideoSource {
+  label: String!
+  resolution: Int
+  preferred: Boolean!
+
+  kind: String!
+
+  server: String!
+
+  url: String!
+}
+
+type SubtitleTrack {
+  lang: String!
+
+  url: String!
+}
+
+type AudioTrack {
+  lang: String!
+  url: String!
+}
+
+type SkipMarker {
+  type: String!
+  name: String!
+  startMs: Int!
+  endMs: Int!
 }
 
 enum DownloadStatus {
@@ -74,12 +217,14 @@ enum DownloadStatus {
 
 type Download {
   id: ID!
+  mediaId: ID!
   chapterId: ID!
+  chapter: Chapter! @goField(forceResolver: true)
   status: DownloadStatus!
   progress: Float!
-  downloadedBytes: Int
+  downloadedBytes: Float
   bytesPerSec: Float
-  finalSizeBytes: Int
+  finalSizeBytes: Float
   error: String
   createdAt: Time!
   completedAt: Time
@@ -87,7 +232,7 @@ type Download {
 
 type ReadingProgress {
   id: ID!
-  libraryEntryId: ID!
+  mediaId: ID!
   chapterId: ID!
   progress: Float!
   completed: Boolean!
@@ -96,23 +241,33 @@ type ReadingProgress {
   updatedAt: Time!
 }
 
-type SearchResult {
-  sourceEntryId: String!
-  title: String!
-  coverUrl: String
+type DownloaderStatus {
+  isRunning: Boolean!
+  queuedCount: Int!
+  downloadingCount: Int!
+  failedCount: Int!
+}
+
+type RecentChapter {
+  chapter: Chapter!
+  media: Media!
 }
 
 type SearchResponse {
-  results: [SearchResult!]!
+  results: [Media!]!
   hasNextPage: Boolean!
 }
 
-type SourceDetails {
-  sourceEntryId: String!
-  title: String!
-  description: String
-  coverUrl: String
-  status: String
+type MediaPage {
+  items: [Media!]!
+  total: Int!
+  hasMore: Boolean!
+}
+
+type StorageInfo {
+  usedBytes: Float!
+  totalBytes: Float!
+  freeBytes: Float!
 }
 
 type AboutServer {
@@ -128,42 +283,221 @@ type Folder {
   systemKey: String
   parentFolderId: ID
   sortOrder: Int!
+  includeInUpdate: Boolean!
+  includeInDownload: Boolean!
+}
+
+enum LibrarySort {
+  TITLE
+  ADDED_AT
+  LAST_READ_AT
+  LATEST_CHAPTER_AT
+  UNREAD_COUNT
+}
+
+input LibrarySortInput {
+  by: LibrarySort! = ADDED_AT
+  ascending: Boolean! = false
+}
+
+input LibraryFilter {
+  contentType: ContentType
+
+  inLibrary: Boolean = true
+  unreadOnly: Boolean
+  downloadedOnly: Boolean
+  tagIds: [ID!]
+  folderId: ID
+  query: String
 }
 
 type Query {
   about: AboutServer!
   folders: [Folder!]!
   folder(id: ID!): Folder
-  entriesInFolder(folderId: ID!): [LibraryEntry!]!
+  mediaInFolder(folderId: ID!): [Media!]!
   repositories: [Repository!]!
   availableExtensions(repositoryId: ID!): [Extension!]!
   installedExtensions: [Extension!]!
-  library(contentType: ContentType): [LibraryEntry!]!
-  libraryEntry(id: ID!): LibraryEntry
-  readingProgress(libraryEntryId: ID!): [ReadingProgress!]!
-  search(extensionId: String!, query: String!, page: Int): SearchResponse!
-  sourceDetails(extensionId: String!, sourceEntryId: String!): SourceDetails!
-  downloadStatus(chapterId: ID!): Download
+
+  library(filter: LibraryFilter, sort: LibrarySortInput, limit: Int = 100, offset: Int = 0): MediaPage!
+  media(id: ID!): Media
+
+  chapter(id: ID!): Chapter
+
+  resolveMedia(extensionId: ID!, externalId: String!, syncChapters: Boolean = true): Media!
+
+  readingProgress(mediaId: ID!): [ReadingProgress!]!
+  search(extensionId: ID!, query: String!, page: Int, filters: [FilterInput!]): SearchResponse!
+  filterOptions(extensionId: ID!): [FilterNode!]!
+  popularManga(extensionId: ID!, page: Int): SearchResponse!
+  latestUpdates(extensionId: ID!, page: Int): SearchResponse!
+  downloadStatus(mediaId: ID!, chapterId: ID!): Download
+  downloadQueue: [Download!]!
+  downloaderStatus: DownloaderStatus!
+  recentChapters(since: Time, limit: Int): [RecentChapter!]!
+
+  chapterUpdates(since: Time, limit: Int): [RecentChapter!]!
+
+  libraryUpdateStatus: LibraryUpdateStatus!
+  storageInfo: StorageInfo!
+
+  trackers: [Tracker!]!
+
+  trackSearch(trackerKey: String!, query: String!, contentType: ContentType): [TrackSearchResult!]!
+
+  searchMetadata(query: String!, contentType: ContentType!, provider: String): [MetadataCandidate!]!
+
+  skipTimestamps(chapterId: ID!, episodeLengthMs: Int): [SkipMarker!]!
+}
+
+type LibraryUpdateStatus {
+  running: Boolean!
+  total: Int!
+  done: Int!
+  currentTitle: String
+  newChapterCount: Int!
+  failedTitles: [String!]!
+  startedAt: Time
+  finishedAt: Time
 }
 
 type Mutation {
   createFolder(name: String!, parentFolderId: ID): Folder!
   renameFolder(folderId: ID!, name: String!): Folder!
   deleteFolder(folderId: ID!): Boolean!
-  addEntryToFolder(libraryEntryId: ID!, folderId: ID!): Boolean!
-  removeEntryFromFolder(libraryEntryId: ID!, folderId: ID!): Boolean!
-  markChaptersRead(libraryEntryId: ID!, chapterIds: [ID!]!, read: Boolean!): [ReadingProgress!]!
-  dequeueDownload(chapterId: ID!): Boolean!
+  addMediaToFolder(mediaId: ID!, folderId: ID!): Boolean!
+  removeMediaFromFolder(mediaId: ID!, folderId: ID!): Boolean!
+
+  markChaptersRead(mediaId: ID!, chapterIds: [ID!]!, read: Boolean!): [ReadingProgress!]!
+  dequeueDownload(mediaId: ID!, chapterId: ID!): Boolean!
+
   addRepository(indexUrl: String!, name: String): Repository!
   renameRepository(repositoryId: ID!, name: String!): Repository!
   deleteRepository(repositoryId: ID!): Boolean!
   installExtension(packageName: String!): Extension!
+  installExternalExtension(url: String!): Extension!
   uninstallExtension(packageName: String!): Extension!
   updateExtension(packageName: String!): Extension!
-  addToLibrary(extensionId: String!, sourceEntryId: String!): LibraryEntry!
-  syncChapters(libraryEntryId: ID!): [Chapter!]!
-  updateReadingProgress(libraryEntryId: ID!, chapterId: ID!, progress: Float!, completed: Boolean, positionSeconds: Float, durationSeconds: Float): ReadingProgress!
-  markChapterRead(libraryEntryId: ID!, chapterId: ID!): ReadingProgress!
-  enqueueDownload(chapterId: ID!): Download!
-  retryDownload(chapterId: ID!): Download!
+
+  setInLibrary(mediaId: ID!, inLibrary: Boolean!): Media!
+  syncChapters(mediaId: ID!): [Chapter!]!
+  updateReadingProgress(mediaId: ID!, chapterId: ID!, progress: Float!, completed: Boolean, positionSeconds: Float, durationSeconds: Float): ReadingProgress!
+  markChapterRead(mediaId: ID!, chapterId: ID!): ReadingProgress!
+  enqueueDownload(mediaId: ID!, chapterIds: [ID!]!): [Download!]!
+  retryDownload(mediaId: ID!, chapterId: ID!): Download!
+  deleteDownload(mediaId: ID!, chapterIds: [ID!]!): Boolean!
+  reorderDownload(mediaId: ID!, chapterId: ID!, position: Int!): Boolean!
+  clearDownloads(status: [DownloadStatus!]): Boolean!
+  startDownloader: Boolean!
+  stopDownloader: Boolean!
+  refreshMetadata(mediaId: ID!, syncChapters: Boolean = true): Media!
+  refreshFolder(folderId: ID!): [Media!]!
+  reorderFolder(folderId: ID!, sortOrder: Int!): Folder!
+  updateFolderFlags(folderId: ID!, includeInUpdate: Boolean, includeInDownload: Boolean): Folder!
+  clearImageCache: Boolean!
+
+  startLibraryUpdate(folderId: ID): Boolean!
+
+  setMediaCover(mediaId: ID!, url: String): Media!
+
+  rescanLocalMedia: [Media!]!
+
+  trackerLogin(trackerKey: String!, token: String!): Tracker!
+  trackerLogout(trackerKey: String!): Boolean!
+
+  bindTrack(mediaId: ID!, trackerKey: String!, remoteId: String!): TrackLink!
+
+  updateTrack(linkId: ID!, status: Int, score: Float, lastChapterRead: Float): TrackLink!
+  unbindTrack(linkId: ID!): Boolean!
+
+  resyncTrack(linkId: ID!): TrackLink!
+
+  pullTracker(mediaId: ID!): [TrackLink!]!
+
+  applyMetadataMatch(mediaId: ID!, providerId: String!, provider: String): Media!
+
+  unlinkMetadata(mediaId: ID!): Boolean!
+
+  refreshMetadataMatch(mediaId: ID!): Media!
+}
+
+union FilterNode = HeaderFilter | SeparatorFilter | SelectFilter | TextFilter | CheckBoxFilter | TriStateFilter | GroupFilter | SortFilter
+
+type HeaderFilter {
+  name: String!
+}
+
+type SeparatorFilter {
+  name: String!
+}
+
+type SelectFilter {
+  name: String!
+  values: [String!]!
+  state: Int!
+}
+
+type TextFilter {
+  name: String!
+  state: String!
+}
+
+type CheckBoxFilter {
+  name: String!
+  state: Boolean!
+}
+
+type TriStateFilter {
+  name: String!
+  state: Int!
+}
+
+type GroupFilter {
+  name: String!
+  children: [FilterNode!]!
+}
+
+type SortFilter {
+  name: String!
+  values: [String!]!
+  hasState: Boolean!
+  index: Int
+  ascending: Boolean
+}
+
+input FilterInput {
+  name: String!
+  select: SelectFilterInput
+  text: TextFilterInput
+  checkbox: CheckBoxFilterInput
+  tristate: TriStateFilterInput
+  group: GroupFilterInput
+  sort: SortFilterInput
+}
+
+input SelectFilterInput {
+  state: Int!
+}
+
+input TextFilterInput {
+  state: String!
+}
+
+input CheckBoxFilterInput {
+  state: Boolean!
+}
+
+input TriStateFilterInput {
+  state: Int!
+}
+
+input GroupFilterInput {
+  children: [FilterInput!]!
+}
+
+input SortFilterInput {
+  hasState: Boolean!
+  index: Int
+  ascending: Boolean
 }

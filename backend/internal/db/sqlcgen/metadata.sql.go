@@ -1,0 +1,263 @@
+package sqlcgen
+
+import (
+	"context"
+	"strings"
+)
+
+const deleteMetadataLink = `-- name: DeleteMetadataLink :exec
+DELETE FROM metadata_links WHERE media_id = ? AND provider = ?
+`
+
+type DeleteMetadataLinkParams struct {
+	MediaID  int64  `json:"media_id"`
+	Provider string `json:"provider"`
+}
+
+func (q *Queries) DeleteMetadataLink(ctx context.Context, arg DeleteMetadataLinkParams) error {
+	_, err := q.db.ExecContext(ctx, deleteMetadataLink, arg.MediaID, arg.Provider)
+	return err
+}
+
+const gapFillMediaMetadata = `-- name: GapFillMediaMetadata :one
+
+UPDATE media SET
+    description = CASE WHEN description IS NULL OR description = ''
+        THEN NULLIF(CAST(?1 AS TEXT), '') ELSE description END,
+    status = CASE WHEN status IS NULL OR status = ''
+        THEN NULLIF(CAST(?2 AS TEXT), '') ELSE status END,
+    author = CASE WHEN author IS NULL OR author = ''
+        THEN NULLIF(CAST(?3 AS TEXT), '') ELSE author END,
+    cover_path = CASE
+        WHEN (cover_path IS NULL OR cover_path = '')
+         AND (cover_local_path IS NULL OR cover_local_path = '')
+         AND (cover_override IS NULL OR cover_override = '')
+        THEN NULLIF(CAST(?4 AS TEXT), '') ELSE cover_path END,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = ?5
+RETURNING id, extension_id, extension_name, external_id, content_type, title, cover_path, cover_local_path, description, status, author, artist, extension_removed_at, added_at, last_viewed_at, details_fetched_at, updated_at, chapters_synced_at, cover_override
+`
+
+type GapFillMediaMetadataParams struct {
+	Description string `json:"description"`
+	Status      string `json:"status"`
+	Author      string `json:"author"`
+	CoverPath   string `json:"cover_path"`
+	ID          int64  `json:"id"`
+}
+
+func (q *Queries) GapFillMediaMetadata(ctx context.Context, arg GapFillMediaMetadataParams) (Medium, error) {
+	row := q.db.QueryRowContext(ctx, gapFillMediaMetadata,
+		arg.Description,
+		arg.Status,
+		arg.Author,
+		arg.CoverPath,
+		arg.ID,
+	)
+	var i Medium
+	err := row.Scan(
+		&i.ID,
+		&i.ExtensionID,
+		&i.ExtensionName,
+		&i.ExternalID,
+		&i.ContentType,
+		&i.Title,
+		&i.CoverPath,
+		&i.CoverLocalPath,
+		&i.Description,
+		&i.Status,
+		&i.Author,
+		&i.Artist,
+		&i.ExtensionRemovedAt,
+		&i.AddedAt,
+		&i.LastViewedAt,
+		&i.DetailsFetchedAt,
+		&i.UpdatedAt,
+		&i.ChaptersSyncedAt,
+		&i.CoverOverride,
+	)
+	return i, err
+}
+
+const getMetadataLink = `-- name: GetMetadataLink :one
+SELECT id, media_id, provider, provider_id, provider_url, confidence, locked, matched_at FROM metadata_links WHERE media_id = ? AND provider = ?
+`
+
+type GetMetadataLinkParams struct {
+	MediaID  int64  `json:"media_id"`
+	Provider string `json:"provider"`
+}
+
+func (q *Queries) GetMetadataLink(ctx context.Context, arg GetMetadataLinkParams) (MetadataLink, error) {
+	row := q.db.QueryRowContext(ctx, getMetadataLink, arg.MediaID, arg.Provider)
+	var i MetadataLink
+	err := row.Scan(
+		&i.ID,
+		&i.MediaID,
+		&i.Provider,
+		&i.ProviderID,
+		&i.ProviderUrl,
+		&i.Confidence,
+		&i.Locked,
+		&i.MatchedAt,
+	)
+	return i, err
+}
+
+const listMediaIDsWithoutMetadataLink = `-- name: ListMediaIDsWithoutMetadataLink :many
+
+SELECT m.id
+FROM media m
+WHERE m.added_at IS NOT NULL
+  AND m.extension_id IS NOT NULL
+  AND NOT EXISTS (SELECT 1 FROM metadata_links ml WHERE ml.media_id = m.id)
+`
+
+func (q *Queries) ListMediaIDsWithoutMetadataLink(ctx context.Context) ([]int64, error) {
+	rows, err := q.db.QueryContext(ctx, listMediaIDsWithoutMetadataLink)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []int64{}
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listMetadataLinksByMedia = `-- name: ListMetadataLinksByMedia :many
+SELECT id, media_id, provider, provider_id, provider_url, confidence, locked, matched_at FROM metadata_links WHERE media_id = ?
+`
+
+func (q *Queries) ListMetadataLinksByMedia(ctx context.Context, mediaID int64) ([]MetadataLink, error) {
+	rows, err := q.db.QueryContext(ctx, listMetadataLinksByMedia, mediaID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []MetadataLink{}
+	for rows.Next() {
+		var i MetadataLink
+		if err := rows.Scan(
+			&i.ID,
+			&i.MediaID,
+			&i.Provider,
+			&i.ProviderID,
+			&i.ProviderUrl,
+			&i.Confidence,
+			&i.Locked,
+			&i.MatchedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listMetadataLinksByMediaIDs = `-- name: ListMetadataLinksByMediaIDs :many
+SELECT id, media_id, provider, provider_id, provider_url, confidence, locked, matched_at FROM metadata_links WHERE media_id IN (/*SLICE:media_ids*/?)
+`
+
+func (q *Queries) ListMetadataLinksByMediaIDs(ctx context.Context, mediaIds []int64) ([]MetadataLink, error) {
+	query := listMetadataLinksByMediaIDs
+	var queryParams []interface{}
+	if len(mediaIds) > 0 {
+		for _, v := range mediaIds {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:media_ids*/?", strings.Repeat(",?", len(mediaIds))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:media_ids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []MetadataLink{}
+	for rows.Next() {
+		var i MetadataLink
+		if err := rows.Scan(
+			&i.ID,
+			&i.MediaID,
+			&i.Provider,
+			&i.ProviderID,
+			&i.ProviderUrl,
+			&i.Confidence,
+			&i.Locked,
+			&i.MatchedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const upsertMetadataLink = `-- name: UpsertMetadataLink :one
+INSERT INTO metadata_links (media_id, provider, provider_id, provider_url, confidence, locked)
+VALUES (?, ?, ?, ?, ?, ?)
+ON CONFLICT(media_id, provider) DO UPDATE SET
+    provider_id = excluded.provider_id,
+    provider_url = excluded.provider_url,
+    confidence = excluded.confidence,
+    locked = excluded.locked,
+    matched_at = CURRENT_TIMESTAMP
+RETURNING id, media_id, provider, provider_id, provider_url, confidence, locked, matched_at
+`
+
+type UpsertMetadataLinkParams struct {
+	MediaID     int64   `json:"media_id"`
+	Provider    string  `json:"provider"`
+	ProviderID  string  `json:"provider_id"`
+	ProviderUrl string  `json:"provider_url"`
+	Confidence  float64 `json:"confidence"`
+	Locked      int64   `json:"locked"`
+}
+
+func (q *Queries) UpsertMetadataLink(ctx context.Context, arg UpsertMetadataLinkParams) (MetadataLink, error) {
+	row := q.db.QueryRowContext(ctx, upsertMetadataLink,
+		arg.MediaID,
+		arg.Provider,
+		arg.ProviderID,
+		arg.ProviderUrl,
+		arg.Confidence,
+		arg.Locked,
+	)
+	var i MetadataLink
+	err := row.Scan(
+		&i.ID,
+		&i.MediaID,
+		&i.Provider,
+		&i.ProviderID,
+		&i.ProviderUrl,
+		&i.Confidence,
+		&i.Locked,
+		&i.MatchedAt,
+	)
+	return i, err
+}

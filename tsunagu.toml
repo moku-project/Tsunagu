@@ -1,4 +1,4 @@
-http_addr = ":8080"
+http_addr = ":6007"
 db_path = "data/tsunagu.db"
 jar_cache_dir = "./jar-cache"
 

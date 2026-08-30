@@ -7,46 +7,46 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"time"
 
 	_ "modernc.org/sqlite"
 )
 
+const dsnPragmas = "?_pragma=foreign_keys(1)" +
+	"&_pragma=journal_mode(WAL)" +
+	"&_pragma=synchronous(NORMAL)" +
+	"&_pragma=busy_timeout(5000)" +
+	"&_pragma=cache_size(-20000)" +
+	"&_pragma=temp_store(MEMORY)"
+
 //go:embed migrations/0001_init.sql
 var migration0001 string
 
-//go:embed migrations/0002_extension_updates.sql
+//go:embed migrations/0002_lazy_hydration.sql
 var migration0002 string
 
-//go:embed migrations/0003_extension_removal.sql
+//go:embed migrations/0003_updates_and_cover_override.sql
 var migration0003 string
 
-//go:embed migrations/0004_library_organization.sql
+//go:embed migrations/0004_tracker_records.sql
 var migration0004 string
 
-//go:embed migrations/0005_chapter_uploaded_at_epoch.sql
+//go:embed migrations/0005_metadata_links.sql
 var migration0005 string
 
-//go:embed migrations/0006_reading_progress_position.sql
+//go:embed migrations/0006_chapter_scanlator.sql
 var migration0006 string
-
-//go:embed migrations/0007_download_bytes.sql
-var migration0007 string
-
-//go:embed migrations/0008_download_extras.sql
-var migration0008 string
 
 var migrations = []struct {
 	name string
 	sql  string
 }{
 	{"0001_init.sql", migration0001},
-	{"0002_extension_updates.sql", migration0002},
-	{"0003_extension_removal.sql", migration0003},
-	{"0004_library_organization.sql", migration0004},
-	{"0005_chapter_uploaded_at_epoch.sql", migration0005},
-	{"0006_reading_progress_position.sql", migration0006},
-	{"0007_download_bytes.sql", migration0007},
-	{"0008_download_extras.sql", migration0008},
+	{"0002_lazy_hydration.sql", migration0002},
+	{"0003_updates_and_cover_override.sql", migration0003},
+	{"0004_tracker_records.sql", migration0004},
+	{"0005_metadata_links.sql", migration0005},
+	{"0006_chapter_scanlator.sql", migration0006},
 }
 
 func Open(path string) (*sql.DB, error) {
@@ -56,10 +56,12 @@ func Open(path string) (*sql.DB, error) {
 		}
 	}
 
-	conn, err := sql.Open("sqlite", path+"?_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)")
+	conn, err := sql.Open("sqlite", path+dsnPragmas)
 	if err != nil {
 		return nil, fmt.Errorf("open sqlite: %w", err)
 	}
+	conn.SetMaxOpenConns(16)
+	conn.SetConnMaxIdleTime(5 * time.Minute)
 
 	if err := migrate(conn); err != nil {
 		conn.Close()

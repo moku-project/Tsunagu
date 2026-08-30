@@ -1,0 +1,2721 @@
+package sandboxv1
+
+import (
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	reflect "reflect"
+	sync "sync"
+	unsafe "unsafe"
+)
+
+const (
+	_ = protoimpl.EnforceVersion(20 - protoimpl.MinVersion)
+
+	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
+)
+
+type ContentType int32
+
+const (
+	ContentType_CONTENT_TYPE_UNSPECIFIED ContentType = 0
+	ContentType_MANGA                    ContentType = 1
+	ContentType_NOVEL                    ContentType = 2
+	ContentType_ANIME                    ContentType = 3
+)
+
+var (
+	ContentType_name = map[int32]string{
+		0: "CONTENT_TYPE_UNSPECIFIED",
+		1: "MANGA",
+		2: "NOVEL",
+		3: "ANIME",
+	}
+	ContentType_value = map[string]int32{
+		"CONTENT_TYPE_UNSPECIFIED": 0,
+		"MANGA":                    1,
+		"NOVEL":                    2,
+		"ANIME":                    3,
+	}
+)
+
+func (x ContentType) Enum() *ContentType {
+	p := new(ContentType)
+	*p = x
+	return p
+}
+
+func (x ContentType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ContentType) Descriptor() protoreflect.EnumDescriptor {
+	return file_sandbox_v1_sandbox_proto_enumTypes[0].Descriptor()
+}
+
+func (ContentType) Type() protoreflect.EnumType {
+	return &file_sandbox_v1_sandbox_proto_enumTypes[0]
+}
+
+func (x ContentType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+func (ContentType) EnumDescriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{0}
+}
+
+type Empty struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Empty) Reset() {
+	*x = Empty{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Empty) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Empty) ProtoMessage() {}
+
+func (x *Empty) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*Empty) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{0}
+}
+
+type LoadExtensionsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Extensions    []*ExtensionToLoad     `protobuf:"bytes,1,rep,name=extensions,proto3" json:"extensions,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LoadExtensionsRequest) Reset() {
+	*x = LoadExtensionsRequest{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LoadExtensionsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LoadExtensionsRequest) ProtoMessage() {}
+
+func (x *LoadExtensionsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*LoadExtensionsRequest) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *LoadExtensionsRequest) GetExtensions() []*ExtensionToLoad {
+	if x != nil {
+		return x.Extensions
+	}
+	return nil
+}
+
+type ExtensionToLoad struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ExtensionId   string                 `protobuf:"bytes,1,opt,name=extension_id,json=extensionId,proto3" json:"extension_id,omitempty"`
+	JarPath       string                 `protobuf:"bytes,2,opt,name=jar_path,json=jarPath,proto3" json:"jar_path,omitempty"`
+	ContentType   ContentType            `protobuf:"varint,3,opt,name=content_type,json=contentType,proto3,enum=sandbox.v1.ContentType" json:"content_type,omitempty"`
+	Lang          string                 `protobuf:"bytes,4,opt,name=lang,proto3" json:"lang,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ExtensionToLoad) Reset() {
+	*x = ExtensionToLoad{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExtensionToLoad) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExtensionToLoad) ProtoMessage() {}
+
+func (x *ExtensionToLoad) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*ExtensionToLoad) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *ExtensionToLoad) GetExtensionId() string {
+	if x != nil {
+		return x.ExtensionId
+	}
+	return ""
+}
+
+func (x *ExtensionToLoad) GetJarPath() string {
+	if x != nil {
+		return x.JarPath
+	}
+	return ""
+}
+
+func (x *ExtensionToLoad) GetContentType() ContentType {
+	if x != nil {
+		return x.ContentType
+	}
+	return ContentType_CONTENT_TYPE_UNSPECIFIED
+}
+
+func (x *ExtensionToLoad) GetLang() string {
+	if x != nil {
+		return x.Lang
+	}
+	return ""
+}
+
+type ExtensionRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ExtensionId   string                 `protobuf:"bytes,1,opt,name=extension_id,json=extensionId,proto3" json:"extension_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ExtensionRequest) Reset() {
+	*x = ExtensionRequest{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExtensionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExtensionRequest) ProtoMessage() {}
+
+func (x *ExtensionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*ExtensionRequest) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ExtensionRequest) GetExtensionId() string {
+	if x != nil {
+		return x.ExtensionId
+	}
+	return ""
+}
+
+type Extension struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Id             string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name           string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Version        string                 `protobuf:"bytes,3,opt,name=version,proto3" json:"version,omitempty"`
+	ContentType    ContentType            `protobuf:"varint,4,opt,name=content_type,json=contentType,proto3,enum=sandbox.v1.ContentType" json:"content_type,omitempty"`
+	Lang           string                 `protobuf:"bytes,5,opt,name=lang,proto3" json:"lang,omitempty"`
+	SupportsLatest bool                   `protobuf:"varint,6,opt,name=supports_latest,json=supportsLatest,proto3" json:"supports_latest,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *Extension) Reset() {
+	*x = Extension{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Extension) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Extension) ProtoMessage() {}
+
+func (x *Extension) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*Extension) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *Extension) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Extension) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Extension) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+func (x *Extension) GetContentType() ContentType {
+	if x != nil {
+		return x.ContentType
+	}
+	return ContentType_CONTENT_TYPE_UNSPECIFIED
+}
+
+func (x *Extension) GetLang() string {
+	if x != nil {
+		return x.Lang
+	}
+	return ""
+}
+
+func (x *Extension) GetSupportsLatest() bool {
+	if x != nil {
+		return x.SupportsLatest
+	}
+	return false
+}
+
+type ExtensionList struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Extensions    []*Extension           `protobuf:"bytes,1,rep,name=extensions,proto3" json:"extensions,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ExtensionList) Reset() {
+	*x = ExtensionList{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExtensionList) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExtensionList) ProtoMessage() {}
+
+func (x *ExtensionList) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*ExtensionList) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *ExtensionList) GetExtensions() []*Extension {
+	if x != nil {
+		return x.Extensions
+	}
+	return nil
+}
+
+type SearchRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ExtensionId   string                 `protobuf:"bytes,1,opt,name=extension_id,json=extensionId,proto3" json:"extension_id,omitempty"`
+	Query         string                 `protobuf:"bytes,2,opt,name=query,proto3" json:"query,omitempty"`
+	Page          int32                  `protobuf:"varint,3,opt,name=page,proto3" json:"page,omitempty"`
+	Filters       []*FilterNode          `protobuf:"bytes,4,rep,name=filters,proto3" json:"filters,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SearchRequest) Reset() {
+	*x = SearchRequest{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SearchRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SearchRequest) ProtoMessage() {}
+
+func (x *SearchRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*SearchRequest) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *SearchRequest) GetExtensionId() string {
+	if x != nil {
+		return x.ExtensionId
+	}
+	return ""
+}
+
+func (x *SearchRequest) GetQuery() string {
+	if x != nil {
+		return x.Query
+	}
+	return ""
+}
+
+func (x *SearchRequest) GetPage() int32 {
+	if x != nil {
+		return x.Page
+	}
+	return 0
+}
+
+func (x *SearchRequest) GetFilters() []*FilterNode {
+	if x != nil {
+		return x.Filters
+	}
+	return nil
+}
+
+type BrowseRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ExtensionId   string                 `protobuf:"bytes,1,opt,name=extension_id,json=extensionId,proto3" json:"extension_id,omitempty"`
+	Page          int32                  `protobuf:"varint,2,opt,name=page,proto3" json:"page,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BrowseRequest) Reset() {
+	*x = BrowseRequest{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BrowseRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BrowseRequest) ProtoMessage() {}
+
+func (x *BrowseRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*BrowseRequest) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *BrowseRequest) GetExtensionId() string {
+	if x != nil {
+		return x.ExtensionId
+	}
+	return ""
+}
+
+func (x *BrowseRequest) GetPage() int32 {
+	if x != nil {
+		return x.Page
+	}
+	return 0
+}
+
+type SearchResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Results       []*EntrySummary        `protobuf:"bytes,1,rep,name=results,proto3" json:"results,omitempty"`
+	HasNextPage   bool                   `protobuf:"varint,2,opt,name=has_next_page,json=hasNextPage,proto3" json:"has_next_page,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SearchResponse) Reset() {
+	*x = SearchResponse{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SearchResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SearchResponse) ProtoMessage() {}
+
+func (x *SearchResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*SearchResponse) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *SearchResponse) GetResults() []*EntrySummary {
+	if x != nil {
+		return x.Results
+	}
+	return nil
+}
+
+func (x *SearchResponse) GetHasNextPage() bool {
+	if x != nil {
+		return x.HasNextPage
+	}
+	return false
+}
+
+type EntrySummary struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SourceEntryId string                 `protobuf:"bytes,1,opt,name=source_entry_id,json=sourceEntryId,proto3" json:"source_entry_id,omitempty"`
+	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	CoverUrl      string                 `protobuf:"bytes,3,opt,name=cover_url,json=coverUrl,proto3" json:"cover_url,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EntrySummary) Reset() {
+	*x = EntrySummary{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EntrySummary) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EntrySummary) ProtoMessage() {}
+
+func (x *EntrySummary) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*EntrySummary) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *EntrySummary) GetSourceEntryId() string {
+	if x != nil {
+		return x.SourceEntryId
+	}
+	return ""
+}
+
+func (x *EntrySummary) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *EntrySummary) GetCoverUrl() string {
+	if x != nil {
+		return x.CoverUrl
+	}
+	return ""
+}
+
+type EntryRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ExtensionId   string                 `protobuf:"bytes,1,opt,name=extension_id,json=extensionId,proto3" json:"extension_id,omitempty"`
+	SourceEntryId string                 `protobuf:"bytes,2,opt,name=source_entry_id,json=sourceEntryId,proto3" json:"source_entry_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EntryRequest) Reset() {
+	*x = EntryRequest{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EntryRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EntryRequest) ProtoMessage() {}
+
+func (x *EntryRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*EntryRequest) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *EntryRequest) GetExtensionId() string {
+	if x != nil {
+		return x.ExtensionId
+	}
+	return ""
+}
+
+func (x *EntryRequest) GetSourceEntryId() string {
+	if x != nil {
+		return x.SourceEntryId
+	}
+	return ""
+}
+
+type EntryDetails struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SourceEntryId string                 `protobuf:"bytes,1,opt,name=source_entry_id,json=sourceEntryId,proto3" json:"source_entry_id,omitempty"`
+	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	CoverUrl      string                 `protobuf:"bytes,4,opt,name=cover_url,json=coverUrl,proto3" json:"cover_url,omitempty"`
+	Authors       []string               `protobuf:"bytes,5,rep,name=authors,proto3" json:"authors,omitempty"`
+	Genres        []string               `protobuf:"bytes,6,rep,name=genres,proto3" json:"genres,omitempty"`
+	Status        string                 `protobuf:"bytes,7,opt,name=status,proto3" json:"status,omitempty"`
+	Artists       []string               `protobuf:"bytes,8,rep,name=artists,proto3" json:"artists,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EntryDetails) Reset() {
+	*x = EntryDetails{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EntryDetails) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EntryDetails) ProtoMessage() {}
+
+func (x *EntryDetails) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*EntryDetails) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *EntryDetails) GetSourceEntryId() string {
+	if x != nil {
+		return x.SourceEntryId
+	}
+	return ""
+}
+
+func (x *EntryDetails) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *EntryDetails) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *EntryDetails) GetCoverUrl() string {
+	if x != nil {
+		return x.CoverUrl
+	}
+	return ""
+}
+
+func (x *EntryDetails) GetAuthors() []string {
+	if x != nil {
+		return x.Authors
+	}
+	return nil
+}
+
+func (x *EntryDetails) GetGenres() []string {
+	if x != nil {
+		return x.Genres
+	}
+	return nil
+}
+
+func (x *EntryDetails) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *EntryDetails) GetArtists() []string {
+	if x != nil {
+		return x.Artists
+	}
+	return nil
+}
+
+type ChapterList struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Chapters      []*ChapterSummary      `protobuf:"bytes,1,rep,name=chapters,proto3" json:"chapters,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ChapterList) Reset() {
+	*x = ChapterList{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ChapterList) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChapterList) ProtoMessage() {}
+
+func (x *ChapterList) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*ChapterList) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *ChapterList) GetChapters() []*ChapterSummary {
+	if x != nil {
+		return x.Chapters
+	}
+	return nil
+}
+
+type ChapterSummary struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	SourceChapterId string                 `protobuf:"bytes,1,opt,name=source_chapter_id,json=sourceChapterId,proto3" json:"source_chapter_id,omitempty"`
+	Name            string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Number          float64                `protobuf:"fixed64,3,opt,name=number,proto3" json:"number,omitempty"`
+	UploadTimestamp int64                  `protobuf:"varint,4,opt,name=upload_timestamp,json=uploadTimestamp,proto3" json:"upload_timestamp,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *ChapterSummary) Reset() {
+	*x = ChapterSummary{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ChapterSummary) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChapterSummary) ProtoMessage() {}
+
+func (x *ChapterSummary) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*ChapterSummary) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *ChapterSummary) GetSourceChapterId() string {
+	if x != nil {
+		return x.SourceChapterId
+	}
+	return ""
+}
+
+func (x *ChapterSummary) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *ChapterSummary) GetNumber() float64 {
+	if x != nil {
+		return x.Number
+	}
+	return 0
+}
+
+func (x *ChapterSummary) GetUploadTimestamp() int64 {
+	if x != nil {
+		return x.UploadTimestamp
+	}
+	return 0
+}
+
+type ChapterRequest struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	ExtensionId     string                 `protobuf:"bytes,1,opt,name=extension_id,json=extensionId,proto3" json:"extension_id,omitempty"`
+	SourceEntryId   string                 `protobuf:"bytes,2,opt,name=source_entry_id,json=sourceEntryId,proto3" json:"source_entry_id,omitempty"`
+	SourceChapterId string                 `protobuf:"bytes,3,opt,name=source_chapter_id,json=sourceChapterId,proto3" json:"source_chapter_id,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *ChapterRequest) Reset() {
+	*x = ChapterRequest{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ChapterRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChapterRequest) ProtoMessage() {}
+
+func (x *ChapterRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*ChapterRequest) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *ChapterRequest) GetExtensionId() string {
+	if x != nil {
+		return x.ExtensionId
+	}
+	return ""
+}
+
+func (x *ChapterRequest) GetSourceEntryId() string {
+	if x != nil {
+		return x.SourceEntryId
+	}
+	return ""
+}
+
+func (x *ChapterRequest) GetSourceChapterId() string {
+	if x != nil {
+		return x.SourceChapterId
+	}
+	return ""
+}
+
+type PageList struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PageUrls      []string               `protobuf:"bytes,1,rep,name=page_urls,json=pageUrls,proto3" json:"page_urls,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PageList) Reset() {
+	*x = PageList{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PageList) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PageList) ProtoMessage() {}
+
+func (x *PageList) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*PageList) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *PageList) GetPageUrls() []string {
+	if x != nil {
+		return x.PageUrls
+	}
+	return nil
+}
+
+type TextContent struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Content       string                 `protobuf:"bytes,1,opt,name=content,proto3" json:"content,omitempty"`
+	Format        string                 `protobuf:"bytes,2,opt,name=format,proto3" json:"format,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TextContent) Reset() {
+	*x = TextContent{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TextContent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TextContent) ProtoMessage() {}
+
+func (x *TextContent) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*TextContent) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *TextContent) GetContent() string {
+	if x != nil {
+		return x.Content
+	}
+	return ""
+}
+
+func (x *TextContent) GetFormat() string {
+	if x != nil {
+		return x.Format
+	}
+	return ""
+}
+
+type EpisodeList struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Episodes      []*EpisodeSummary      `protobuf:"bytes,1,rep,name=episodes,proto3" json:"episodes,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EpisodeList) Reset() {
+	*x = EpisodeList{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EpisodeList) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EpisodeList) ProtoMessage() {}
+
+func (x *EpisodeList) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*EpisodeList) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *EpisodeList) GetEpisodes() []*EpisodeSummary {
+	if x != nil {
+		return x.Episodes
+	}
+	return nil
+}
+
+type EpisodeSummary struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	SourceEpisodeId string                 `protobuf:"bytes,1,opt,name=source_episode_id,json=sourceEpisodeId,proto3" json:"source_episode_id,omitempty"`
+	Name            string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Number          float64                `protobuf:"fixed64,3,opt,name=number,proto3" json:"number,omitempty"`
+	UploadTimestamp int64                  `protobuf:"varint,4,opt,name=upload_timestamp,json=uploadTimestamp,proto3" json:"upload_timestamp,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *EpisodeSummary) Reset() {
+	*x = EpisodeSummary{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EpisodeSummary) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EpisodeSummary) ProtoMessage() {}
+
+func (x *EpisodeSummary) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*EpisodeSummary) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *EpisodeSummary) GetSourceEpisodeId() string {
+	if x != nil {
+		return x.SourceEpisodeId
+	}
+	return ""
+}
+
+func (x *EpisodeSummary) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *EpisodeSummary) GetNumber() float64 {
+	if x != nil {
+		return x.Number
+	}
+	return 0
+}
+
+func (x *EpisodeSummary) GetUploadTimestamp() int64 {
+	if x != nil {
+		return x.UploadTimestamp
+	}
+	return 0
+}
+
+type EpisodeRequest struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	ExtensionId     string                 `protobuf:"bytes,1,opt,name=extension_id,json=extensionId,proto3" json:"extension_id,omitempty"`
+	SourceEntryId   string                 `protobuf:"bytes,2,opt,name=source_entry_id,json=sourceEntryId,proto3" json:"source_entry_id,omitempty"`
+	SourceEpisodeId string                 `protobuf:"bytes,3,opt,name=source_episode_id,json=sourceEpisodeId,proto3" json:"source_episode_id,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *EpisodeRequest) Reset() {
+	*x = EpisodeRequest{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EpisodeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EpisodeRequest) ProtoMessage() {}
+
+func (x *EpisodeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*EpisodeRequest) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *EpisodeRequest) GetExtensionId() string {
+	if x != nil {
+		return x.ExtensionId
+	}
+	return ""
+}
+
+func (x *EpisodeRequest) GetSourceEntryId() string {
+	if x != nil {
+		return x.SourceEntryId
+	}
+	return ""
+}
+
+func (x *EpisodeRequest) GetSourceEpisodeId() string {
+	if x != nil {
+		return x.SourceEpisodeId
+	}
+	return ""
+}
+
+type StreamInfo struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+
+	StreamUrl string            `protobuf:"bytes,1,opt,name=stream_url,json=streamUrl,proto3" json:"stream_url,omitempty"`
+	Quality   string            `protobuf:"bytes,2,opt,name=quality,proto3" json:"quality,omitempty"`
+	Subtitles []*SubtitleTrack  `protobuf:"bytes,3,rep,name=subtitles,proto3" json:"subtitles,omitempty"`
+	Headers   map[string]string `protobuf:"bytes,4,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+
+	Sources     []*VideoSource `protobuf:"bytes,5,rep,name=sources,proto3" json:"sources,omitempty"`
+	AudioTracks []*AudioTrack  `protobuf:"bytes,6,rep,name=audio_tracks,json=audioTracks,proto3" json:"audio_tracks,omitempty"`
+
+	Timestamps    []*SkipTimestamp `protobuf:"bytes,7,rep,name=timestamps,proto3" json:"timestamps,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StreamInfo) Reset() {
+	*x = StreamInfo{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StreamInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StreamInfo) ProtoMessage() {}
+
+func (x *StreamInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*StreamInfo) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *StreamInfo) GetStreamUrl() string {
+	if x != nil {
+		return x.StreamUrl
+	}
+	return ""
+}
+
+func (x *StreamInfo) GetQuality() string {
+	if x != nil {
+		return x.Quality
+	}
+	return ""
+}
+
+func (x *StreamInfo) GetSubtitles() []*SubtitleTrack {
+	if x != nil {
+		return x.Subtitles
+	}
+	return nil
+}
+
+func (x *StreamInfo) GetHeaders() map[string]string {
+	if x != nil {
+		return x.Headers
+	}
+	return nil
+}
+
+func (x *StreamInfo) GetSources() []*VideoSource {
+	if x != nil {
+		return x.Sources
+	}
+	return nil
+}
+
+func (x *StreamInfo) GetAudioTracks() []*AudioTrack {
+	if x != nil {
+		return x.AudioTracks
+	}
+	return nil
+}
+
+func (x *StreamInfo) GetTimestamps() []*SkipTimestamp {
+	if x != nil {
+		return x.Timestamps
+	}
+	return nil
+}
+
+type VideoSource struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	Label         string                 `protobuf:"bytes,2,opt,name=label,proto3" json:"label,omitempty"`
+	Resolution    int32                  `protobuf:"varint,3,opt,name=resolution,proto3" json:"resolution,omitempty"`
+	Preferred     bool                   `protobuf:"varint,4,opt,name=preferred,proto3" json:"preferred,omitempty"`
+	Headers       map[string]string      `protobuf:"bytes,5,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Subtitles     []*SubtitleTrack       `protobuf:"bytes,6,rep,name=subtitles,proto3" json:"subtitles,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *VideoSource) Reset() {
+	*x = VideoSource{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *VideoSource) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*VideoSource) ProtoMessage() {}
+
+func (x *VideoSource) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*VideoSource) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *VideoSource) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *VideoSource) GetLabel() string {
+	if x != nil {
+		return x.Label
+	}
+	return ""
+}
+
+func (x *VideoSource) GetResolution() int32 {
+	if x != nil {
+		return x.Resolution
+	}
+	return 0
+}
+
+func (x *VideoSource) GetPreferred() bool {
+	if x != nil {
+		return x.Preferred
+	}
+	return false
+}
+
+func (x *VideoSource) GetHeaders() map[string]string {
+	if x != nil {
+		return x.Headers
+	}
+	return nil
+}
+
+func (x *VideoSource) GetSubtitles() []*SubtitleTrack {
+	if x != nil {
+		return x.Subtitles
+	}
+	return nil
+}
+
+type AudioTrack struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	Lang          string                 `protobuf:"bytes,2,opt,name=lang,proto3" json:"lang,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AudioTrack) Reset() {
+	*x = AudioTrack{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AudioTrack) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AudioTrack) ProtoMessage() {}
+
+func (x *AudioTrack) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*AudioTrack) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *AudioTrack) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *AudioTrack) GetLang() string {
+	if x != nil {
+		return x.Lang
+	}
+	return ""
+}
+
+type SkipTimestamp struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	StartMs       int64                  `protobuf:"varint,1,opt,name=start_ms,json=startMs,proto3" json:"start_ms,omitempty"`
+	EndMs         int64                  `protobuf:"varint,2,opt,name=end_ms,json=endMs,proto3" json:"end_ms,omitempty"`
+	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	Type          string                 `protobuf:"bytes,4,opt,name=type,proto3" json:"type,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SkipTimestamp) Reset() {
+	*x = SkipTimestamp{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SkipTimestamp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SkipTimestamp) ProtoMessage() {}
+
+func (x *SkipTimestamp) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*SkipTimestamp) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *SkipTimestamp) GetStartMs() int64 {
+	if x != nil {
+		return x.StartMs
+	}
+	return 0
+}
+
+func (x *SkipTimestamp) GetEndMs() int64 {
+	if x != nil {
+		return x.EndMs
+	}
+	return 0
+}
+
+func (x *SkipTimestamp) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *SkipTimestamp) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+type SubtitleTrack struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	Lang          string                 `protobuf:"bytes,2,opt,name=lang,proto3" json:"lang,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SubtitleTrack) Reset() {
+	*x = SubtitleTrack{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SubtitleTrack) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SubtitleTrack) ProtoMessage() {}
+
+func (x *SubtitleTrack) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*SubtitleTrack) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *SubtitleTrack) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *SubtitleTrack) GetLang() string {
+	if x != nil {
+		return x.Lang
+	}
+	return ""
+}
+
+type ImageRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ExtensionId   string                 `protobuf:"bytes,1,opt,name=extension_id,json=extensionId,proto3" json:"extension_id,omitempty"`
+	ImageUrl      string                 `protobuf:"bytes,2,opt,name=image_url,json=imageUrl,proto3" json:"image_url,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ImageRequest) Reset() {
+	*x = ImageRequest{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ImageRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ImageRequest) ProtoMessage() {}
+
+func (x *ImageRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*ImageRequest) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *ImageRequest) GetExtensionId() string {
+	if x != nil {
+		return x.ExtensionId
+	}
+	return ""
+}
+
+func (x *ImageRequest) GetImageUrl() string {
+	if x != nil {
+		return x.ImageUrl
+	}
+	return ""
+}
+
+type ImageData struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Data          []byte                 `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
+	ContentType   string                 `protobuf:"bytes,2,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ImageData) Reset() {
+	*x = ImageData{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ImageData) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ImageData) ProtoMessage() {}
+
+func (x *ImageData) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*ImageData) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *ImageData) GetData() []byte {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+func (x *ImageData) GetContentType() string {
+	if x != nil {
+		return x.ContentType
+	}
+	return ""
+}
+
+type PeekExtensionRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FilePath      string                 `protobuf:"bytes,1,opt,name=file_path,json=filePath,proto3" json:"file_path,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PeekExtensionRequest) Reset() {
+	*x = PeekExtensionRequest{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PeekExtensionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PeekExtensionRequest) ProtoMessage() {}
+
+func (x *PeekExtensionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*PeekExtensionRequest) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *PeekExtensionRequest) GetFilePath() string {
+	if x != nil {
+		return x.FilePath
+	}
+	return ""
+}
+
+type ExtensionMetadata struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PackageName   string                 `protobuf:"bytes,1,opt,name=package_name,json=packageName,proto3" json:"package_name,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	ContentType   ContentType            `protobuf:"varint,3,opt,name=content_type,json=contentType,proto3,enum=sandbox.v1.ContentType" json:"content_type,omitempty"`
+	Lang          string                 `protobuf:"bytes,4,opt,name=lang,proto3" json:"lang,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ExtensionMetadata) Reset() {
+	*x = ExtensionMetadata{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExtensionMetadata) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExtensionMetadata) ProtoMessage() {}
+
+func (x *ExtensionMetadata) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*ExtensionMetadata) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *ExtensionMetadata) GetPackageName() string {
+	if x != nil {
+		return x.PackageName
+	}
+	return ""
+}
+
+func (x *ExtensionMetadata) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *ExtensionMetadata) GetContentType() ContentType {
+	if x != nil {
+		return x.ContentType
+	}
+	return ContentType_CONTENT_TYPE_UNSPECIFIED
+}
+
+func (x *ExtensionMetadata) GetLang() string {
+	if x != nil {
+		return x.Lang
+	}
+	return ""
+}
+
+type GetFilterListRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ExtensionId   string                 `protobuf:"bytes,1,opt,name=extension_id,json=extensionId,proto3" json:"extension_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetFilterListRequest) Reset() {
+	*x = GetFilterListRequest{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetFilterListRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetFilterListRequest) ProtoMessage() {}
+
+func (x *GetFilterListRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*GetFilterListRequest) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *GetFilterListRequest) GetExtensionId() string {
+	if x != nil {
+		return x.ExtensionId
+	}
+	return ""
+}
+
+type GetFilterListResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Filters       []*FilterNode          `protobuf:"bytes,1,rep,name=filters,proto3" json:"filters,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetFilterListResponse) Reset() {
+	*x = GetFilterListResponse{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetFilterListResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetFilterListResponse) ProtoMessage() {}
+
+func (x *GetFilterListResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*GetFilterListResponse) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *GetFilterListResponse) GetFilters() []*FilterNode {
+	if x != nil {
+		return x.Filters
+	}
+	return nil
+}
+
+type FilterNode struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Name  string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+
+	Kind          isFilterNode_Kind `protobuf_oneof:"kind"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FilterNode) Reset() {
+	*x = FilterNode{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FilterNode) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FilterNode) ProtoMessage() {}
+
+func (x *FilterNode) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*FilterNode) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *FilterNode) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *FilterNode) GetKind() isFilterNode_Kind {
+	if x != nil {
+		return x.Kind
+	}
+	return nil
+}
+
+func (x *FilterNode) GetHeader() *HeaderFilter {
+	if x != nil {
+		if x, ok := x.Kind.(*FilterNode_Header); ok {
+			return x.Header
+		}
+	}
+	return nil
+}
+
+func (x *FilterNode) GetSeparator() *SeparatorFilter {
+	if x != nil {
+		if x, ok := x.Kind.(*FilterNode_Separator); ok {
+			return x.Separator
+		}
+	}
+	return nil
+}
+
+func (x *FilterNode) GetSelect() *SelectFilter {
+	if x != nil {
+		if x, ok := x.Kind.(*FilterNode_Select); ok {
+			return x.Select
+		}
+	}
+	return nil
+}
+
+func (x *FilterNode) GetText() *TextFilter {
+	if x != nil {
+		if x, ok := x.Kind.(*FilterNode_Text); ok {
+			return x.Text
+		}
+	}
+	return nil
+}
+
+func (x *FilterNode) GetCheckbox() *CheckBoxFilter {
+	if x != nil {
+		if x, ok := x.Kind.(*FilterNode_Checkbox); ok {
+			return x.Checkbox
+		}
+	}
+	return nil
+}
+
+func (x *FilterNode) GetTristate() *TriStateFilter {
+	if x != nil {
+		if x, ok := x.Kind.(*FilterNode_Tristate); ok {
+			return x.Tristate
+		}
+	}
+	return nil
+}
+
+func (x *FilterNode) GetGroup() *GroupFilter {
+	if x != nil {
+		if x, ok := x.Kind.(*FilterNode_Group); ok {
+			return x.Group
+		}
+	}
+	return nil
+}
+
+func (x *FilterNode) GetSort() *SortFilter {
+	if x != nil {
+		if x, ok := x.Kind.(*FilterNode_Sort); ok {
+			return x.Sort
+		}
+	}
+	return nil
+}
+
+type isFilterNode_Kind interface {
+	isFilterNode_Kind()
+}
+
+type FilterNode_Header struct {
+	Header *HeaderFilter `protobuf:"bytes,2,opt,name=header,proto3,oneof"`
+}
+
+type FilterNode_Separator struct {
+	Separator *SeparatorFilter `protobuf:"bytes,3,opt,name=separator,proto3,oneof"`
+}
+
+type FilterNode_Select struct {
+	Select *SelectFilter `protobuf:"bytes,4,opt,name=select,proto3,oneof"`
+}
+
+type FilterNode_Text struct {
+	Text *TextFilter `protobuf:"bytes,5,opt,name=text,proto3,oneof"`
+}
+
+type FilterNode_Checkbox struct {
+	Checkbox *CheckBoxFilter `protobuf:"bytes,6,opt,name=checkbox,proto3,oneof"`
+}
+
+type FilterNode_Tristate struct {
+	Tristate *TriStateFilter `protobuf:"bytes,7,opt,name=tristate,proto3,oneof"`
+}
+
+type FilterNode_Group struct {
+	Group *GroupFilter `protobuf:"bytes,8,opt,name=group,proto3,oneof"`
+}
+
+type FilterNode_Sort struct {
+	Sort *SortFilter `protobuf:"bytes,9,opt,name=sort,proto3,oneof"`
+}
+
+func (*FilterNode_Header) isFilterNode_Kind() {}
+
+func (*FilterNode_Separator) isFilterNode_Kind() {}
+
+func (*FilterNode_Select) isFilterNode_Kind() {}
+
+func (*FilterNode_Text) isFilterNode_Kind() {}
+
+func (*FilterNode_Checkbox) isFilterNode_Kind() {}
+
+func (*FilterNode_Tristate) isFilterNode_Kind() {}
+
+func (*FilterNode_Group) isFilterNode_Kind() {}
+
+func (*FilterNode_Sort) isFilterNode_Kind() {}
+
+type HeaderFilter struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HeaderFilter) Reset() {
+	*x = HeaderFilter{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HeaderFilter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HeaderFilter) ProtoMessage() {}
+
+func (x *HeaderFilter) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*HeaderFilter) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{32}
+}
+
+type SeparatorFilter struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SeparatorFilter) Reset() {
+	*x = SeparatorFilter{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SeparatorFilter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SeparatorFilter) ProtoMessage() {}
+
+func (x *SeparatorFilter) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*SeparatorFilter) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{33}
+}
+
+type SelectFilter struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Values        []string               `protobuf:"bytes,1,rep,name=values,proto3" json:"values,omitempty"`
+	State         int32                  `protobuf:"varint,2,opt,name=state,proto3" json:"state,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SelectFilter) Reset() {
+	*x = SelectFilter{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SelectFilter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SelectFilter) ProtoMessage() {}
+
+func (x *SelectFilter) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[34]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*SelectFilter) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{34}
+}
+
+func (x *SelectFilter) GetValues() []string {
+	if x != nil {
+		return x.Values
+	}
+	return nil
+}
+
+func (x *SelectFilter) GetState() int32 {
+	if x != nil {
+		return x.State
+	}
+	return 0
+}
+
+type TextFilter struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	State         string                 `protobuf:"bytes,1,opt,name=state,proto3" json:"state,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TextFilter) Reset() {
+	*x = TextFilter{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[35]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TextFilter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TextFilter) ProtoMessage() {}
+
+func (x *TextFilter) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[35]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*TextFilter) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{35}
+}
+
+func (x *TextFilter) GetState() string {
+	if x != nil {
+		return x.State
+	}
+	return ""
+}
+
+type CheckBoxFilter struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	State         bool                   `protobuf:"varint,1,opt,name=state,proto3" json:"state,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CheckBoxFilter) Reset() {
+	*x = CheckBoxFilter{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[36]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CheckBoxFilter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckBoxFilter) ProtoMessage() {}
+
+func (x *CheckBoxFilter) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[36]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*CheckBoxFilter) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{36}
+}
+
+func (x *CheckBoxFilter) GetState() bool {
+	if x != nil {
+		return x.State
+	}
+	return false
+}
+
+type TriStateFilter struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	State         int32                  `protobuf:"varint,1,opt,name=state,proto3" json:"state,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TriStateFilter) Reset() {
+	*x = TriStateFilter{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[37]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TriStateFilter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TriStateFilter) ProtoMessage() {}
+
+func (x *TriStateFilter) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[37]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*TriStateFilter) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{37}
+}
+
+func (x *TriStateFilter) GetState() int32 {
+	if x != nil {
+		return x.State
+	}
+	return 0
+}
+
+type GroupFilter struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Children      []*FilterNode          `protobuf:"bytes,1,rep,name=children,proto3" json:"children,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GroupFilter) Reset() {
+	*x = GroupFilter{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[38]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GroupFilter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GroupFilter) ProtoMessage() {}
+
+func (x *GroupFilter) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[38]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*GroupFilter) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{38}
+}
+
+func (x *GroupFilter) GetChildren() []*FilterNode {
+	if x != nil {
+		return x.Children
+	}
+	return nil
+}
+
+type SortFilter struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Values        []string               `protobuf:"bytes,1,rep,name=values,proto3" json:"values,omitempty"`
+	HasState      bool                   `protobuf:"varint,2,opt,name=has_state,json=hasState,proto3" json:"has_state,omitempty"`
+	Index         int32                  `protobuf:"varint,3,opt,name=index,proto3" json:"index,omitempty"`
+	Ascending     bool                   `protobuf:"varint,4,opt,name=ascending,proto3" json:"ascending,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SortFilter) Reset() {
+	*x = SortFilter{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[39]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SortFilter) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SortFilter) ProtoMessage() {}
+
+func (x *SortFilter) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[39]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+func (*SortFilter) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{39}
+}
+
+func (x *SortFilter) GetValues() []string {
+	if x != nil {
+		return x.Values
+	}
+	return nil
+}
+
+func (x *SortFilter) GetHasState() bool {
+	if x != nil {
+		return x.HasState
+	}
+	return false
+}
+
+func (x *SortFilter) GetIndex() int32 {
+	if x != nil {
+		return x.Index
+	}
+	return 0
+}
+
+func (x *SortFilter) GetAscending() bool {
+	if x != nil {
+		return x.Ascending
+	}
+	return false
+}
+
+var File_sandbox_v1_sandbox_proto protoreflect.FileDescriptor
+
+const file_sandbox_v1_sandbox_proto_rawDesc = "" +
+	"\n" +
+	"\x18sandbox/v1/sandbox.proto\x12\n" +
+	"sandbox.v1\"\a\n" +
+	"\x05Empty\"T\n" +
+	"\x15LoadExtensionsRequest\x12;\n" +
+	"\n" +
+	"extensions\x18\x01 \x03(\v2\x1b.sandbox.v1.ExtensionToLoadR\n" +
+	"extensions\"\x9f\x01\n" +
+	"\x0fExtensionToLoad\x12!\n" +
+	"\fextension_id\x18\x01 \x01(\tR\vextensionId\x12\x19\n" +
+	"\bjar_path\x18\x02 \x01(\tR\ajarPath\x12:\n" +
+	"\fcontent_type\x18\x03 \x01(\x0e2\x17.sandbox.v1.ContentTypeR\vcontentType\x12\x12\n" +
+	"\x04lang\x18\x04 \x01(\tR\x04lang\"5\n" +
+	"\x10ExtensionRequest\x12!\n" +
+	"\fextension_id\x18\x01 \x01(\tR\vextensionId\"\xc2\x01\n" +
+	"\tExtension\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
+	"\aversion\x18\x03 \x01(\tR\aversion\x12:\n" +
+	"\fcontent_type\x18\x04 \x01(\x0e2\x17.sandbox.v1.ContentTypeR\vcontentType\x12\x12\n" +
+	"\x04lang\x18\x05 \x01(\tR\x04lang\x12'\n" +
+	"\x0fsupports_latest\x18\x06 \x01(\bR\x0esupportsLatest\"F\n" +
+	"\rExtensionList\x125\n" +
+	"\n" +
+	"extensions\x18\x01 \x03(\v2\x15.sandbox.v1.ExtensionR\n" +
+	"extensions\"\x8e\x01\n" +
+	"\rSearchRequest\x12!\n" +
+	"\fextension_id\x18\x01 \x01(\tR\vextensionId\x12\x14\n" +
+	"\x05query\x18\x02 \x01(\tR\x05query\x12\x12\n" +
+	"\x04page\x18\x03 \x01(\x05R\x04page\x120\n" +
+	"\afilters\x18\x04 \x03(\v2\x16.sandbox.v1.FilterNodeR\afilters\"F\n" +
+	"\rBrowseRequest\x12!\n" +
+	"\fextension_id\x18\x01 \x01(\tR\vextensionId\x12\x12\n" +
+	"\x04page\x18\x02 \x01(\x05R\x04page\"h\n" +
+	"\x0eSearchResponse\x122\n" +
+	"\aresults\x18\x01 \x03(\v2\x18.sandbox.v1.EntrySummaryR\aresults\x12\"\n" +
+	"\rhas_next_page\x18\x02 \x01(\bR\vhasNextPage\"i\n" +
+	"\fEntrySummary\x12&\n" +
+	"\x0fsource_entry_id\x18\x01 \x01(\tR\rsourceEntryId\x12\x14\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\x12\x1b\n" +
+	"\tcover_url\x18\x03 \x01(\tR\bcoverUrl\"Y\n" +
+	"\fEntryRequest\x12!\n" +
+	"\fextension_id\x18\x01 \x01(\tR\vextensionId\x12&\n" +
+	"\x0fsource_entry_id\x18\x02 \x01(\tR\rsourceEntryId\"\xef\x01\n" +
+	"\fEntryDetails\x12&\n" +
+	"\x0fsource_entry_id\x18\x01 \x01(\tR\rsourceEntryId\x12\x14\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\x12 \n" +
+	"\vdescription\x18\x03 \x01(\tR\vdescription\x12\x1b\n" +
+	"\tcover_url\x18\x04 \x01(\tR\bcoverUrl\x12\x18\n" +
+	"\aauthors\x18\x05 \x03(\tR\aauthors\x12\x16\n" +
+	"\x06genres\x18\x06 \x03(\tR\x06genres\x12\x16\n" +
+	"\x06status\x18\a \x01(\tR\x06status\x12\x18\n" +
+	"\aartists\x18\b \x03(\tR\aartists\"E\n" +
+	"\vChapterList\x126\n" +
+	"\bchapters\x18\x01 \x03(\v2\x1a.sandbox.v1.ChapterSummaryR\bchapters\"\x93\x01\n" +
+	"\x0eChapterSummary\x12*\n" +
+	"\x11source_chapter_id\x18\x01 \x01(\tR\x0fsourceChapterId\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x16\n" +
+	"\x06number\x18\x03 \x01(\x01R\x06number\x12)\n" +
+	"\x10upload_timestamp\x18\x04 \x01(\x03R\x0fuploadTimestamp\"\x87\x01\n" +
+	"\x0eChapterRequest\x12!\n" +
+	"\fextension_id\x18\x01 \x01(\tR\vextensionId\x12&\n" +
+	"\x0fsource_entry_id\x18\x02 \x01(\tR\rsourceEntryId\x12*\n" +
+	"\x11source_chapter_id\x18\x03 \x01(\tR\x0fsourceChapterId\"'\n" +
+	"\bPageList\x12\x1b\n" +
+	"\tpage_urls\x18\x01 \x03(\tR\bpageUrls\"?\n" +
+	"\vTextContent\x12\x18\n" +
+	"\acontent\x18\x01 \x01(\tR\acontent\x12\x16\n" +
+	"\x06format\x18\x02 \x01(\tR\x06format\"E\n" +
+	"\vEpisodeList\x126\n" +
+	"\bepisodes\x18\x01 \x03(\v2\x1a.sandbox.v1.EpisodeSummaryR\bepisodes\"\x93\x01\n" +
+	"\x0eEpisodeSummary\x12*\n" +
+	"\x11source_episode_id\x18\x01 \x01(\tR\x0fsourceEpisodeId\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x16\n" +
+	"\x06number\x18\x03 \x01(\x01R\x06number\x12)\n" +
+	"\x10upload_timestamp\x18\x04 \x01(\x03R\x0fuploadTimestamp\"\x87\x01\n" +
+	"\x0eEpisodeRequest\x12!\n" +
+	"\fextension_id\x18\x01 \x01(\tR\vextensionId\x12&\n" +
+	"\x0fsource_entry_id\x18\x02 \x01(\tR\rsourceEntryId\x12*\n" +
+	"\x11source_episode_id\x18\x03 \x01(\tR\x0fsourceEpisodeId\"\xa2\x03\n" +
+	"\n" +
+	"StreamInfo\x12\x1d\n" +
+	"\n" +
+	"stream_url\x18\x01 \x01(\tR\tstreamUrl\x12\x18\n" +
+	"\aquality\x18\x02 \x01(\tR\aquality\x127\n" +
+	"\tsubtitles\x18\x03 \x03(\v2\x19.sandbox.v1.SubtitleTrackR\tsubtitles\x12=\n" +
+	"\aheaders\x18\x04 \x03(\v2#.sandbox.v1.StreamInfo.HeadersEntryR\aheaders\x121\n" +
+	"\asources\x18\x05 \x03(\v2\x17.sandbox.v1.VideoSourceR\asources\x129\n" +
+	"\faudio_tracks\x18\x06 \x03(\v2\x16.sandbox.v1.AudioTrackR\vaudioTracks\x129\n" +
+	"\n" +
+	"timestamps\x18\a \x03(\v2\x19.sandbox.v1.SkipTimestampR\n" +
+	"timestamps\x1a:\n" +
+	"\fHeadersEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xa8\x02\n" +
+	"\vVideoSource\x12\x10\n" +
+	"\x03url\x18\x01 \x01(\tR\x03url\x12\x14\n" +
+	"\x05label\x18\x02 \x01(\tR\x05label\x12\x1e\n" +
+	"\n" +
+	"resolution\x18\x03 \x01(\x05R\n" +
+	"resolution\x12\x1c\n" +
+	"\tpreferred\x18\x04 \x01(\bR\tpreferred\x12>\n" +
+	"\aheaders\x18\x05 \x03(\v2$.sandbox.v1.VideoSource.HeadersEntryR\aheaders\x127\n" +
+	"\tsubtitles\x18\x06 \x03(\v2\x19.sandbox.v1.SubtitleTrackR\tsubtitles\x1a:\n" +
+	"\fHeadersEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"2\n" +
+	"\n" +
+	"AudioTrack\x12\x10\n" +
+	"\x03url\x18\x01 \x01(\tR\x03url\x12\x12\n" +
+	"\x04lang\x18\x02 \x01(\tR\x04lang\"i\n" +
+	"\rSkipTimestamp\x12\x19\n" +
+	"\bstart_ms\x18\x01 \x01(\x03R\astartMs\x12\x15\n" +
+	"\x06end_ms\x18\x02 \x01(\x03R\x05endMs\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x12\x12\n" +
+	"\x04type\x18\x04 \x01(\tR\x04type\"5\n" +
+	"\rSubtitleTrack\x12\x10\n" +
+	"\x03url\x18\x01 \x01(\tR\x03url\x12\x12\n" +
+	"\x04lang\x18\x02 \x01(\tR\x04lang\"N\n" +
+	"\fImageRequest\x12!\n" +
+	"\fextension_id\x18\x01 \x01(\tR\vextensionId\x12\x1b\n" +
+	"\timage_url\x18\x02 \x01(\tR\bimageUrl\"B\n" +
+	"\tImageData\x12\x12\n" +
+	"\x04data\x18\x01 \x01(\fR\x04data\x12!\n" +
+	"\fcontent_type\x18\x02 \x01(\tR\vcontentType\"3\n" +
+	"\x14PeekExtensionRequest\x12\x1b\n" +
+	"\tfile_path\x18\x01 \x01(\tR\bfilePath\"\x9a\x01\n" +
+	"\x11ExtensionMetadata\x12!\n" +
+	"\fpackage_name\x18\x01 \x01(\tR\vpackageName\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12:\n" +
+	"\fcontent_type\x18\x03 \x01(\x0e2\x17.sandbox.v1.ContentTypeR\vcontentType\x12\x12\n" +
+	"\x04lang\x18\x04 \x01(\tR\x04lang\"9\n" +
+	"\x14GetFilterListRequest\x12!\n" +
+	"\fextension_id\x18\x01 \x01(\tR\vextensionId\"I\n" +
+	"\x15GetFilterListResponse\x120\n" +
+	"\afilters\x18\x01 \x03(\v2\x16.sandbox.v1.FilterNodeR\afilters\"\xce\x03\n" +
+	"\n" +
+	"FilterNode\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x122\n" +
+	"\x06header\x18\x02 \x01(\v2\x18.sandbox.v1.HeaderFilterH\x00R\x06header\x12;\n" +
+	"\tseparator\x18\x03 \x01(\v2\x1b.sandbox.v1.SeparatorFilterH\x00R\tseparator\x122\n" +
+	"\x06select\x18\x04 \x01(\v2\x18.sandbox.v1.SelectFilterH\x00R\x06select\x12,\n" +
+	"\x04text\x18\x05 \x01(\v2\x16.sandbox.v1.TextFilterH\x00R\x04text\x128\n" +
+	"\bcheckbox\x18\x06 \x01(\v2\x1a.sandbox.v1.CheckBoxFilterH\x00R\bcheckbox\x128\n" +
+	"\btristate\x18\a \x01(\v2\x1a.sandbox.v1.TriStateFilterH\x00R\btristate\x12/\n" +
+	"\x05group\x18\b \x01(\v2\x17.sandbox.v1.GroupFilterH\x00R\x05group\x12,\n" +
+	"\x04sort\x18\t \x01(\v2\x16.sandbox.v1.SortFilterH\x00R\x04sortB\x06\n" +
+	"\x04kind\"\x0e\n" +
+	"\fHeaderFilter\"\x11\n" +
+	"\x0fSeparatorFilter\"<\n" +
+	"\fSelectFilter\x12\x16\n" +
+	"\x06values\x18\x01 \x03(\tR\x06values\x12\x14\n" +
+	"\x05state\x18\x02 \x01(\x05R\x05state\"\"\n" +
+	"\n" +
+	"TextFilter\x12\x14\n" +
+	"\x05state\x18\x01 \x01(\tR\x05state\"&\n" +
+	"\x0eCheckBoxFilter\x12\x14\n" +
+	"\x05state\x18\x01 \x01(\bR\x05state\"&\n" +
+	"\x0eTriStateFilter\x12\x14\n" +
+	"\x05state\x18\x01 \x01(\x05R\x05state\"A\n" +
+	"\vGroupFilter\x122\n" +
+	"\bchildren\x18\x01 \x03(\v2\x16.sandbox.v1.FilterNodeR\bchildren\"u\n" +
+	"\n" +
+	"SortFilter\x12\x16\n" +
+	"\x06values\x18\x01 \x03(\tR\x06values\x12\x1b\n" +
+	"\thas_state\x18\x02 \x01(\bR\bhasState\x12\x14\n" +
+	"\x05index\x18\x03 \x01(\x05R\x05index\x12\x1c\n" +
+	"\tascending\x18\x04 \x01(\bR\tascending*L\n" +
+	"\vContentType\x12\x1c\n" +
+	"\x18CONTENT_TYPE_UNSPECIFIED\x10\x00\x12\t\n" +
+	"\x05MANGA\x10\x01\x12\t\n" +
+	"\x05NOVEL\x10\x02\x12\t\n" +
+	"\x05ANIME\x10\x032\xbd\b\n" +
+	"\x10ExtensionService\x12N\n" +
+	"\x0eLoadExtensions\x12!.sandbox.v1.LoadExtensionsRequest\x1a\x19.sandbox.v1.ExtensionList\x12D\n" +
+	"\x14ListLoadedExtensions\x12\x11.sandbox.v1.Empty\x1a\x19.sandbox.v1.ExtensionList\x12B\n" +
+	"\x0fUnloadExtension\x12\x1c.sandbox.v1.ExtensionRequest\x1a\x11.sandbox.v1.Empty\x12?\n" +
+	"\x06Search\x12\x19.sandbox.v1.SearchRequest\x1a\x1a.sandbox.v1.SearchResponse\x12@\n" +
+	"\n" +
+	"GetDetails\x12\x18.sandbox.v1.EntryRequest\x1a\x18.sandbox.v1.EntryDetails\x12@\n" +
+	"\vGetChapters\x12\x18.sandbox.v1.EntryRequest\x1a\x17.sandbox.v1.ChapterList\x12<\n" +
+	"\bGetPages\x12\x1a.sandbox.v1.ChapterRequest\x1a\x14.sandbox.v1.PageList\x12E\n" +
+	"\x0eGetChapterText\x12\x1a.sandbox.v1.ChapterRequest\x1a\x17.sandbox.v1.TextContent\x12@\n" +
+	"\vGetEpisodes\x12\x18.sandbox.v1.EntryRequest\x1a\x17.sandbox.v1.EpisodeList\x12D\n" +
+	"\x0eGetVideoStream\x12\x1a.sandbox.v1.EpisodeRequest\x1a\x16.sandbox.v1.StreamInfo\x12@\n" +
+	"\rGetImageBytes\x12\x18.sandbox.v1.ImageRequest\x1a\x15.sandbox.v1.ImageData\x12P\n" +
+	"\rPeekExtension\x12 .sandbox.v1.PeekExtensionRequest\x1a\x1d.sandbox.v1.ExtensionMetadata\x12T\n" +
+	"\rGetFilterList\x12 .sandbox.v1.GetFilterListRequest\x1a!.sandbox.v1.GetFilterListResponse\x12H\n" +
+	"\x0fGetPopularManga\x12\x19.sandbox.v1.BrowseRequest\x1a\x1a.sandbox.v1.SearchResponse\x12I\n" +
+	"\x10GetLatestUpdates\x12\x19.sandbox.v1.BrowseRequest\x1a\x1a.sandbox.v1.SearchResponseB0Z.tsunagu/backend/internal/sandbox/gen;sandboxv1b\x06proto3"
+
+var (
+	file_sandbox_v1_sandbox_proto_rawDescOnce sync.Once
+	file_sandbox_v1_sandbox_proto_rawDescData []byte
+)
+
+func file_sandbox_v1_sandbox_proto_rawDescGZIP() []byte {
+	file_sandbox_v1_sandbox_proto_rawDescOnce.Do(func() {
+		file_sandbox_v1_sandbox_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_sandbox_v1_sandbox_proto_rawDesc), len(file_sandbox_v1_sandbox_proto_rawDesc)))
+	})
+	return file_sandbox_v1_sandbox_proto_rawDescData
+}
+
+var file_sandbox_v1_sandbox_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_sandbox_v1_sandbox_proto_msgTypes = make([]protoimpl.MessageInfo, 42)
+var file_sandbox_v1_sandbox_proto_goTypes = []any{
+	(ContentType)(0),
+	(*Empty)(nil),
+	(*LoadExtensionsRequest)(nil),
+	(*ExtensionToLoad)(nil),
+	(*ExtensionRequest)(nil),
+	(*Extension)(nil),
+	(*ExtensionList)(nil),
+	(*SearchRequest)(nil),
+	(*BrowseRequest)(nil),
+	(*SearchResponse)(nil),
+	(*EntrySummary)(nil),
+	(*EntryRequest)(nil),
+	(*EntryDetails)(nil),
+	(*ChapterList)(nil),
+	(*ChapterSummary)(nil),
+	(*ChapterRequest)(nil),
+	(*PageList)(nil),
+	(*TextContent)(nil),
+	(*EpisodeList)(nil),
+	(*EpisodeSummary)(nil),
+	(*EpisodeRequest)(nil),
+	(*StreamInfo)(nil),
+	(*VideoSource)(nil),
+	(*AudioTrack)(nil),
+	(*SkipTimestamp)(nil),
+	(*SubtitleTrack)(nil),
+	(*ImageRequest)(nil),
+	(*ImageData)(nil),
+	(*PeekExtensionRequest)(nil),
+	(*ExtensionMetadata)(nil),
+	(*GetFilterListRequest)(nil),
+	(*GetFilterListResponse)(nil),
+	(*FilterNode)(nil),
+	(*HeaderFilter)(nil),
+	(*SeparatorFilter)(nil),
+	(*SelectFilter)(nil),
+	(*TextFilter)(nil),
+	(*CheckBoxFilter)(nil),
+	(*TriStateFilter)(nil),
+	(*GroupFilter)(nil),
+	(*SortFilter)(nil),
+	nil,
+	nil,
+}
+var file_sandbox_v1_sandbox_proto_depIdxs = []int32{
+	3,
+	0,
+	0,
+	5,
+	32,
+	10,
+	14,
+	19,
+	25,
+	41,
+	22,
+	23,
+	24,
+	42,
+	25,
+	0,
+	32,
+	33,
+	34,
+	35,
+	36,
+	37,
+	38,
+	39,
+	40,
+	32,
+	2,
+	1,
+	4,
+	7,
+	11,
+	11,
+	15,
+	15,
+	11,
+	20,
+	26,
+	28,
+	30,
+	8,
+	8,
+	6,
+	6,
+	1,
+	9,
+	12,
+	13,
+	16,
+	17,
+	18,
+	21,
+	27,
+	29,
+	31,
+	9,
+	9,
+	41,
+	26,
+	26,
+	26,
+	0,
+}
+
+func init() { file_sandbox_v1_sandbox_proto_init() }
+func file_sandbox_v1_sandbox_proto_init() {
+	if File_sandbox_v1_sandbox_proto != nil {
+		return
+	}
+	file_sandbox_v1_sandbox_proto_msgTypes[31].OneofWrappers = []any{
+		(*FilterNode_Header)(nil),
+		(*FilterNode_Separator)(nil),
+		(*FilterNode_Select)(nil),
+		(*FilterNode_Text)(nil),
+		(*FilterNode_Checkbox)(nil),
+		(*FilterNode_Tristate)(nil),
+		(*FilterNode_Group)(nil),
+		(*FilterNode_Sort)(nil),
+	}
+	type x struct{}
+	out := protoimpl.TypeBuilder{
+		File: protoimpl.DescBuilder{
+			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_sandbox_v1_sandbox_proto_rawDesc), len(file_sandbox_v1_sandbox_proto_rawDesc)),
+			NumEnums:      1,
+			NumMessages:   42,
+			NumExtensions: 0,
+			NumServices:   1,
+		},
+		GoTypes:           file_sandbox_v1_sandbox_proto_goTypes,
+		DependencyIndexes: file_sandbox_v1_sandbox_proto_depIdxs,
+		EnumInfos:         file_sandbox_v1_sandbox_proto_enumTypes,
+		MessageInfos:      file_sandbox_v1_sandbox_proto_msgTypes,
+	}.Build()
+	File_sandbox_v1_sandbox_proto = out.File
+	file_sandbox_v1_sandbox_proto_goTypes = nil
+	file_sandbox_v1_sandbox_proto_depIdxs = nil
+}

@@ -1,0 +1,118 @@
+name: release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  binaries:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - name: build tsunagu (all targets)
+        run: |
+          VER="${GITHUB_REF_NAME#v}"
+          [ "$VER" = "$GITHUB_REF_NAME" ] && VER="0.0.0-dev"
+          BT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          mkdir -p out
+          nix develop -c bash -c "
+            cd backend
+            for t in windows/amd64 darwin/amd64 darwin/arm64 linux/amd64; do
+              os=\${t%/*}; arch=\${t#*/}
+              ext=''; [ \$os = windows ] && ext='.exe'
+              GOOS=\$os GOARCH=\$arch CGO_ENABLED=0 go build \
+                -trimpath -ldflags \"-s -w -X main.serverVersion=$VER -X main.serverBuildTime=$BT\" \
+                -o ../out/tsunagu-\$os-\$arch\$ext ./cmd/server
+            done
+          "
+      - uses: actions/upload-artifact@v4
+        with: { name: binaries, path: out/* }
+
+  jar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - name: shadow jar
+        run: |
+          nix develop -c bash -c 'cd sandbox && gradle shadowJar -x test --no-daemon'
+          mkdir -p out && cp sandbox/build/libs/*-all.jar out/sandbox.jar
+      - uses: actions/upload-artifact@v4
+        with: { name: jar, path: out/sandbox.jar }
+
+  runtime:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest,  name: linux-amd64  }
+          - { os: macos-13,       name: darwin-amd64 }
+          - { os: macos-14,       name: darwin-arm64 }
+          - { os: windows-latest, name: windows-amd64 }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '21' }
+      - name: jlink minimal runtime
+        shell: bash
+        run: |
+          MODS="$(cat sandbox/build-config/jlink-modules.txt)"
+          "$JAVA_HOME/bin/jlink" --add-modules "$MODS" \
+            --strip-debug --no-header-files --no-man-pages --compress=zip-9 \
+            --output runtime
+          runtime/bin/java -version
+      - name: package
+        shell: bash
+        run: |
+          mkdir -p out
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            7z a -tzip "out/runtime-${{ matrix.name }}.zip" runtime
+          else
+            tar czf "out/runtime-${{ matrix.name }}.tar.gz" runtime
+          fi
+      - uses: actions/upload-artifact@v4
+        with: { name: runtime-${{ matrix.name }}, path: out/* }
+
+  publish:
+    needs: [binaries, jar, runtime]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { path: dl }
+      - name: collect + checksums + manifest
+        run: |
+          mkdir rel
+          find dl -type f -exec cp {} rel/ \;
+          cd rel
+          sha256sum * > sha256sums.txt
+          VER="${GITHUB_REF_NAME#v}"
+          {
+            echo "{"
+            echo "  \"version\": \"$VER\","
+            echo "  \"jar\": \"sandbox.jar\","
+            echo "  \"binaries\": {"
+            echo "    \"windows-amd64\": \"tsunagu-windows-amd64.exe\","
+            echo "    \"darwin-amd64\": \"tsunagu-darwin-amd64\","
+            echo "    \"darwin-arm64\": \"tsunagu-darwin-arm64\","
+            echo "    \"linux-amd64\": \"tsunagu-linux-amd64\""
+            echo "  },"
+            echo "  \"runtimes\": {"
+            echo "    \"windows-amd64\": \"runtime-windows-amd64.zip\","
+            echo "    \"darwin-amd64\": \"runtime-darwin-amd64.tar.gz\","
+            echo "    \"darwin-arm64\": \"runtime-darwin-arm64.tar.gz\","
+            echo "    \"linux-amd64\": \"runtime-linux-amd64.tar.gz\""
+            echo "  }"
+            echo "}"
+          } > manifest.json
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: rel/*
+          generate_release_notes: true
