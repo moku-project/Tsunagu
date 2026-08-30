@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
   binaries:
@@ -84,8 +85,98 @@ jobs:
           name: runtime-${{ matrix.name }}
           path: out/*
 
-  publish:
+  bundle:
     needs: [binaries, jar, runtime]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: linux-amd64,   bin: tsunagu-linux-amd64,       ext: ""     }
+          - { name: darwin-amd64,  bin: tsunagu-darwin-amd64,      ext: ""     }
+          - { name: darwin-arm64,  bin: tsunagu-darwin-arm64,      ext: ""     }
+          - { name: windows-amd64, bin: tsunagu-windows-amd64.exe, ext: ".exe" }
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { name: binaries, path: bin }
+      - uses: actions/download-artifact@v4
+        with: { name: jar, path: jar }
+      - uses: actions/download-artifact@v4
+        with:
+          name: runtime-${{ matrix.name }}
+          path: rt
+      - name: assemble run-ready bundle
+        run: |
+          set -eu
+          root="tsunagu-${{ matrix.name }}"
+          mkdir -p "$root/sandbox" out
+          cp "bin/${{ matrix.bin }}" "$root/tsunagu${{ matrix.ext }}"
+          chmod +x "$root/tsunagu${{ matrix.ext }}"
+          cp jar/sandbox.jar "$root/sandbox/sandbox.jar"
+          if [ -f "rt/runtime-${{ matrix.name }}.zip" ]; then
+            unzip -q "rt/runtime-${{ matrix.name }}.zip" -d "$root/sandbox/"
+          else
+            tar xzf "rt/runtime-${{ matrix.name }}.tar.gz" -C "$root/sandbox/"
+          fi
+          if [ "${{ matrix.name }}" = "windows-amd64" ]; then
+            zip -qr "out/$root.zip" "$root"
+          else
+            tar czf "out/$root.tar.gz" "$root"
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bundle-${{ matrix.name }}
+          path: out/*
+
+  docker:
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { platform: linux/amd64, runner: ubuntu-latest,   suffix: amd64 }
+          - { platform: linux/arm64, runner: ubuntu-24.04-arm, suffix: arm64 }
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          platforms: ${{ matrix.platform }}
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/tsunagu:${{ inputs.version }}-${{ matrix.suffix }}
+
+  docker-manifest:
+    needs: docker
+    permissions:
+      packages: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: merge multi-arch manifest
+        run: |
+          IMG="ghcr.io/${{ github.repository_owner }}/tsunagu"
+          for tag in "${{ inputs.version }}" latest; do
+            docker buildx imagetools create -t "$IMG:$tag" \
+              "$IMG:${{ inputs.version }}-amd64" \
+              "$IMG:${{ inputs.version }}-arm64"
+          done
+
+  publish:
+    needs: [binaries, jar, runtime, bundle, docker-manifest]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
@@ -97,9 +188,11 @@ jobs:
           cd rel
           sha256sum -- * > sha256sums.txt
           VER="${{ inputs.version }}"
+          IMG="ghcr.io/${{ github.repository_owner }}/tsunagu"
           {
             echo "{"
             echo "  \"version\": \"$VER\","
+            echo "  \"image\": \"$IMG:$VER\","
             echo "  \"jar\": \"sandbox.jar\","
             echo "  \"binaries\": {"
             echo "    \"windows-amd64\": \"tsunagu-windows-amd64.exe\","
@@ -112,6 +205,12 @@ jobs:
             echo "    \"darwin-amd64\": \"runtime-darwin-amd64.tar.gz\","
             echo "    \"darwin-arm64\": \"runtime-darwin-arm64.tar.gz\","
             echo "    \"linux-amd64\": \"runtime-linux-amd64.tar.gz\""
+            echo "  },"
+            echo "  \"bundles\": {"
+            echo "    \"windows-amd64\": \"tsunagu-windows-amd64.zip\","
+            echo "    \"darwin-amd64\": \"tsunagu-darwin-amd64.tar.gz\","
+            echo "    \"darwin-arm64\": \"tsunagu-darwin-arm64.tar.gz\","
+            echo "    \"linux-amd64\": \"tsunagu-linux-amd64.tar.gz\""
             echo "  }"
             echo "}"
           } > manifest.json
