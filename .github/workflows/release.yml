@@ -72,6 +72,9 @@ jobs:
             --output runtime
           runtime/bin/java -version
           test -f runtime/lib/modules
+          for m in $(echo "$MODS" | tr ',' ' '); do
+            runtime/bin/java --list-modules | grep -q "^$m@" || { echo "missing module: $m"; exit 1; }
+          done
       - name: package
         shell: bash
         run: |
