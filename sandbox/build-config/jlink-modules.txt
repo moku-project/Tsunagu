@@ -1,1 +1,1 @@
-java.base,java.compiler,java.desktop,java.instrument,java.naming,java.sql,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.internal.vm.ci,jdk.jfr,jdk.management,jdk.unsupported
+java.base,java.compiler,java.desktop,java.instrument,java.naming,java.sql,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.internal.vm.ci,jdk.jfr,jdk.management,jdk.unsupported,jdk.zipfs

@@ -272,9 +272,12 @@ func logRequests(next http.Handler) http.Handler {
 		sr := &statusRecorder{ResponseWriter: w}
 		next.ServeHTTP(sr, r)
 		p := r.URL.Path
-		noisy := strings.HasPrefix(p, "/content/") || strings.HasPrefix(p, "/proxy/")
-		if !noisy || sr.code >= 400 {
-			log.Printf("%s %s %d %s", r.Method, p, sr.code, time.Since(start))
+		dur := time.Since(start)
+		bulky := strings.HasPrefix(p, "/content/") || strings.HasPrefix(p, "/proxy/")
+		chatty := p == "/api/graphql" || p == "/healthz"
+		quiet := bulky || (chatty && dur < 500*time.Millisecond)
+		if !quiet || sr.code >= 400 {
+			log.Printf("%s %s %d %s", r.Method, p, sr.code, dur)
 		}
 	})
 }
