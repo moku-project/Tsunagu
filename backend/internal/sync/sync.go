@@ -577,6 +577,132 @@ func (s *Syncer) SetInLibrary(ctx context.Context, c *sandbox.Client, mediaID in
 	return s.q.RemoveMediaFromLibrary(ctx, mediaID)
 }
 
+func (s *Syncer) MigrateMedia(ctx context.Context, c *sandbox.Client, fromMediaID int64, toPackageName, toExternalID string) (sqlcgen.Medium, error) {
+	if _, err := s.q.GetMedia(ctx, fromMediaID); err != nil {
+		return sqlcgen.Medium{}, fmt.Errorf("get source media %d: %w", fromMediaID, err)
+	}
+
+	newMedia, err := s.ResolveMedia(ctx, c, toPackageName, toExternalID, true)
+	if err != nil {
+		return sqlcgen.Medium{}, fmt.Errorf("adopt target %s/%s: %w", toPackageName, toExternalID, err)
+	}
+	if newMedia.ID == fromMediaID {
+		return sqlcgen.Medium{}, fmt.Errorf("migration target resolves to the source entry")
+	}
+
+	oldChapters, err := s.q.ListChaptersByMedia(ctx, fromMediaID)
+	if err != nil {
+		return sqlcgen.Medium{}, fmt.Errorf("list source chapters: %w", err)
+	}
+	newChapters, err := s.q.ListChaptersByMedia(ctx, newMedia.ID)
+	if err != nil {
+		return sqlcgen.Medium{}, fmt.Errorf("list target chapters: %w", err)
+	}
+	progress, err := s.q.ListReadingProgressByMedia(ctx, fromMediaID)
+	if err != nil {
+		return sqlcgen.Medium{}, fmt.Errorf("list source progress: %w", err)
+	}
+	folders, err := s.q.ListFoldersByMediaIDs(ctx, []int64{fromMediaID})
+	if err != nil {
+		return sqlcgen.Medium{}, fmt.Errorf("list source folders: %w", err)
+	}
+
+	oldByID := make(map[int64]sqlcgen.Chapter, len(oldChapters))
+	for _, ch := range oldChapters {
+		oldByID[ch.ID] = ch
+	}
+	match := chapterMatcher(newChapters)
+
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return sqlcgen.Medium{}, err
+	}
+	defer func() { _ = tx.Rollback() }()
+	qtx := s.q.WithTx(tx)
+
+	for _, p := range progress {
+		oldCh, ok := oldByID[p.ChapterID]
+		if !ok {
+			continue
+		}
+		newCh, ok := match(oldCh)
+		if !ok {
+			continue
+		}
+		if _, err := qtx.UpsertReadingProgress(ctx, sqlcgen.UpsertReadingProgressParams{
+			MediaID:         newMedia.ID,
+			ChapterID:       newCh.ID,
+			Progress:        p.Progress,
+			Completed:       p.Completed,
+			PositionSeconds: p.PositionSeconds,
+			DurationSeconds: p.DurationSeconds,
+		}); err != nil {
+			return sqlcgen.Medium{}, fmt.Errorf("carry progress for chapter %d: %w", p.ChapterID, err)
+		}
+	}
+
+	for _, f := range folders {
+		if err := qtx.AddMediaToFolder(ctx, sqlcgen.AddMediaToFolderParams{
+			MediaID:  newMedia.ID,
+			FolderID: f.ID,
+		}); err != nil {
+			return sqlcgen.Medium{}, fmt.Errorf("re-add to folder %d: %w", f.ID, err)
+		}
+	}
+
+	if _, err := qtx.RemoveMediaFromLibrary(ctx, fromMediaID); err != nil {
+		return sqlcgen.Medium{}, fmt.Errorf("remove source from library: %w", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return sqlcgen.Medium{}, err
+	}
+
+	return s.q.GetMedia(ctx, newMedia.ID)
+}
+
+func chapterMatcher(newChapters []sqlcgen.Chapter) func(sqlcgen.Chapter) (sqlcgen.Chapter, bool) {
+	type numScan struct {
+		num  float64
+		scan string
+	}
+	byNumScan := make(map[numScan]sqlcgen.Chapter, len(newChapters))
+	byNum := make(map[float64]sqlcgen.Chapter, len(newChapters))
+	for _, ch := range newChapters {
+		n := chapterNumber(ch)
+		if n <= 0 {
+			continue
+		}
+		if _, ok := byNum[n]; !ok {
+			byNum[n] = ch
+		}
+		byNumScan[numScan{n, ch.Scanlator}] = ch
+	}
+	return func(old sqlcgen.Chapter) (sqlcgen.Chapter, bool) {
+		n := chapterNumber(old)
+		if n <= 0 {
+			return sqlcgen.Chapter{}, false
+		}
+		if ch, ok := byNumScan[numScan{n, old.Scanlator}]; ok {
+			return ch, true
+		}
+		if ch, ok := byNum[n]; ok {
+			return ch, true
+		}
+		return sqlcgen.Chapter{}, false
+	}
+}
+
+func chapterNumber(ch sqlcgen.Chapter) float64 {
+	if ch.Number.Valid && ch.Number.Float64 > 0 {
+		return ch.Number.Float64
+	}
+	if ch.Title.Valid {
+		return chapternum.FromTitle(ch.Title.String)
+	}
+	return 0
+}
+
 func (s *Syncer) RefreshMetadata(ctx context.Context, c *sandbox.Client, libraryEntryID int64, syncChapters bool) (sqlcgen.Medium, error) {
 	entry, err := s.q.GetMedia(ctx, libraryEntryID)
 	if err != nil {

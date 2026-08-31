@@ -510,6 +510,43 @@ func (r *mutationResolver) SetInLibrary(ctx context.Context, mediaID string, inL
 	return toMedia(m, r.MediaDir), nil
 }
 
+func (r *mutationResolver) MigrateMedia(ctx context.Context, fromMediaID string, toExtensionID string, toExternalID string) (*model.Media, error) {
+	fromID, err := parseID(fromMediaID)
+	if err != nil {
+		return nil, err
+	}
+	ext, err := r.resolveExtension(ctx, toExtensionID)
+	if err != nil {
+		return nil, err
+	}
+	c, err := r.Sc.Ensure(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	oldLinks, _ := r.Tk.LinksByMedia(ctx, fromID)
+
+	m, err := r.Sy.MigrateMedia(ctx, c, fromID, ext.PackageName, toExternalID)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, l := range oldLinks {
+		key := r.Tk.KeyForAccountID(ctx, l.TrackerAccountID)
+		if key == "" {
+			continue
+		}
+		_, _ = r.Tk.Bind(ctx, key, m.ID, l.ExternalTrackerID)
+	}
+
+	if r.Md != nil {
+		go r.Md.AutoEnrich(context.Background(), m.ID)
+	}
+	go r.Tk.SyncMediaProgress(context.Background(), m.ID)
+
+	return toMedia(m, r.MediaDir), nil
+}
+
 func (r *mutationResolver) SyncChapters(ctx context.Context, mediaID string) ([]*model.Chapter, error) {
 	id, err := parseID(mediaID)
 	if err != nil {

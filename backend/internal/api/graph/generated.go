@@ -224,6 +224,7 @@ type ComplexityRoot struct {
 		InstallExternalExtension func(childComplexity int, url string) int
 		MarkChapterRead          func(childComplexity int, mediaID string, chapterID string) int
 		MarkChaptersRead         func(childComplexity int, mediaID string, chapterIds []string, read bool) int
+		MigrateMedia             func(childComplexity int, fromMediaID string, toExtensionID string, toExternalID string) int
 		PullTracker              func(childComplexity int, mediaID string) int
 		RefreshFolder            func(childComplexity int, folderID string) int
 		RefreshMetadata          func(childComplexity int, mediaID string, syncChapters *bool) int
@@ -468,6 +469,7 @@ type MutationResolver interface {
 	UninstallExtension(ctx context.Context, packageName string) (*model.Extension, error)
 	UpdateExtension(ctx context.Context, packageName string) (*model.Extension, error)
 	SetInLibrary(ctx context.Context, mediaID string, inLibrary bool) (*model.Media, error)
+	MigrateMedia(ctx context.Context, fromMediaID string, toExtensionID string, toExternalID string) (*model.Media, error)
 	SyncChapters(ctx context.Context, mediaID string) ([]*model.Chapter, error)
 	UpdateReadingProgress(ctx context.Context, mediaID string, chapterID string, progress float64, completed *bool, positionSeconds *float64, durationSeconds *float64) (*model.ReadingProgress, error)
 	MarkChapterRead(ctx context.Context, mediaID string, chapterID string) (*model.ReadingProgress, error)
@@ -1483,6 +1485,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.MarkChaptersRead(childComplexity, args["mediaId"].(string), args["chapterIds"].([]string), args["read"].(bool)), true
+	case "Mutation.migrateMedia":
+		if e.ComplexityRoot.Mutation.MigrateMedia == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_migrateMedia_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.MigrateMedia(childComplexity, args["fromMediaId"].(string), args["toExtensionId"].(string), args["toExternalId"].(string)), true
 	case "Mutation.pullTracker":
 		if e.ComplexityRoot.Mutation.PullTracker == nil {
 			break
@@ -3622,6 +3635,36 @@ func (ec *executionContext) field_Mutation_markChaptersRead_args(ctx context.Con
 		return nil, err
 	}
 	args["read"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_migrateMedia_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "fromMediaId",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["fromMediaId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "toExtensionId",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["toExtensionId"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "toExternalId",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["toExternalId"] = arg2
 	return args, nil
 }
 
@@ -8264,6 +8307,50 @@ func (ec *executionContext) fieldContext_Mutation_setInLibrary(ctx context.Conte
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_setInLibrary_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_migrateMedia(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_migrateMedia(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().MigrateMedia(ctx, fc.Args["fromMediaId"].(string), fc.Args["toExtensionId"].(string), fc.Args["toExternalId"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.Media) graphql.Marshaler {
+			return ec.marshalNMedia2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐMedia(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_migrateMedia(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Media(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_migrateMedia_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -16093,6 +16180,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "setInLibrary":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_setInLibrary(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "migrateMedia":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_migrateMedia(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++

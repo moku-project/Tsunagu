@@ -381,6 +381,7 @@ type Mutation {
   updateExtension(packageName: String!): Extension!
 
   setInLibrary(mediaId: ID!, inLibrary: Boolean!): Media!
+  migrateMedia(fromMediaId: ID!, toExtensionId: ID!, toExternalId: String!): Media!
   syncChapters(mediaId: ID!): [Chapter!]!
   updateReadingProgress(mediaId: ID!, chapterId: ID!, progress: Float!, completed: Boolean, positionSeconds: Float, durationSeconds: Float): ReadingProgress!
   markChapterRead(mediaId: ID!, chapterId: ID!): ReadingProgress!
