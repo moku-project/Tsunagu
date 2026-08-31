@@ -35,6 +35,35 @@ class ExtensionServiceImpl(
 
     private val logger = KotlinLogging.logger {}
 
+    private val verboseErrors = System.getenv("SANDBOX_VERBOSE_ERRORS")?.toBoolean() == true
+
+    private fun compactCause(e: Throwable): String =
+        generateSequence(e) { it.cause }
+            .joinToString(" <- ") { "${it.javaClass.simpleName}: ${it.message?.take(200) ?: ""}".trim() }
+
+    private fun appFrames(e: Throwable, limit: Int = 4): String {
+        val root = generateSequence(e) { it.cause }.last()
+        return root.stackTrace
+            .filter {
+                it.className.startsWith("eu.kanade.") ||
+                    it.className.startsWith("tsunagu.") ||
+                    it.className.startsWith("keiyoushi.")
+            }
+            .take(limit)
+            .joinToString("; ") { "${it.className.substringAfterLast('.')}.${it.methodName}:${it.lineNumber}" }
+    }
+
+    private fun logExtensionFailure(e: Throwable) {
+        if (verboseErrors) {
+            logger.error(e) { "extension call failed" }
+            return
+        }
+        val network = generateSequence(e) { it.cause }.any { it is java.io.IOException }
+        val where = appFrames(e)
+        val msg = "extension call failed: ${compactCause(e)}" + if (where.isNotEmpty()) " @ $where" else ""
+        if (network) logger.warn { msg } else logger.error { msg }
+    }
+
     override fun loadExtensions(
         request: Sandbox.LoadExtensionsRequest,
         responseObserver: StreamObserver<Sandbox.ExtensionList>,
@@ -116,7 +145,7 @@ class ExtensionServiceImpl(
             responseObserver.onNext(builder.build())
             responseObserver.onCompleted()
         } catch (e: Throwable) {
-            logger.error(e) { "extension call failed" }
+            logExtensionFailure(e)
             responseObserver.onError(internal(e))
         }
     }
@@ -140,7 +169,7 @@ class ExtensionServiceImpl(
             responseObserver.onNext(response)
             responseObserver.onCompleted()
         } catch (e: Throwable) {
-            logger.error(e) { "extension call failed" }
+            logExtensionFailure(e)
             responseObserver.onError(internal(e))
         }
     }
@@ -191,7 +220,7 @@ class ExtensionServiceImpl(
             responseObserver.onNext(Sandbox.SearchResponse.newBuilder().setHasNextPage(false).build())
             responseObserver.onCompleted()
         } catch (e: Throwable) {
-            logger.error(e) { "extension call failed" }
+            logExtensionFailure(e)
             responseObserver.onError(internal(e))
         }
     }
@@ -231,7 +260,7 @@ class ExtensionServiceImpl(
             responseObserver.onNext(Sandbox.SearchResponse.newBuilder().setHasNextPage(false).build())
             responseObserver.onCompleted()
         } catch (e: Throwable) {
-            logger.error(e) { "extension call failed" }
+            logExtensionFailure(e)
             responseObserver.onError(internal(e))
         }
     }
@@ -271,7 +300,7 @@ class ExtensionServiceImpl(
             responseObserver.onNext(details)
             responseObserver.onCompleted()
         } catch (e: Throwable) {
-            logger.error(e) { "extension call failed" }
+            logExtensionFailure(e)
             responseObserver.onError(internal(e))
         }
     }
@@ -308,7 +337,7 @@ class ExtensionServiceImpl(
             responseObserver.onNext(list)
             responseObserver.onCompleted()
         } catch (e: Throwable) {
-            logger.error(e) { "extension call failed" }
+            logExtensionFailure(e)
             responseObserver.onError(internal(e))
         }
     }
@@ -351,7 +380,7 @@ class ExtensionServiceImpl(
             )
             responseObserver.onCompleted()
         } catch (e: Throwable) {
-            logger.error(e) { "extension call failed" }
+            logExtensionFailure(e)
             responseObserver.onError(internal(e))
         }
     }
@@ -427,7 +456,7 @@ class ExtensionServiceImpl(
             responseObserver.onNext(block(httpSource))
             responseObserver.onCompleted()
         } catch (e: Throwable) {
-            logger.error(e) { "extension call failed" }
+            logExtensionFailure(e)
             responseObserver.onError(internal(e))
         }
     }
@@ -448,7 +477,7 @@ class ExtensionServiceImpl(
             responseObserver.onNext(block(animeSource))
             responseObserver.onCompleted()
         } catch (e: Throwable) {
-            logger.error(e) { "extension call failed" }
+            logExtensionFailure(e)
             responseObserver.onError(internal(e))
         }
     }

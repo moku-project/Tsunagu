@@ -5,11 +5,12 @@ SELECT * FROM metadata_links WHERE media_id = ? AND provider = ?;
 SELECT * FROM metadata_links WHERE media_id = ?;
 
 -- name: UpsertMetadataLink :one
-INSERT INTO metadata_links (media_id, provider, provider_id, provider_url, confidence, locked)
-VALUES (?, ?, ?, ?, ?, ?)
+INSERT INTO metadata_links (media_id, provider, provider_id, provider_url, cover_url, confidence, locked)
+VALUES (?, ?, ?, ?, ?, ?, ?)
 ON CONFLICT(media_id, provider) DO UPDATE SET
     provider_id = excluded.provider_id,
     provider_url = excluded.provider_url,
+    cover_url = excluded.cover_url,
     confidence = excluded.confidence,
     locked = excluded.locked,
     matched_at = CURRENT_TIMESTAMP

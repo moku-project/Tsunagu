@@ -22,10 +22,16 @@ import (
 )
 
 func toMetadataMatch(l sqlcgen.MetadataLink) *model.MetadataMatch {
+	var coverURL *string
+	if l.CoverUrl != "" {
+		coverURL = &l.CoverUrl
+	}
 	return &model.MetadataMatch{
+		MediaID:    strconv.FormatInt(l.MediaID, 10),
 		Provider:   l.Provider,
 		ProviderID: l.ProviderID,
 		URL:        l.ProviderUrl,
+		CoverURL:   coverURL,
 		Confidence: l.Confidence,
 		Locked:     l.Locked != 0,
 		MatchedAt:  l.MatchedAt,

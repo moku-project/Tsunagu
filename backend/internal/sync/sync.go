@@ -384,6 +384,94 @@ func (s *Syncer) ListAvailableExtensions(ctx context.Context, repositoryID int64
 	return s.q.ListExtensionsByRepository(ctx, repositoryID)
 }
 
+type ExtensionQuery struct {
+	RepositoryID *int64
+	ContentType  string
+	Lang         string
+	Search       string
+	Installed    *bool
+	Limit        int64
+	Offset       int64
+}
+
+func (s *Syncer) QueryExtensions(ctx context.Context, q ExtensionQuery) ([]sqlcgen.Extension, int64, error) {
+	if q.Limit <= 0 || q.Limit > 200 {
+		q.Limit = 60
+	}
+	if q.Offset < 0 {
+		q.Offset = 0
+	}
+	repoID := sql.NullInt64{}
+	if q.RepositoryID != nil {
+		repoID = sql.NullInt64{Int64: *q.RepositoryID, Valid: true}
+	}
+	ct := sql.NullString{}
+	if q.ContentType != "" {
+		ct = sql.NullString{String: q.ContentType, Valid: true}
+	}
+	lang := sql.NullString{}
+	if q.Lang != "" {
+		lang = sql.NullString{String: q.Lang, Valid: true}
+	}
+	installed := sql.NullBool{}
+	if q.Installed != nil {
+		installed = sql.NullBool{Bool: *q.Installed, Valid: true}
+	}
+	search := sql.NullString{}
+	if s := strings.TrimSpace(q.Search); s != "" {
+		search = sql.NullString{String: s, Valid: true}
+	}
+
+	total, err := s.q.CountExtensions(ctx, sqlcgen.CountExtensionsParams{
+		RepositoryID: repoID,
+		ContentType:  ct,
+		Lang:         lang,
+		Installed:    installed,
+		Search:       search,
+	})
+	if err != nil {
+		return nil, 0, err
+	}
+	items, err := s.q.QueryExtensions(ctx, sqlcgen.QueryExtensionsParams{
+		RepositoryID: repoID,
+		ContentType:  ct,
+		Lang:         lang,
+		Installed:    installed,
+		Search:       search,
+		Lim:          q.Limit,
+		Off:          q.Offset,
+	})
+	if err != nil {
+		return nil, 0, err
+	}
+	return items, total, nil
+}
+
+func (s *Syncer) ExtensionLanguages(ctx context.Context, q ExtensionQuery) ([]string, error) {
+	repoID := sql.NullInt64{}
+	if q.RepositoryID != nil {
+		repoID = sql.NullInt64{Int64: *q.RepositoryID, Valid: true}
+	}
+	ct := sql.NullString{}
+	if q.ContentType != "" {
+		ct = sql.NullString{String: q.ContentType, Valid: true}
+	}
+	installed := sql.NullBool{}
+	if q.Installed != nil {
+		installed = sql.NullBool{Bool: *q.Installed, Valid: true}
+	}
+	search := sql.NullString{}
+	if s := strings.TrimSpace(q.Search); s != "" {
+		search = sql.NullString{String: s, Valid: true}
+	}
+	return s.q.ListExtensionLanguages(ctx, sqlcgen.ListExtensionLanguagesParams{
+		RepositoryID: repoID,
+		ContentType:  ct,
+		Installed:    installed,
+		Search:       search,
+	})
+}
+
 func extensionDownloadTarget(ext sqlcgen.Extension) (url string, fileExt string, err error) {
 	if ext.ContentType == "novel" {
 		if ext.JarUrl.Valid && ext.JarUrl.String != "" {

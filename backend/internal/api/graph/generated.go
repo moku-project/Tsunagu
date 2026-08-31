@@ -28,6 +28,7 @@ type ResolverRoot interface {
 	Chapter() ChapterResolver
 	Download() DownloadResolver
 	Media() MediaResolver
+	MetadataMatch() MetadataMatchResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
 }
@@ -116,6 +117,12 @@ type ComplexityRoot struct {
 		Version          func(childComplexity int) int
 	}
 
+	ExtensionPage struct {
+		Items     func(childComplexity int) int
+		Languages func(childComplexity int) int
+		Total     func(childComplexity int) int
+	}
+
 	Folder struct {
 		ID                func(childComplexity int) int
 		IncludeInDownload func(childComplexity int) int
@@ -200,8 +207,12 @@ type ComplexityRoot struct {
 
 	MetadataMatch struct {
 		Confidence func(childComplexity int) int
+		CoverURL   func(childComplexity int) int
 		Locked     func(childComplexity int) int
+		MalID      func(childComplexity int) int
+		MalURL     func(childComplexity int) int
 		MatchedAt  func(childComplexity int) int
+		MediaID    func(childComplexity int) int
 		Provider   func(childComplexity int) int
 		ProviderID func(childComplexity int) int
 		URL        func(childComplexity int) int
@@ -264,6 +275,7 @@ type ComplexityRoot struct {
 		DownloadQueue       func(childComplexity int) int
 		DownloadStatus      func(childComplexity int, mediaID string, chapterID string) int
 		DownloaderStatus    func(childComplexity int) int
+		Extensions          func(childComplexity int, repositoryID *string, query *string, contentType *model.ContentType, lang *string, installed *bool, limit *int32, offset *int32) int
 		FilterOptions       func(childComplexity int, extensionID string) int
 		Folder              func(childComplexity int, id string) int
 		Folders             func(childComplexity int) int
@@ -455,6 +467,10 @@ type MediaResolver interface {
 	Metadata(ctx context.Context, obj *model.Media) (*model.MetadataMatch, error)
 	Source(ctx context.Context, obj *model.Media) (*model.Extension, error)
 }
+type MetadataMatchResolver interface {
+	MalID(ctx context.Context, obj *model.MetadataMatch) (*int32, error)
+	MalURL(ctx context.Context, obj *model.MetadataMatch) (*string, error)
+}
 type MutationResolver interface {
 	CreateFolder(ctx context.Context, name string, parentFolderID *string) (*model.Folder, error)
 	RenameFolder(ctx context.Context, folderID string, name string) (*model.Folder, error)
@@ -511,6 +527,7 @@ type QueryResolver interface {
 	Repositories(ctx context.Context) ([]*model.Repository, error)
 	AvailableExtensions(ctx context.Context, repositoryID string) ([]*model.Extension, error)
 	InstalledExtensions(ctx context.Context) ([]*model.Extension, error)
+	Extensions(ctx context.Context, repositoryID *string, query *string, contentType *model.ContentType, lang *string, installed *bool, limit *int32, offset *int32) (*model.ExtensionPage, error)
 	Library(ctx context.Context, filter *model.LibraryFilter, sort *model.LibrarySortInput, limit *int32, offset *int32) (*model.MediaPage, error)
 	Media(ctx context.Context, id string) (*model.Media, error)
 	Chapter(ctx context.Context, id string) (*model.Chapter, error)
@@ -908,6 +925,25 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Extension.Version(childComplexity), true
 
+	case "ExtensionPage.items":
+		if e.ComplexityRoot.ExtensionPage.Items == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtensionPage.Items(childComplexity), true
+	case "ExtensionPage.languages":
+		if e.ComplexityRoot.ExtensionPage.Languages == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtensionPage.Languages(childComplexity), true
+	case "ExtensionPage.total":
+		if e.ComplexityRoot.ExtensionPage.Total == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ExtensionPage.Total(childComplexity), true
+
 	case "Folder.id":
 		if e.ComplexityRoot.Folder.ID == nil {
 			break
@@ -1287,18 +1323,42 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.MetadataMatch.Confidence(childComplexity), true
+	case "MetadataMatch.coverUrl":
+		if e.ComplexityRoot.MetadataMatch.CoverURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MetadataMatch.CoverURL(childComplexity), true
 	case "MetadataMatch.locked":
 		if e.ComplexityRoot.MetadataMatch.Locked == nil {
 			break
 		}
 
 		return e.ComplexityRoot.MetadataMatch.Locked(childComplexity), true
+	case "MetadataMatch.malId":
+		if e.ComplexityRoot.MetadataMatch.MalID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MetadataMatch.MalID(childComplexity), true
+	case "MetadataMatch.malUrl":
+		if e.ComplexityRoot.MetadataMatch.MalURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MetadataMatch.MalURL(childComplexity), true
 	case "MetadataMatch.matchedAt":
 		if e.ComplexityRoot.MetadataMatch.MatchedAt == nil {
 			break
 		}
 
 		return e.ComplexityRoot.MetadataMatch.MatchedAt(childComplexity), true
+	case "MetadataMatch.mediaId":
+		if e.ComplexityRoot.MetadataMatch.MediaID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MetadataMatch.MediaID(childComplexity), true
 	case "MetadataMatch.provider":
 		if e.ComplexityRoot.MetadataMatch.Provider == nil {
 			break
@@ -1862,6 +1922,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.DownloaderStatus(childComplexity), true
+	case "Query.extensions":
+		if e.ComplexityRoot.Query.Extensions == nil {
+			break
+		}
+
+		args, err := ec.field_Query_extensions_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.Extensions(childComplexity, args["repositoryId"].(*string), args["query"].(*string), args["contentType"].(*model.ContentType), args["lang"].(*string), args["installed"].(*bool), args["limit"].(*int32), args["offset"].(*int32)), true
 	case "Query.filterOptions":
 		if e.ComplexityRoot.Query.FilterOptions == nil {
 			break
@@ -2845,6 +2916,18 @@ func (ec *executionContext) childFields_Extension(ctx context.Context, field gra
 	return nil, fmt.Errorf("no field named %q was found under type Extension", field.Name)
 }
 
+func (ec *executionContext) childFields_ExtensionPage(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "items":
+		return ec.fieldContext_ExtensionPage_items(ctx, field)
+	case "total":
+		return ec.fieldContext_ExtensionPage_total(ctx, field)
+	case "languages":
+		return ec.fieldContext_ExtensionPage_languages(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ExtensionPage", field.Name)
+}
+
 func (ec *executionContext) childFields_Folder(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "id":
@@ -2993,12 +3076,20 @@ func (ec *executionContext) childFields_MetadataCandidate(ctx context.Context, f
 
 func (ec *executionContext) childFields_MetadataMatch(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
+	case "mediaId":
+		return ec.fieldContext_MetadataMatch_mediaId(ctx, field)
 	case "provider":
 		return ec.fieldContext_MetadataMatch_provider(ctx, field)
 	case "providerId":
 		return ec.fieldContext_MetadataMatch_providerId(ctx, field)
 	case "url":
 		return ec.fieldContext_MetadataMatch_url(ctx, field)
+	case "coverUrl":
+		return ec.fieldContext_MetadataMatch_coverUrl(ctx, field)
+	case "malId":
+		return ec.fieldContext_MetadataMatch_malId(ctx, field)
+	case "malUrl":
+		return ec.fieldContext_MetadataMatch_malUrl(ctx, field)
 	case "confidence":
 		return ec.fieldContext_MetadataMatch_confidence(ctx, field)
 	case "locked":
@@ -4290,6 +4381,68 @@ func (ec *executionContext) field_Query_downloadStatus_args(ctx context.Context,
 		return nil, err
 	}
 	args["chapterId"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_extensions_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "repositoryId",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOID2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["repositoryId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "query",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["query"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "contentType",
+		func(ctx context.Context, v any) (*model.ContentType, error) {
+			return ec.unmarshalOContentType2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐContentType(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["contentType"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "lang",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["lang"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "installed",
+		func(ctx context.Context, v any) (*bool, error) {
+			return ec.unmarshalOBoolean2ᚖbool(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["installed"] = arg4
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "limit",
+		func(ctx context.Context, v any) (*int32, error) {
+			return ec.unmarshalOInt2ᚖint32(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg5
+	arg6, err := graphql.ProcessArgField(ctx, rawArgs, "offset",
+		func(ctx context.Context, v any) (*int32, error) {
+			return ec.unmarshalOInt2ᚖint32(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["offset"] = arg6
 	return args, nil
 }
 
@@ -6066,6 +6219,84 @@ func (ec *executionContext) fieldContext_Extension_supportsLatest(_ context.Cont
 	return graphql.NewScalarFieldContext("Extension", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
+func (ec *executionContext) _ExtensionPage_items(ctx context.Context, field graphql.CollectedField, obj *model.ExtensionPage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ExtensionPage_items(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Items, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.Extension) graphql.Marshaler {
+			return ec.marshalNExtension2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐExtensionᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ExtensionPage_items(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ExtensionPage",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Extension(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ExtensionPage_total(ctx context.Context, field graphql.CollectedField, obj *model.ExtensionPage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ExtensionPage_total(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Total, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ExtensionPage_total(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ExtensionPage", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _ExtensionPage_languages(ctx context.Context, field graphql.CollectedField, obj *model.ExtensionPage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ExtensionPage_languages(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Languages, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []string) graphql.Marshaler {
+			return ec.marshalNString2ᚕstringᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ExtensionPage_languages(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ExtensionPage", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
 func (ec *executionContext) _Folder_id(ctx context.Context, field graphql.CollectedField, obj *model.Folder) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -7550,6 +7781,29 @@ func (ec *executionContext) fieldContext_MetadataCandidate_startYear(_ context.C
 	return graphql.NewScalarFieldContext("MetadataCandidate", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
+func (ec *executionContext) _MetadataMatch_mediaId(ctx context.Context, field graphql.CollectedField, obj *model.MetadataMatch) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_MetadataMatch_mediaId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MediaID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_MetadataMatch_mediaId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("MetadataMatch", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
 func (ec *executionContext) _MetadataMatch_provider(ctx context.Context, field graphql.CollectedField, obj *model.MetadataMatch) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -7617,6 +7871,75 @@ func (ec *executionContext) _MetadataMatch_url(ctx context.Context, field graphq
 }
 func (ec *executionContext) fieldContext_MetadataMatch_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("MetadataMatch", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _MetadataMatch_coverUrl(ctx context.Context, field graphql.CollectedField, obj *model.MetadataMatch) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_MetadataMatch_coverUrl(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CoverURL, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_MetadataMatch_coverUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("MetadataMatch", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _MetadataMatch_malId(ctx context.Context, field graphql.CollectedField, obj *model.MetadataMatch) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_MetadataMatch_malId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.MetadataMatch().MalID(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int32) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint32(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_MetadataMatch_malId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("MetadataMatch", field, true, true, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _MetadataMatch_malUrl(ctx context.Context, field graphql.CollectedField, obj *model.MetadataMatch) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_MetadataMatch_malUrl(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.MetadataMatch().MalURL(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_MetadataMatch_malUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("MetadataMatch", field, true, true, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _MetadataMatch_confidence(ctx context.Context, field graphql.CollectedField, obj *model.MetadataMatch) (ret graphql.Marshaler) {
@@ -9881,6 +10204,50 @@ func (ec *executionContext) fieldContext_Query_installedExtensions(_ context.Con
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return ec.childFields_Extension(ctx, field)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_extensions(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_extensions(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().Extensions(ctx, fc.Args["repositoryId"].(*string), fc.Args["query"].(*string), fc.Args["contentType"].(*model.ContentType), fc.Args["lang"].(*string), fc.Args["installed"].(*bool), fc.Args["limit"].(*int32), fc.Args["offset"].(*int32))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.ExtensionPage) graphql.Marshaler {
+			return ec.marshalNExtensionPage2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐExtensionPage(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_extensions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ExtensionPage(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_extensions_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -15155,6 +15522,54 @@ func (ec *executionContext) _Extension(ctx context.Context, sel ast.SelectionSet
 	return out
 }
 
+var extensionPageImplementors = []string{"ExtensionPage"}
+
+func (ec *executionContext) _ExtensionPage(ctx context.Context, sel ast.SelectionSet, obj *model.ExtensionPage) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, extensionPageImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ExtensionPage")
+		case "items":
+			out.Values[i] = ec._ExtensionPage_items(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "total":
+			out.Values[i] = ec._ExtensionPage_total(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "languages":
+			out.Values[i] = ec._ExtensionPage_languages(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var folderImplementors = []string{"Folder"}
 
 func (ec *executionContext) _Folder(ctx context.Context, sel ast.SelectionSet, obj *model.Folder) graphql.Marshaler {
@@ -16119,35 +16534,119 @@ func (ec *executionContext) _MetadataMatch(ctx context.Context, sel ast.Selectio
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("MetadataMatch")
+		case "mediaId":
+			out.Values[i] = ec._MetadataMatch_mediaId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "provider":
 			out.Values[i] = ec._MetadataMatch_provider(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "providerId":
 			out.Values[i] = ec._MetadataMatch_providerId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "url":
 			out.Values[i] = ec._MetadataMatch_url(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "coverUrl":
+			out.Values[i] = ec._MetadataMatch_coverUrl(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "malId":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._MetadataMatch_malId(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "malUrl":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._MetadataMatch_malUrl(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "confidence":
 			out.Values[i] = ec._MetadataMatch_confidence(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "locked":
 			out.Values[i] = ec._MetadataMatch_locked(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "matchedAt":
 			out.Values[i] = ec._MetadataMatch_matchedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -16695,6 +17194,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_installedExtensions(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "extensions":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_extensions(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -18772,6 +19293,20 @@ func (ec *executionContext) marshalNExtension2ᚖtsunaguᚋbackendᚋinternalᚋ
 		return graphql.Null
 	}
 	return ec._Extension(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNExtensionPage2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐExtensionPage(ctx context.Context, sel ast.SelectionSet, v model.ExtensionPage) graphql.Marshaler {
+	return ec._ExtensionPage(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNExtensionPage2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐExtensionPage(ctx context.Context, sel ast.SelectionSet, v *model.ExtensionPage) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ExtensionPage(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNFilterInput2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐFilterInputᚄ(ctx context.Context, v any) ([]*model.FilterInput, error) {

@@ -98,6 +98,12 @@ type Extension struct {
 	SupportsLatest   bool        `json:"supportsLatest"`
 }
 
+type ExtensionPage struct {
+	Items     []*Extension `json:"items"`
+	Total     int32        `json:"total"`
+	Languages []string     `json:"languages"`
+}
+
 type FilterInput struct {
 	Name     string               `json:"name"`
 	Select   *SelectFilterInput   `json:"select,omitempty"`
@@ -214,9 +220,13 @@ type MetadataCandidate struct {
 }
 
 type MetadataMatch struct {
+	MediaID    string    `json:"mediaId"`
 	Provider   string    `json:"provider"`
 	ProviderID string    `json:"providerId"`
 	URL        string    `json:"url"`
+	CoverURL   *string   `json:"coverUrl,omitempty"`
+	MalID      *int32    `json:"malId,omitempty"`
+	MalURL     *string   `json:"malUrl,omitempty"`
 	Confidence float64   `json:"confidence"`
 	Locked     bool      `json:"locked"`
 	MatchedAt  time.Time `json:"matchedAt"`

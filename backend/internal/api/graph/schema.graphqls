@@ -40,6 +40,12 @@ type Extension {
   supportsLatest: Boolean!
 }
 
+type ExtensionPage {
+  items: [Extension!]!
+  total: Int!
+  languages: [String!]!
+}
+
 type Media {
   id: ID!
   extensionId: ID
@@ -75,9 +81,13 @@ type Media {
 }
 
 type MetadataMatch {
+  mediaId: ID!
   provider: String!
   providerId: String!
   url: String!
+  coverUrl: String
+  malId: Int @goField(forceResolver: true)
+  malUrl: String @goField(forceResolver: true)
   confidence: Float!
   locked: Boolean!
   matchedAt: Time!
@@ -319,6 +329,15 @@ type Query {
   repositories: [Repository!]!
   availableExtensions(repositoryId: ID!): [Extension!]!
   installedExtensions: [Extension!]!
+  extensions(
+    repositoryId: ID
+    query: String
+    contentType: ContentType
+    lang: String
+    installed: Boolean
+    limit: Int = 60
+    offset: Int = 0
+  ): ExtensionPage!
 
   library(filter: LibraryFilter, sort: LibrarySortInput, limit: Int = 100, offset: Int = 0): MediaPage!
   media(id: ID!): Media

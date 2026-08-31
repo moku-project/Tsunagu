@@ -41,10 +41,6 @@ func (m *Manager) AutoEnrich(ctx context.Context, mediaID int64) error {
 	if err == nil && len(links) > 0 {
 		return nil
 	}
-	thin, err := m.detailsAreThin(ctx, media)
-	if err != nil || !thin {
-		return nil
-	}
 	return m.tryMatch(ctx, media)
 }
 
@@ -266,6 +262,7 @@ func (m *Manager) applyCandidate(ctx context.Context, mediaID int64, provider st
 		Provider:    provider,
 		ProviderID:  c.ProviderID,
 		ProviderUrl: c.URL,
+		CoverUrl:    c.CoverURL,
 		Confidence:  confidence,
 		Locked:      b2i(locked),
 	}); err != nil {
@@ -276,31 +273,6 @@ func (m *Manager) applyCandidate(ctx context.Context, mediaID int64, provider st
 		return sqlcgen.Medium{}, err
 	}
 	return updated, nil
-}
-
-func (m *Manager) detailsAreThin(ctx context.Context, media sqlcgen.Medium) (bool, error) {
-	missing := 0
-	if !media.Description.Valid || media.Description.String == "" {
-		missing++
-	}
-	if (!media.CoverPath.Valid || media.CoverPath.String == "") &&
-		(!media.CoverLocalPath.Valid || media.CoverLocalPath.String == "") {
-		missing++
-	}
-	if !media.Status.Valid || media.Status.String == "" {
-		missing++
-	}
-	if !media.Author.Valid || media.Author.String == "" {
-		missing++
-	}
-	if missing >= 2 {
-		return true, nil
-	}
-	genres, err := m.q.ListGenresForMedia(ctx, media.ID)
-	if err != nil {
-		return false, err
-	}
-	return len(genres) == 0, nil
 }
 
 func contentTypeOf(media sqlcgen.Medium) ContentType {

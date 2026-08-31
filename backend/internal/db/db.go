@@ -37,6 +37,9 @@ var migration0005 string
 //go:embed migrations/0006_chapter_scanlator.sql
 var migration0006 string
 
+//go:embed migrations/0007_metadata_cover.sql
+var migration0007 string
+
 var migrations = []struct {
 	name string
 	sql  string
@@ -47,6 +50,7 @@ var migrations = []struct {
 	{"0004_tracker_records.sql", migration0004},
 	{"0005_metadata_links.sql", migration0005},
 	{"0006_chapter_scanlator.sql", migration0006},
+	{"0007_metadata_cover.sql", migration0007},
 }
 
 func Open(path string) (*sql.DB, error) {
