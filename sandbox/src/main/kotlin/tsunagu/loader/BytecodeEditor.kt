@@ -14,41 +14,82 @@ import org.objectweb.asm.tree.InsnNode
 import org.objectweb.asm.tree.MethodInsnNode
 import org.objectweb.asm.tree.MethodNode
 import org.objectweb.asm.tree.TypeInsnNode
+import java.io.BufferedOutputStream
 import java.net.URLClassLoader
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardOpenOption
+import java.nio.file.StandardCopyOption
+import java.util.jar.JarEntry
+import java.util.jar.JarOutputStream
 import kotlin.streams.asSequence
 
 object BytecodeEditor {
     private val logger = KotlinLogging.logger {}
 
     fun fixAndroidClasses(jarFile: Path) {
-        val classpathLoader = URLClassLoader(arrayOf(jarFile.toUri().toURL()), javaClass.classLoader)
-        classpathLoader.use { loader ->
-            FileSystems.newFileSystem(jarFile, null as ClassLoader?)?.use {
-                val classes =
-                    Files
-                        .walk(it.getPath("/"))
-                        .asSequence()
-                        .filterNotNull()
-                        .filterNot(Files::isDirectory)
-                        .mapNotNull(::getClassBytes)
-                        .toList()
-
-                val instantiatedTypes = collectInstantiatedTypes(classes)
-                logger.trace { "Instantiated types" to instantiatedTypes }
-
-                classes
-                    .map { entry -> transform(entry, instantiatedTypes, loader) }
-                    .forEach(::write)
+        // Read every entry up front, then close the zip FileSystem so nothing
+        // holds jarFile open.
+        val entries = LinkedHashMap<String, ByteArray>()
+        FileSystems.newFileSystem(jarFile, null as ClassLoader?).use { fs ->
+            Files.walk(fs.getPath("/")).use { stream ->
+                stream
+                    .asSequence()
+                    .filterNotNull()
+                    .filterNot(Files::isDirectory)
+                    .forEach { p -> entries[p.toString().trimStart('/')] = Files.readAllBytes(p) }
             }
         }
+
+        val classes =
+            entries.entries
+                .filter { (name, bytes) -> name.endsWith(".class") && isJavaClass(bytes) }
+                .map { (name, bytes) -> name to bytes }
+
+        val instantiatedTypes = collectInstantiatedTypes(classes)
+        logger.trace { "Instantiated types" to instantiatedTypes }
+
+        // Compute transforms while the classpath loader is open (it is needed
+        // for stack-map frame computation), then close it.
+        URLClassLoader(arrayOf(jarFile.toUri().toURL()), javaClass.classLoader).use { loader ->
+            classes.forEach { entry ->
+                val (name, bytes) = transform(entry, instantiatedTypes, loader)
+                entries[name] = bytes
+            }
+        }
+
+        // Write a brand-new jar next to the original and swap it in. Rewriting
+        // the jar in place through the zip FileSystem fails on Windows: its
+        // sync() on close() deletes the original file, which the OS refuses
+        // while any handle (URLClassLoader, a prior ZipFile) is still open or
+        // settling. A fresh file plus an atomic move has no such window.
+        val fixed =
+            Files.createTempFile(jarFile.toAbsolutePath().parent, "tsunagu-ext-fixed-", ".jar")
+        try {
+            JarOutputStream(BufferedOutputStream(Files.newOutputStream(fixed))).use { jos ->
+                for ((name, bytes) in entries) {
+                    jos.putNextEntry(JarEntry(name))
+                    jos.write(bytes)
+                    jos.closeEntry()
+                }
+            }
+            Files.move(fixed, jarFile, StandardCopyOption.REPLACE_EXISTING)
+        } catch (e: Throwable) {
+            Files.deleteIfExists(fixed)
+            throw e
+        }
     }
-    private fun collectInstantiatedTypes(classes: List<Pair<Path, ByteArray>>): Set<String> {
+
+    private fun isJavaClass(bytes: ByteArray): Boolean =
+        bytes.size >= 4 &&
+            bytes[0] == 0xCA.toByte() &&
+            bytes[1] == 0xFE.toByte() &&
+            bytes[2] == 0xBA.toByte() &&
+            bytes[3] == 0xBE.toByte()
+
+    private fun collectInstantiatedTypes(classes: List<Pair<String, ByteArray>>): Set<String> {
         val instantiated = mutableSetOf<String>()
-        classes.forEach { (path, bytes) ->
+        classes.forEach { (name, bytes) ->
             try {
                 val cr = ClassReader(bytes)
                 cr.accept(
@@ -74,39 +115,10 @@ object BytecodeEditor {
                     0,
                 )
             } catch (e: Exception) {
-                logger.error(e) { "Error scanning class for NEW instructions: $path" }
+                logger.error(e) { "Error scanning class for NEW instructions: $name" }
             }
         }
         return instantiated
-    }
-
-    private fun getClassBytes(path: Path): Pair<Path, ByteArray>? {
-        return try {
-            if (path.toString().endsWith(".class")) {
-                val bytes = Files.readAllBytes(path)
-                if (bytes.size < 4) {
-                    return null
-                }
-                val cafebabe =
-                    String.format(
-                        "%02X%02X%02X%02X",
-                        bytes[0],
-                        bytes[1],
-                        bytes[2],
-                        bytes[3],
-                    )
-                if (cafebabe.lowercase() != "cafebabe") {
-                    return null
-                }
-
-                path to bytes
-            } else {
-                null
-            }
-        } catch (e: Exception) {
-            logger.error(e) { "Error loading class from Path: $path" }
-            null
-        }
     }
 
     private const val REPLACEMENT_PATH = "xyz/nulldev/androidcompat/replace"
@@ -265,10 +277,10 @@ object BytecodeEditor {
         }
 
     private fun transform(
-        pair: Pair<Path, ByteArray>,
+        pair: Pair<String, ByteArray>,
         instantiatedTypes: Set<String>,
         classpathLoader: ClassLoader,
-    ): Pair<Path, ByteArray> {
+    ): Pair<String, ByteArray> {
         val cr = ClassReader(pair.second)
         val cw = computeFramesWriter(cr, classpathLoader)
         cr.accept(
@@ -340,14 +352,5 @@ object BytecodeEditor {
             0,
         )
         return pair.first to cw.toByteArray()
-    }
-
-    private fun write(pair: Pair<Path, ByteArray>) {
-        Files.write(
-            pair.first,
-            pair.second,
-            StandardOpenOption.CREATE,
-            StandardOpenOption.TRUNCATE_EXISTING,
-        )
     }
 }

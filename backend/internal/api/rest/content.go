@@ -397,41 +397,77 @@ func (h *ContentHandler) runProbe(ctx context.Context, chapterID int64, onStage 
 	if err != nil {
 		return probeResult{Stage: "resolve", Error: err.Error()}
 	}
-	streamURL, headers := info.GetStreamUrl(), info.GetHeaders()
-	if streamURL == "" {
+	primaryURL, primaryHeaders := info.GetStreamUrl(), info.GetHeaders()
+
+	// Try the primary stream URL first, then fall back through the other
+	// sources the extension returned. Extractors routinely hand back a broken
+	// primary URL alongside a dozen working alternates (a flaky host, a
+	// mapper entry missing its `url`, etc.); playback already picks among
+	// GetSources() for quality, so the probe should not fail the episode when
+	// only the primary is bad.
+	type streamCandidate struct {
+		url     string
+		headers map[string]string
+	}
+	var candidates []streamCandidate
+	if primaryURL != "" {
+		candidates = append(candidates, streamCandidate{primaryURL, primaryHeaders})
+	}
+	for _, s := range info.GetSources() {
+		u := s.GetUrl()
+		if u == "" || u == primaryURL {
+			continue
+		}
+		hdr := primaryHeaders
+		if len(s.GetHeaders()) > 0 {
+			hdr = s.GetHeaders()
+		}
+		candidates = append(candidates, streamCandidate{u, hdr})
+	}
+	if len(candidates) == 0 {
 		return probeResult{Stage: "resolve", Error: "source returned no stream url"}
 	}
-	streamURL, headers = unwrapLocalProxyURL(streamURL, headers)
 
 	if onStage != nil {
 		onStage("verifying")
 	}
-	status, verr := verifyStreamURL(ctx, streamURL, headers)
+
 	res := probeResult{
-		StreamType:  classifyStream(streamURL),
 		Sources:     len(info.GetSources()),
 		Subtitles:   len(info.GetSubtitles()),
 		AudioTracks: len(info.GetAudioTracks()),
 		SkipMarkers: len(info.GetTimestamps()),
-		Status:      status,
 	}
-	if verr != nil {
 
-		h.Sr.Invalidate(dctx.ExtensionPackageName, dctx.SourceEntryID, dctx.SourceChapterID)
-		res.Stage = "verify"
-		res.Error = verr.Error()
+	var lastErr error
+	var lastStatus int
+	for _, c := range candidates {
+		streamURL, headers := unwrapLocalProxyURL(c.url, c.headers)
+		streamType := classifyStream(streamURL)
+
+		status, verr := verifyStreamURL(ctx, streamURL, headers)
+		if verr != nil {
+			lastErr, lastStatus = verr, status
+			continue
+		}
+		if streamType == "hls" {
+			if cerr := hlsContentCheck(ctx, streamURL, headers, 2); cerr != nil {
+				lastErr, lastStatus = cerr, status
+				continue
+			}
+		}
+		res.OK = true
+		res.StreamType = streamType
+		res.Status = status
 		return res
 	}
 
-	if res.StreamType == "hls" {
-		if cerr := hlsContentCheck(ctx, streamURL, headers, 2); cerr != nil {
-			h.Sr.Invalidate(dctx.ExtensionPackageName, dctx.SourceEntryID, dctx.SourceChapterID)
-			res.Stage = "verify"
-			res.Error = cerr.Error()
-			return res
-		}
+	h.Sr.Invalidate(dctx.ExtensionPackageName, dctx.SourceEntryID, dctx.SourceChapterID)
+	res.Stage = "verify"
+	res.Status = lastStatus
+	if lastErr != nil {
+		res.Error = lastErr.Error()
 	}
-	res.OK = true
 	return res
 }
 
