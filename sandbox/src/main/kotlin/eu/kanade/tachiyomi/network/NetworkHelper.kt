@@ -90,7 +90,7 @@ class NetworkHelper {
                 }
             builder.addNetworkInterceptor(httpLoggingInterceptor)
 
-            builder.addInterceptor(CloudflareInterceptor())
+            builder.addInterceptor(CloudflareInterceptor(cookieStore))
 
             return builder
         }

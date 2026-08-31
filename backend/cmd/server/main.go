@@ -26,6 +26,7 @@ import (
 	"tsunagu/backend/internal/db"
 	"tsunagu/backend/internal/db/sqlcgen"
 	"tsunagu/backend/internal/download"
+	"tsunagu/backend/internal/flaresolverr"
 	"tsunagu/backend/internal/localsource"
 	"tsunagu/backend/internal/metadata"
 	"tsunagu/backend/internal/sandbox"
@@ -43,23 +44,24 @@ var (
 )
 
 func main() {
-	dataDir := flag.String("data-dir", "", "directory for the DB, caches, extensions and downloads")
+	dataDir := flag.String("data-dir", "", "root directory for the DB, caches, extensions and downloads")
+	configPath := flag.String("config", "", "path to tsunagu.toml (defaults to <data-dir>/tsunagu.toml)")
 	showVersion := flag.Bool("version", false, "print version and exit")
 	flag.Parse()
 	if *showVersion {
 		fmt.Printf("%s %s (%s)\n", serverName, serverVersion, serverBuildTime)
 		return
 	}
-	if *dataDir != "" {
-		_ = os.Setenv("TSUNAGU_DATA_DIR", *dataDir)
+	if flag.NArg() > 0 && flag.Arg(0) == "config" {
+		runConfigCLI(flag.Args()[1:], config.Options{ConfigPath: *configPath, DataDir: *dataDir})
+		return
 	}
 
-	cfg, err := config.Load()
+	bootCfg, tomlPath, activeKeys, err := config.Load(config.Options{ConfigPath: *configPath, DataDir: *dataDir})
 	if err != nil {
 		log.Fatalf("loading config: %v", err)
 	}
-
-	wantAddr := cfg.HTTPAddr
+	wantAddr := bootCfg.HTTPAddr
 	if !strings.Contains(wantAddr, ":") {
 		wantAddr = ":" + wantAddr
 	}
@@ -73,6 +75,33 @@ func main() {
 		log.Printf("address %s unavailable, bound %s instead", wantAddr, ln.Addr())
 	}
 	boundAddr := ln.Addr().String()
+
+	conn, err := db.Open(bootCfg.DBPath)
+	if err != nil {
+		log.Fatalf("opening db: %v", err)
+	}
+	defer conn.Close()
+	q := sqlcgen.New(conn)
+
+	fsDir, _ := filepath.Abs(filepath.Join(filepath.Dir(bootCfg.DBPath), "flaresolverr"))
+	fsMgr := flaresolverr.NewManager(fsDir)
+	defer fsMgr.Shutdown()
+	globalFsMgr = fsMgr
+
+	store := config.NewStore(bootCfg, q, tomlPath, activeKeys)
+	applyCloudflare := func(ctx context.Context) {
+		c := store.Config()
+		fsMgr.ApplyConfig(c.CloudflareSolverMode, c.CloudflareSolverURL)
+	}
+	store.OnChange("cloudflare_solver_mode", applyCloudflare)
+	store.OnChange("cloudflare_solver_url", applyCloudflare)
+	if err := store.Sync(context.Background()); err != nil {
+		log.Fatalf("syncing config: %v", err)
+	}
+	applyCloudflare(context.Background())
+	globalStore = store
+
+	cfg := store.Config()
 	if cfg.PublicURL == "" || strings.HasPrefix(cfg.PublicURL, "http://localhost:6007") {
 		host, port, _ := net.SplitHostPort(boundAddr)
 		if host == "" || host == "::" || host == "0.0.0.0" {
@@ -80,20 +109,10 @@ func main() {
 		}
 		cfg.PublicURL = "http://" + net.JoinHostPort(host, port)
 	}
-
-	absCacheDir, err := filepath.Abs(cfg.JarCacheDir)
-	if err != nil {
-		log.Fatalf("resolving cache dir: %v", err)
+	if absCacheDir, err := filepath.Abs(cfg.JarCacheDir); err == nil {
+		cfg.JarCacheDir = absCacheDir
 	}
-	cfg.JarCacheDir = absCacheDir
 
-	conn, err := db.Open(cfg.DBPath)
-	if err != nil {
-		log.Fatalf("opening db: %v", err)
-	}
-	defer conn.Close()
-
-	q := sqlcgen.New(conn)
 	absMediaDir, err := filepath.Abs(cfg.MediaDir)
 	if err != nil {
 		log.Fatalf("resolving media dir: %v", err)
@@ -125,6 +144,12 @@ func main() {
 		Addr:          cfg.SandboxAddr,
 		IdleTimeout:   cfg.IdleTimeout(),
 		HeapMB:        cfg.SandboxHeapMB,
+		FlareSolverrURLFunc: func() string {
+			if store.Config().CloudflareSolverMode == flaresolverr.ModeDisabled {
+				return ""
+			}
+			return strings.TrimRight(cfg.PublicURL, "/") + "/internal/flaresolverr"
+		},
 	})
 	defer supervised.Shutdown()
 
@@ -163,6 +188,7 @@ func main() {
 	mux.Handle("/proxy/cover/remote/", remoteImg)
 	mux.Handle("/proxy/img/", remoteImg)
 	mux.Handle("/proxy/icon/", &rest.IconProxyHandler{Q: q, IconCacheDir: filepath.Join(absMediaDir, "icons")})
+	mux.Handle("/internal/flaresolverr/", fsMgr.SolveHandler("/internal/flaresolverr"))
 	mux.HandleFunc("/api/tracker/mal/callback", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		info, err := trackerMgr.OAuthCallback(r.Context(), "mal", r.URL.Query())
@@ -287,7 +313,7 @@ func authMiddleware(token string, next http.Handler) http.Handler {
 		return next
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/healthz" || strings.HasPrefix(r.URL.Path, "/api/tracker/") || r.Method == http.MethodOptions {
+		if r.URL.Path == "/healthz" || strings.HasPrefix(r.URL.Path, "/api/tracker/") || strings.HasPrefix(r.URL.Path, "/internal/") || r.Method == http.MethodOptions {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -317,7 +343,7 @@ func corsMiddleware(next http.Handler) http.Handler {
 }
 
 func registerGraphQL(mux *http.ServeMux, sc *sandbox.SupervisedClient, sy *sync.Syncer, dm *download.Manager, tk *tracker.Manager, md *metadata.Manager, sr *streamresolve.Resolver, q *sqlcgen.Queries) {
-	resolver := &graph.Resolver{Sy: sy, Sc: sc, Dm: dm, Ls: localsource.New(q, globalMediaDir), Tk: tk, Md: md, Sr: sr, Q: q, MediaDir: globalMediaDir, Name: serverName, Version: serverVersion, BuildTime: serverBuildTime}
+	resolver := &graph.Resolver{Sy: sy, Sc: sc, Dm: dm, Ls: localsource.New(q, globalMediaDir), Tk: tk, Md: md, Sr: sr, Q: q, Fs: globalFsMgr, Cfg: globalStore, MediaDir: globalMediaDir, Name: serverName, Version: serverVersion, BuildTime: serverBuildTime}
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: resolver}))
 	srv.Use(extension.FixedComplexityLimit(8000))
 	mux.Handle("/api/graphql", withLoaders(q, srv))
@@ -339,3 +365,5 @@ func registerRoutes(mux *http.ServeMux) {
 }
 
 var globalMediaDir string
+var globalFsMgr *flaresolverr.Manager
+var globalStore *config.Store

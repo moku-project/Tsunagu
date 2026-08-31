@@ -21,14 +21,15 @@ func (w *logWriter) Write(p []byte) (int, error) {
 }
 
 type SupervisedClient struct {
-	jarPath      string
-	port         int
-	extDir       string
-	storageDir   string
-	novelEnabled bool
-	addr         string
-	idleTimeout  time.Duration
-	heapMB       int
+	jarPath           string
+	port              int
+	extDir            string
+	storageDir        string
+	novelEnabled      bool
+	addr              string
+	idleTimeout       time.Duration
+	heapMB            int
+	flaresolverrURLFn func() string
 
 	mu         sync.Mutex
 	cmd        *exec.Cmd
@@ -39,27 +40,29 @@ type SupervisedClient struct {
 }
 
 type SupervisedConfig struct {
-	JarPath       string
-	Port          int
-	ExtensionsDir string
-	StorageDir    string
-	NovelEnabled  bool
-	Addr          string
-	IdleTimeout   time.Duration
-	HeapMB        int
+	JarPath             string
+	Port                int
+	ExtensionsDir       string
+	StorageDir          string
+	NovelEnabled        bool
+	Addr                string
+	IdleTimeout         time.Duration
+	HeapMB              int
+	FlareSolverrURLFunc func() string
 }
 
 func NewSupervised(cfg SupervisedConfig) *SupervisedClient {
 	sc := &SupervisedClient{
-		jarPath:      cfg.JarPath,
-		port:         cfg.Port,
-		extDir:       cfg.ExtensionsDir,
-		storageDir:   cfg.StorageDir,
-		novelEnabled: cfg.NovelEnabled,
-		addr:         cfg.Addr,
-		idleTimeout:  cfg.IdleTimeout,
-		heapMB:       cfg.HeapMB,
-		stopReaper:   make(chan struct{}),
+		jarPath:           cfg.JarPath,
+		port:              cfg.Port,
+		extDir:            cfg.ExtensionsDir,
+		storageDir:        cfg.StorageDir,
+		novelEnabled:      cfg.NovelEnabled,
+		addr:              cfg.Addr,
+		idleTimeout:       cfg.IdleTimeout,
+		heapMB:            cfg.HeapMB,
+		flaresolverrURLFn: cfg.FlareSolverrURLFunc,
+		stopReaper:        make(chan struct{}),
 	}
 	go sc.reapLoop()
 	return sc
@@ -142,6 +145,11 @@ func (sc *SupervisedClient) spawnLocked() error {
 		"SANDBOX_STORAGE_DIR="+sc.storageDir,
 		"SANDBOX_ENABLE_NOVEL="+strconv.FormatBool(sc.novelEnabled),
 	)
+	if sc.flaresolverrURLFn != nil {
+		if u := sc.flaresolverrURLFn(); u != "" {
+			cmd.Env = append(cmd.Env, "SANDBOX_FLARESOLVERR_URL="+u)
+		}
+	}
 	// On some Windows hosts, AF_UNIX connect() fails with WSAEINVAL for socket
 	// files created under %USERPROFILE%\AppData (AV/EDR filter, Controlled
 	// Folder Access, etc.). The JVM's NIO Selector self-pipe puts its socket

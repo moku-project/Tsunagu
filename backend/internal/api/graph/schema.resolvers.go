@@ -546,6 +546,34 @@ func (r *mutationResolver) SyncRepositories(ctx context.Context) ([]*model.Repos
 	return out, nil
 }
 
+// UpdateServerSetting is the resolver for the updateServerSetting field.
+func (r *mutationResolver) UpdateServerSetting(ctx context.Context, key string, value string) (*model.UpdateSettingResult, error) {
+	eff, err := r.Cfg.Set(ctx, key, value)
+	if err != nil {
+		return nil, err
+	}
+	return &model.UpdateSettingResult{
+		Setting:         toServerSetting(eff),
+		RestartRequired: eff.RestartRequired(),
+	}, nil
+}
+
+// InstallCloudflareSolver is the resolver for the installCloudflareSolver field.
+func (r *mutationResolver) InstallCloudflareSolver(ctx context.Context) (*model.CloudflareSolver, error) {
+	if err := r.Fs.Install(ctx); err != nil {
+		return nil, err
+	}
+	return toCloudflareSolver(r.Fs.Status(ctx)), nil
+}
+
+// UninstallCloudflareSolver is the resolver for the uninstallCloudflareSolver field.
+func (r *mutationResolver) UninstallCloudflareSolver(ctx context.Context) (bool, error) {
+	if err := r.Fs.Uninstall(); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 // InstallExtension is the resolver for the installExtension field.
 func (r *mutationResolver) InstallExtension(ctx context.Context, packageName string) (*model.Extension, error) {
 	ext, err := r.Sy.InstallExtension(ctx, packageName)
@@ -1253,6 +1281,21 @@ func (r *queryResolver) InstalledExtensions(ctx context.Context) ([]*model.Exten
 	out := make([]*model.Extension, 0, len(exts))
 	for _, ext := range exts {
 		out = append(out, toExtension(ext, r.MediaDir))
+	}
+	return out, nil
+}
+
+// Extensions is the resolver for the extensions field.
+func (r *queryResolver) CloudflareSolver(ctx context.Context) (*model.CloudflareSolver, error) {
+	return toCloudflareSolver(r.Fs.Status(ctx)), nil
+}
+
+// SetCloudflareSolver is the resolver for the setCloudflareSolver field.
+func (r *queryResolver) ServerSettings(ctx context.Context) ([]*model.ServerSetting, error) {
+	rows := r.Cfg.List(ctx)
+	out := make([]*model.ServerSetting, 0, len(rows))
+	for _, s := range rows {
+		out = append(out, toServerSetting(s))
 	}
 	return out, nil
 }

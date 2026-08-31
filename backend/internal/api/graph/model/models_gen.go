@@ -53,6 +53,17 @@ type CheckBoxFilterInput struct {
 	State bool `json:"state"`
 }
 
+type CloudflareSolver struct {
+	Mode                SolverMode  `json:"mode"`
+	State               SolverState `json:"state"`
+	DownloadProgress    *float64    `json:"downloadProgress,omitempty"`
+	Version             *string     `json:"version,omitempty"`
+	URL                 *string     `json:"url,omitempty"`
+	Reachable           bool        `json:"reachable"`
+	Error               *string     `json:"error,omitempty"`
+	SupportedOnPlatform bool        `json:"supportedOnPlatform"`
+}
+
 type Download struct {
 	ID              string         `json:"id"`
 	MediaID         string         `json:"mediaId"`
@@ -286,6 +297,18 @@ type SeparatorFilter struct {
 
 func (SeparatorFilter) IsFilterNode() {}
 
+type ServerSetting struct {
+	Key         string        `json:"key"`
+	Value       string        `json:"value"`
+	Default     string        `json:"default"`
+	Type        SettingType   `json:"type"`
+	Kind        SettingKind   `json:"kind"`
+	Scope       SettingScope  `json:"scope"`
+	Source      SettingSource `json:"source"`
+	Editable    bool          `json:"editable"`
+	Description string        `json:"description"`
+}
+
 type SkipMarker struct {
 	Type    string `json:"type"`
 	Name    string `json:"name"`
@@ -387,6 +410,11 @@ func (TriStateFilter) IsFilterNode() {}
 
 type TriStateFilterInput struct {
 	State int32 `json:"state"`
+}
+
+type UpdateSettingResult struct {
+	Setting         *ServerSetting `json:"setting"`
+	RestartRequired bool           `json:"restartRequired"`
 }
 
 type VideoSource struct {
@@ -578,6 +606,350 @@ func (e *LibrarySort) UnmarshalJSON(b []byte) error {
 }
 
 func (e LibrarySort) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type SettingKind string
+
+const (
+	SettingKindBootstrap SettingKind = "BOOTSTRAP"
+	SettingKindRuntime   SettingKind = "RUNTIME"
+)
+
+var AllSettingKind = []SettingKind{
+	SettingKindBootstrap,
+	SettingKindRuntime,
+}
+
+func (e SettingKind) IsValid() bool {
+	switch e {
+	case SettingKindBootstrap, SettingKindRuntime:
+		return true
+	}
+	return false
+}
+
+func (e SettingKind) String() string {
+	return string(e)
+}
+
+func (e *SettingKind) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SettingKind(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SettingKind", str)
+	}
+	return nil
+}
+
+func (e SettingKind) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *SettingKind) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e SettingKind) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type SettingScope string
+
+const (
+	SettingScopeLive           SettingScope = "LIVE"
+	SettingScopeSandboxRestart SettingScope = "SANDBOX_RESTART"
+	SettingScopeFullRestart    SettingScope = "FULL_RESTART"
+)
+
+var AllSettingScope = []SettingScope{
+	SettingScopeLive,
+	SettingScopeSandboxRestart,
+	SettingScopeFullRestart,
+}
+
+func (e SettingScope) IsValid() bool {
+	switch e {
+	case SettingScopeLive, SettingScopeSandboxRestart, SettingScopeFullRestart:
+		return true
+	}
+	return false
+}
+
+func (e SettingScope) String() string {
+	return string(e)
+}
+
+func (e *SettingScope) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SettingScope(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SettingScope", str)
+	}
+	return nil
+}
+
+func (e SettingScope) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *SettingScope) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e SettingScope) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type SettingSource string
+
+const (
+	SettingSourceFile    SettingSource = "FILE"
+	SettingSourceDb      SettingSource = "DB"
+	SettingSourceDefault SettingSource = "DEFAULT"
+)
+
+var AllSettingSource = []SettingSource{
+	SettingSourceFile,
+	SettingSourceDb,
+	SettingSourceDefault,
+}
+
+func (e SettingSource) IsValid() bool {
+	switch e {
+	case SettingSourceFile, SettingSourceDb, SettingSourceDefault:
+		return true
+	}
+	return false
+}
+
+func (e SettingSource) String() string {
+	return string(e)
+}
+
+func (e *SettingSource) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SettingSource(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SettingSource", str)
+	}
+	return nil
+}
+
+func (e SettingSource) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *SettingSource) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e SettingSource) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type SettingType string
+
+const (
+	SettingTypeBool   SettingType = "BOOL"
+	SettingTypeInt    SettingType = "INT"
+	SettingTypeString SettingType = "STRING"
+)
+
+var AllSettingType = []SettingType{
+	SettingTypeBool,
+	SettingTypeInt,
+	SettingTypeString,
+}
+
+func (e SettingType) IsValid() bool {
+	switch e {
+	case SettingTypeBool, SettingTypeInt, SettingTypeString:
+		return true
+	}
+	return false
+}
+
+func (e SettingType) String() string {
+	return string(e)
+}
+
+func (e *SettingType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SettingType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SettingType", str)
+	}
+	return nil
+}
+
+func (e SettingType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *SettingType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e SettingType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type SolverMode string
+
+const (
+	SolverModeDisabled SolverMode = "DISABLED"
+	SolverModeExternal SolverMode = "EXTERNAL"
+	SolverModeManaged  SolverMode = "MANAGED"
+)
+
+var AllSolverMode = []SolverMode{
+	SolverModeDisabled,
+	SolverModeExternal,
+	SolverModeManaged,
+}
+
+func (e SolverMode) IsValid() bool {
+	switch e {
+	case SolverModeDisabled, SolverModeExternal, SolverModeManaged:
+		return true
+	}
+	return false
+}
+
+func (e SolverMode) String() string {
+	return string(e)
+}
+
+func (e *SolverMode) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SolverMode(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SolverMode", str)
+	}
+	return nil
+}
+
+func (e SolverMode) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *SolverMode) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e SolverMode) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type SolverState string
+
+const (
+	SolverStateNotInstalled SolverState = "NOT_INSTALLED"
+	SolverStateDownloading  SolverState = "DOWNLOADING"
+	SolverStateInstalled    SolverState = "INSTALLED"
+	SolverStateRunning      SolverState = "RUNNING"
+	SolverStateError        SolverState = "ERROR"
+)
+
+var AllSolverState = []SolverState{
+	SolverStateNotInstalled,
+	SolverStateDownloading,
+	SolverStateInstalled,
+	SolverStateRunning,
+	SolverStateError,
+}
+
+func (e SolverState) IsValid() bool {
+	switch e {
+	case SolverStateNotInstalled, SolverStateDownloading, SolverStateInstalled, SolverStateRunning, SolverStateError:
+		return true
+	}
+	return false
+}
+
+func (e SolverState) String() string {
+	return string(e)
+}
+
+func (e *SolverState) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SolverState(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SolverState", str)
+	}
+	return nil
+}
+
+func (e SolverState) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *SolverState) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e SolverState) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

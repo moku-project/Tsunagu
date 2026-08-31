@@ -68,6 +68,7 @@ type Querier interface {
 	GetQueuedDownloadByChapter(ctx context.Context, chapterID int64) (Download, error)
 	GetRepository(ctx context.Context, id int64) (Repository, error)
 	GetRepositoryByURL(ctx context.Context, indexUrl string) (Repository, error)
+	GetSetting(ctx context.Context, key string) (string, error)
 	GetTrackerAccount(ctx context.Context, trackerType string) (TrackerAccount, error)
 	GetTrackerLink(ctx context.Context, id int64) (TrackerLink, error)
 	LatestChapterByMediaIDs(ctx context.Context, mediaIds []int64) ([]Chapter, error)
@@ -106,6 +107,7 @@ type Querier interface {
 	ListReadingProgressByMediaIDs(ctx context.Context, mediaIds []int64) ([]ReadingProgress, error)
 	ListRecentChapters(ctx context.Context, arg ListRecentChaptersParams) ([]ListRecentChaptersRow, error)
 	ListRepositories(ctx context.Context) ([]Repository, error)
+	ListSettings(ctx context.Context) ([]ListSettingsRow, error)
 	ListTags(ctx context.Context) ([]Tag, error)
 	ListTagsByMediaIDs(ctx context.Context, mediaIds []int64) ([]ListTagsByMediaIDsRow, error)
 	ListTagsForMedia(ctx context.Context, mediaID int64) ([]Tag, error)
@@ -135,6 +137,7 @@ type Querier interface {
 	SetExtensionEnabled(ctx context.Context, arg SetExtensionEnabledParams) (Extension, error)
 	SetFolderSortOrder(ctx context.Context, arg SetFolderSortOrderParams) (Folder, error)
 	SetMediaCoverOverride(ctx context.Context, arg SetMediaCoverOverrideParams) (Medium, error)
+	SetSetting(ctx context.Context, arg SetSettingParams) error
 	TouchMediaViewed(ctx context.Context, id int64) error
 	TouchRepositorySync(ctx context.Context, id int64) error
 	UpdateDownloadProgress(ctx context.Context, arg UpdateDownloadProgressParams) error

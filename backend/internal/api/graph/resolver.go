@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"log"
 
+	"tsunagu/backend/internal/config"
 	"tsunagu/backend/internal/db/sqlcgen"
 	"tsunagu/backend/internal/download"
+	"tsunagu/backend/internal/flaresolverr"
 	"tsunagu/backend/internal/localsource"
 	"tsunagu/backend/internal/metadata"
 	"tsunagu/backend/internal/sandbox"
@@ -25,6 +27,8 @@ type Resolver struct {
 	Md        *metadata.Manager
 	Sr        *streamresolve.Resolver
 	Q         *sqlcgen.Queries
+	Fs        *flaresolverr.Manager
+	Cfg       *config.Store
 	MediaDir  string
 	Name      string
 	Version   string

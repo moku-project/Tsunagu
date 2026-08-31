@@ -15,6 +15,12 @@ type AnimeEpisodeStream struct {
 	LocalPath sql.NullString `json:"local_path"`
 }
 
+type AppSetting struct {
+	Key       string    `json:"key"`
+	Value     string    `json:"value"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
 type Chapter struct {
 	ID          int64           `json:"id"`
 	MediaID     int64           `json:"media_id"`

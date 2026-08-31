@@ -15,11 +15,40 @@ import (
 	"time"
 
 	"tsunagu/backend/internal/api/graph/model"
+	"tsunagu/backend/internal/config"
 	"tsunagu/backend/internal/db/sqlcgen"
+	"tsunagu/backend/internal/flaresolverr"
 	"tsunagu/backend/internal/metadata"
 	sandboxv1 "tsunagu/backend/internal/sandbox/gen/sandbox/v1"
 	"tsunagu/backend/internal/tracker"
 )
+
+func toServerSetting(s config.EffectiveSetting) *model.ServerSetting {
+	return &model.ServerSetting{
+		Key:         s.Key,
+		Value:       s.Value,
+		Default:     s.Default,
+		Type:        model.SettingType(s.Type),
+		Kind:        model.SettingKind(s.Kind),
+		Scope:       model.SettingScope(s.Scope),
+		Source:      model.SettingSource(s.Source),
+		Editable:    s.Editable,
+		Description: s.Description,
+	}
+}
+
+func toCloudflareSolver(s flaresolverr.Status) *model.CloudflareSolver {
+	return &model.CloudflareSolver{
+		Mode:                model.SolverMode(strings.ToUpper(s.Mode)),
+		State:               model.SolverState(s.State),
+		DownloadProgress:    s.Progress,
+		Version:             s.Version,
+		URL:                 s.URL,
+		Reachable:           s.Reachable,
+		Error:               s.Error,
+		SupportedOnPlatform: s.Supported,
+	}
+}
 
 func toMetadataMatch(l sqlcgen.MetadataLink) *model.MetadataMatch {
 	var coverURL *string

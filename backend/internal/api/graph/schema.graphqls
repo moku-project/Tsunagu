@@ -46,6 +46,42 @@ type ExtensionPage {
   languages: [String!]!
 }
 
+enum SolverMode { DISABLED EXTERNAL MANAGED }
+enum SolverState { NOT_INSTALLED DOWNLOADING INSTALLED RUNNING ERROR }
+
+enum SettingKind { BOOTSTRAP RUNTIME }
+enum SettingType { BOOL INT STRING }
+enum SettingScope { LIVE SANDBOX_RESTART FULL_RESTART }
+enum SettingSource { FILE DB DEFAULT }
+
+type ServerSetting {
+  key: String!
+  value: String!
+  default: String!
+  type: SettingType!
+  kind: SettingKind!
+  scope: SettingScope!
+  source: SettingSource!
+  editable: Boolean!
+  description: String!
+}
+
+type UpdateSettingResult {
+  setting: ServerSetting!
+  restartRequired: Boolean!
+}
+
+type CloudflareSolver {
+  mode: SolverMode!
+  state: SolverState!
+  downloadProgress: Float
+  version: String
+  url: String
+  reachable: Boolean!
+  error: String
+  supportedOnPlatform: Boolean!
+}
+
 type Media {
   id: ID!
   extensionId: ID
@@ -329,6 +365,8 @@ type Query {
   repositories: [Repository!]!
   availableExtensions(repositoryId: ID!): [Extension!]!
   installedExtensions: [Extension!]!
+  cloudflareSolver: CloudflareSolver!
+  serverSettings: [ServerSetting!]!
   extensions(
     repositoryId: ID
     query: String
@@ -396,6 +434,10 @@ type Mutation {
   deleteRepository(repositoryId: ID!): Boolean!
   syncRepository(repositoryId: ID!): Repository!
   syncRepositories: [Repository!]!
+
+  updateServerSetting(key: String!, value: String!): UpdateSettingResult!
+  installCloudflareSolver: CloudflareSolver!
+  uninstallCloudflareSolver: Boolean!
   installExtension(packageName: String!): Extension!
   installExternalExtension(url: String!): Extension!
   uninstallExtension(packageName: String!): Extension!

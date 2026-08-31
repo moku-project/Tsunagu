@@ -72,6 +72,17 @@ type ComplexityRoot struct {
 		State func(childComplexity int) int
 	}
 
+	CloudflareSolver struct {
+		DownloadProgress    func(childComplexity int) int
+		Error               func(childComplexity int) int
+		Mode                func(childComplexity int) int
+		Reachable           func(childComplexity int) int
+		State               func(childComplexity int) int
+		SupportedOnPlatform func(childComplexity int) int
+		URL                 func(childComplexity int) int
+		Version             func(childComplexity int) int
+	}
+
 	Download struct {
 		BytesPerSec     func(childComplexity int) int
 		Chapter         func(childComplexity int) int
@@ -219,52 +230,55 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AddMediaToFolder         func(childComplexity int, mediaID string, folderID string) int
-		AddRepository            func(childComplexity int, indexURL string, name *string) int
-		ApplyMetadataMatch       func(childComplexity int, mediaID string, providerID string, provider *string) int
-		BindTrack                func(childComplexity int, mediaID string, trackerKey string, remoteID string) int
-		ClearDownloads           func(childComplexity int, status []model.DownloadStatus) int
-		ClearImageCache          func(childComplexity int) int
-		CreateFolder             func(childComplexity int, name string, parentFolderID *string) int
-		DeleteDownload           func(childComplexity int, mediaID string, chapterIds []string) int
-		DeleteFolder             func(childComplexity int, folderID string) int
-		DeleteRepository         func(childComplexity int, repositoryID string) int
-		DequeueDownload          func(childComplexity int, mediaID string, chapterID string) int
-		EnqueueDownload          func(childComplexity int, mediaID string, chapterIds []string) int
-		InstallExtension         func(childComplexity int, packageName string) int
-		InstallExternalExtension func(childComplexity int, url string) int
-		MarkChapterRead          func(childComplexity int, mediaID string, chapterID string) int
-		MarkChaptersRead         func(childComplexity int, mediaID string, chapterIds []string, read bool) int
-		MigrateMedia             func(childComplexity int, fromMediaID string, toExtensionID string, toExternalID string) int
-		PullTracker              func(childComplexity int, mediaID string) int
-		RefreshFolder            func(childComplexity int, folderID string) int
-		RefreshMetadata          func(childComplexity int, mediaID string, syncChapters *bool) int
-		RefreshMetadataMatch     func(childComplexity int, mediaID string) int
-		RemoveMediaFromFolder    func(childComplexity int, mediaID string, folderID string) int
-		RenameFolder             func(childComplexity int, folderID string, name string) int
-		RenameRepository         func(childComplexity int, repositoryID string, name string) int
-		ReorderDownload          func(childComplexity int, mediaID string, chapterID string, position int32) int
-		ReorderFolder            func(childComplexity int, folderID string, sortOrder int32) int
-		RescanLocalMedia         func(childComplexity int) int
-		ResyncTrack              func(childComplexity int, linkID string) int
-		RetryDownload            func(childComplexity int, mediaID string, chapterID string) int
-		SetInLibrary             func(childComplexity int, mediaID string, inLibrary bool) int
-		SetMediaCover            func(childComplexity int, mediaID string, url *string) int
-		StartDownloader          func(childComplexity int) int
-		StartLibraryUpdate       func(childComplexity int, folderID *string) int
-		StopDownloader           func(childComplexity int) int
-		SyncChapters             func(childComplexity int, mediaID string) int
-		SyncRepositories         func(childComplexity int) int
-		SyncRepository           func(childComplexity int, repositoryID string) int
-		TrackerLogin             func(childComplexity int, trackerKey string, token string) int
-		TrackerLogout            func(childComplexity int, trackerKey string) int
-		UnbindTrack              func(childComplexity int, linkID string) int
-		UninstallExtension       func(childComplexity int, packageName string) int
-		UnlinkMetadata           func(childComplexity int, mediaID string) int
-		UpdateExtension          func(childComplexity int, packageName string) int
-		UpdateFolderFlags        func(childComplexity int, folderID string, includeInUpdate *bool, includeInDownload *bool) int
-		UpdateReadingProgress    func(childComplexity int, mediaID string, chapterID string, progress float64, completed *bool, positionSeconds *float64, durationSeconds *float64) int
-		UpdateTrack              func(childComplexity int, linkID string, status *int32, score *float64, lastChapterRead *float64) int
+		AddMediaToFolder          func(childComplexity int, mediaID string, folderID string) int
+		AddRepository             func(childComplexity int, indexURL string, name *string) int
+		ApplyMetadataMatch        func(childComplexity int, mediaID string, providerID string, provider *string) int
+		BindTrack                 func(childComplexity int, mediaID string, trackerKey string, remoteID string) int
+		ClearDownloads            func(childComplexity int, status []model.DownloadStatus) int
+		ClearImageCache           func(childComplexity int) int
+		CreateFolder              func(childComplexity int, name string, parentFolderID *string) int
+		DeleteDownload            func(childComplexity int, mediaID string, chapterIds []string) int
+		DeleteFolder              func(childComplexity int, folderID string) int
+		DeleteRepository          func(childComplexity int, repositoryID string) int
+		DequeueDownload           func(childComplexity int, mediaID string, chapterID string) int
+		EnqueueDownload           func(childComplexity int, mediaID string, chapterIds []string) int
+		InstallCloudflareSolver   func(childComplexity int) int
+		InstallExtension          func(childComplexity int, packageName string) int
+		InstallExternalExtension  func(childComplexity int, url string) int
+		MarkChapterRead           func(childComplexity int, mediaID string, chapterID string) int
+		MarkChaptersRead          func(childComplexity int, mediaID string, chapterIds []string, read bool) int
+		MigrateMedia              func(childComplexity int, fromMediaID string, toExtensionID string, toExternalID string) int
+		PullTracker               func(childComplexity int, mediaID string) int
+		RefreshFolder             func(childComplexity int, folderID string) int
+		RefreshMetadata           func(childComplexity int, mediaID string, syncChapters *bool) int
+		RefreshMetadataMatch      func(childComplexity int, mediaID string) int
+		RemoveMediaFromFolder     func(childComplexity int, mediaID string, folderID string) int
+		RenameFolder              func(childComplexity int, folderID string, name string) int
+		RenameRepository          func(childComplexity int, repositoryID string, name string) int
+		ReorderDownload           func(childComplexity int, mediaID string, chapterID string, position int32) int
+		ReorderFolder             func(childComplexity int, folderID string, sortOrder int32) int
+		RescanLocalMedia          func(childComplexity int) int
+		ResyncTrack               func(childComplexity int, linkID string) int
+		RetryDownload             func(childComplexity int, mediaID string, chapterID string) int
+		SetInLibrary              func(childComplexity int, mediaID string, inLibrary bool) int
+		SetMediaCover             func(childComplexity int, mediaID string, url *string) int
+		StartDownloader           func(childComplexity int) int
+		StartLibraryUpdate        func(childComplexity int, folderID *string) int
+		StopDownloader            func(childComplexity int) int
+		SyncChapters              func(childComplexity int, mediaID string) int
+		SyncRepositories          func(childComplexity int) int
+		SyncRepository            func(childComplexity int, repositoryID string) int
+		TrackerLogin              func(childComplexity int, trackerKey string, token string) int
+		TrackerLogout             func(childComplexity int, trackerKey string) int
+		UnbindTrack               func(childComplexity int, linkID string) int
+		UninstallCloudflareSolver func(childComplexity int) int
+		UninstallExtension        func(childComplexity int, packageName string) int
+		UnlinkMetadata            func(childComplexity int, mediaID string) int
+		UpdateExtension           func(childComplexity int, packageName string) int
+		UpdateFolderFlags         func(childComplexity int, folderID string, includeInUpdate *bool, includeInDownload *bool) int
+		UpdateReadingProgress     func(childComplexity int, mediaID string, chapterID string, progress float64, completed *bool, positionSeconds *float64, durationSeconds *float64) int
+		UpdateServerSetting       func(childComplexity int, key string, value string) int
+		UpdateTrack               func(childComplexity int, linkID string, status *int32, score *float64, lastChapterRead *float64) int
 	}
 
 	Query struct {
@@ -272,6 +286,7 @@ type ComplexityRoot struct {
 		AvailableExtensions func(childComplexity int, repositoryID string) int
 		Chapter             func(childComplexity int, id string) int
 		ChapterUpdates      func(childComplexity int, since *time.Time, limit *int32) int
+		CloudflareSolver    func(childComplexity int) int
 		DownloadQueue       func(childComplexity int) int
 		DownloadStatus      func(childComplexity int, mediaID string, chapterID string) int
 		DownloaderStatus    func(childComplexity int) int
@@ -292,6 +307,7 @@ type ComplexityRoot struct {
 		ResolveMedia        func(childComplexity int, extensionID string, externalID string, syncChapters *bool) int
 		Search              func(childComplexity int, extensionID string, query string, page *int32, filters []*model.FilterInput) int
 		SearchMetadata      func(childComplexity int, query string, contentType model.ContentType, provider *string) int
+		ServerSettings      func(childComplexity int) int
 		SkipTimestamps      func(childComplexity int, chapterID string, episodeLengthMs *int32) int
 		StorageInfo         func(childComplexity int) int
 		TrackSearch         func(childComplexity int, trackerKey string, query string, contentType *model.ContentType) int
@@ -336,6 +352,18 @@ type ComplexityRoot struct {
 
 	SeparatorFilter struct {
 		Name func(childComplexity int) int
+	}
+
+	ServerSetting struct {
+		Default     func(childComplexity int) int
+		Description func(childComplexity int) int
+		Editable    func(childComplexity int) int
+		Key         func(childComplexity int) int
+		Kind        func(childComplexity int) int
+		Scope       func(childComplexity int) int
+		Source      func(childComplexity int) int
+		Type        func(childComplexity int) int
+		Value       func(childComplexity int) int
 	}
 
 	SkipMarker struct {
@@ -421,6 +449,11 @@ type ComplexityRoot struct {
 		State func(childComplexity int) int
 	}
 
+	UpdateSettingResult struct {
+		RestartRequired func(childComplexity int) int
+		Setting         func(childComplexity int) int
+	}
+
 	VideoSource struct {
 		Kind       func(childComplexity int) int
 		Label      func(childComplexity int) int
@@ -484,6 +517,9 @@ type MutationResolver interface {
 	DeleteRepository(ctx context.Context, repositoryID string) (bool, error)
 	SyncRepository(ctx context.Context, repositoryID string) (*model.Repository, error)
 	SyncRepositories(ctx context.Context) ([]*model.Repository, error)
+	UpdateServerSetting(ctx context.Context, key string, value string) (*model.UpdateSettingResult, error)
+	InstallCloudflareSolver(ctx context.Context) (*model.CloudflareSolver, error)
+	UninstallCloudflareSolver(ctx context.Context) (bool, error)
 	InstallExtension(ctx context.Context, packageName string) (*model.Extension, error)
 	InstallExternalExtension(ctx context.Context, url string) (*model.Extension, error)
 	UninstallExtension(ctx context.Context, packageName string) (*model.Extension, error)
@@ -527,6 +563,8 @@ type QueryResolver interface {
 	Repositories(ctx context.Context) ([]*model.Repository, error)
 	AvailableExtensions(ctx context.Context, repositoryID string) ([]*model.Extension, error)
 	InstalledExtensions(ctx context.Context) ([]*model.Extension, error)
+	CloudflareSolver(ctx context.Context) (*model.CloudflareSolver, error)
+	ServerSettings(ctx context.Context) ([]*model.ServerSetting, error)
 	Extensions(ctx context.Context, repositoryID *string, query *string, contentType *model.ContentType, lang *string, installed *bool, limit *int32, offset *int32) (*model.ExtensionPage, error)
 	Library(ctx context.Context, filter *model.LibraryFilter, sort *model.LibrarySortInput, limit *int32, offset *int32) (*model.MediaPage, error)
 	Media(ctx context.Context, id string) (*model.Media, error)
@@ -705,6 +743,55 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CheckBoxFilter.State(childComplexity), true
+
+	case "CloudflareSolver.downloadProgress":
+		if e.ComplexityRoot.CloudflareSolver.DownloadProgress == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CloudflareSolver.DownloadProgress(childComplexity), true
+	case "CloudflareSolver.error":
+		if e.ComplexityRoot.CloudflareSolver.Error == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CloudflareSolver.Error(childComplexity), true
+	case "CloudflareSolver.mode":
+		if e.ComplexityRoot.CloudflareSolver.Mode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CloudflareSolver.Mode(childComplexity), true
+	case "CloudflareSolver.reachable":
+		if e.ComplexityRoot.CloudflareSolver.Reachable == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CloudflareSolver.Reachable(childComplexity), true
+	case "CloudflareSolver.state":
+		if e.ComplexityRoot.CloudflareSolver.State == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CloudflareSolver.State(childComplexity), true
+	case "CloudflareSolver.supportedOnPlatform":
+		if e.ComplexityRoot.CloudflareSolver.SupportedOnPlatform == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CloudflareSolver.SupportedOnPlatform(childComplexity), true
+	case "CloudflareSolver.url":
+		if e.ComplexityRoot.CloudflareSolver.URL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CloudflareSolver.URL(childComplexity), true
+	case "CloudflareSolver.version":
+		if e.ComplexityRoot.CloudflareSolver.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CloudflareSolver.Version(childComplexity), true
 
 	case "Download.bytesPerSec":
 		if e.ComplexityRoot.Download.BytesPerSec == nil {
@@ -1505,6 +1592,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.EnqueueDownload(childComplexity, args["mediaId"].(string), args["chapterIds"].([]string)), true
+	case "Mutation.installCloudflareSolver":
+		if e.ComplexityRoot.Mutation.InstallCloudflareSolver == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Mutation.InstallCloudflareSolver(childComplexity), true
 	case "Mutation.installExtension":
 		if e.ComplexityRoot.Mutation.InstallExtension == nil {
 			break
@@ -1793,6 +1886,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UnbindTrack(childComplexity, args["linkId"].(string)), true
+	case "Mutation.uninstallCloudflareSolver":
+		if e.ComplexityRoot.Mutation.UninstallCloudflareSolver == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Mutation.UninstallCloudflareSolver(childComplexity), true
 	case "Mutation.uninstallExtension":
 		if e.ComplexityRoot.Mutation.UninstallExtension == nil {
 			break
@@ -1848,6 +1947,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UpdateReadingProgress(childComplexity, args["mediaId"].(string), args["chapterId"].(string), args["progress"].(float64), args["completed"].(*bool), args["positionSeconds"].(*float64), args["durationSeconds"].(*float64)), true
+	case "Mutation.updateServerSetting":
+		if e.ComplexityRoot.Mutation.UpdateServerSetting == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateServerSetting_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateServerSetting(childComplexity, args["key"].(string), args["value"].(string)), true
 	case "Mutation.updateTrack":
 		if e.ComplexityRoot.Mutation.UpdateTrack == nil {
 			break
@@ -1899,6 +2009,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.ChapterUpdates(childComplexity, args["since"].(*time.Time), args["limit"].(*int32)), true
+	case "Query.cloudflareSolver":
+		if e.ComplexityRoot.Query.CloudflareSolver == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.CloudflareSolver(childComplexity), true
 	case "Query.downloadQueue":
 		if e.ComplexityRoot.Query.DownloadQueue == nil {
 			break
@@ -2090,6 +2206,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.SearchMetadata(childComplexity, args["query"].(string), args["contentType"].(model.ContentType), args["provider"].(*string)), true
+	case "Query.serverSettings":
+		if e.ComplexityRoot.Query.ServerSettings == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.ServerSettings(childComplexity), true
 	case "Query.skipTimestamps":
 		if e.ComplexityRoot.Query.SkipTimestamps == nil {
 			break
@@ -2262,6 +2384,61 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.SeparatorFilter.Name(childComplexity), true
+
+	case "ServerSetting.default":
+		if e.ComplexityRoot.ServerSetting.Default == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ServerSetting.Default(childComplexity), true
+	case "ServerSetting.description":
+		if e.ComplexityRoot.ServerSetting.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ServerSetting.Description(childComplexity), true
+	case "ServerSetting.editable":
+		if e.ComplexityRoot.ServerSetting.Editable == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ServerSetting.Editable(childComplexity), true
+	case "ServerSetting.key":
+		if e.ComplexityRoot.ServerSetting.Key == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ServerSetting.Key(childComplexity), true
+	case "ServerSetting.kind":
+		if e.ComplexityRoot.ServerSetting.Kind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ServerSetting.Kind(childComplexity), true
+	case "ServerSetting.scope":
+		if e.ComplexityRoot.ServerSetting.Scope == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ServerSetting.Scope(childComplexity), true
+	case "ServerSetting.source":
+		if e.ComplexityRoot.ServerSetting.Source == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ServerSetting.Source(childComplexity), true
+	case "ServerSetting.type":
+		if e.ComplexityRoot.ServerSetting.Type == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ServerSetting.Type(childComplexity), true
+	case "ServerSetting.value":
+		if e.ComplexityRoot.ServerSetting.Value == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ServerSetting.Value(childComplexity), true
 
 	case "SkipMarker.endMs":
 		if e.ComplexityRoot.SkipMarker.EndMs == nil {
@@ -2591,6 +2768,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.TriStateFilter.State(childComplexity), true
 
+	case "UpdateSettingResult.restartRequired":
+		if e.ComplexityRoot.UpdateSettingResult.RestartRequired == nil {
+			break
+		}
+
+		return e.ComplexityRoot.UpdateSettingResult.RestartRequired(childComplexity), true
+	case "UpdateSettingResult.setting":
+		if e.ComplexityRoot.UpdateSettingResult.Setting == nil {
+			break
+		}
+
+		return e.ComplexityRoot.UpdateSettingResult.Setting(childComplexity), true
+
 	case "VideoSource.kind":
 		if e.ComplexityRoot.VideoSource.Kind == nil {
 			break
@@ -2824,6 +3014,28 @@ func (ec *executionContext) childFields_Chapter(ctx context.Context, field graph
 		return ec.fieldContext_Chapter_videoStream(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type Chapter", field.Name)
+}
+
+func (ec *executionContext) childFields_CloudflareSolver(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "mode":
+		return ec.fieldContext_CloudflareSolver_mode(ctx, field)
+	case "state":
+		return ec.fieldContext_CloudflareSolver_state(ctx, field)
+	case "downloadProgress":
+		return ec.fieldContext_CloudflareSolver_downloadProgress(ctx, field)
+	case "version":
+		return ec.fieldContext_CloudflareSolver_version(ctx, field)
+	case "url":
+		return ec.fieldContext_CloudflareSolver_url(ctx, field)
+	case "reachable":
+		return ec.fieldContext_CloudflareSolver_reachable(ctx, field)
+	case "error":
+		return ec.fieldContext_CloudflareSolver_error(ctx, field)
+	case "supportedOnPlatform":
+		return ec.fieldContext_CloudflareSolver_supportedOnPlatform(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CloudflareSolver", field.Name)
 }
 
 func (ec *executionContext) childFields_Download(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -3160,6 +3372,30 @@ func (ec *executionContext) childFields_SearchResponse(ctx context.Context, fiel
 	return nil, fmt.Errorf("no field named %q was found under type SearchResponse", field.Name)
 }
 
+func (ec *executionContext) childFields_ServerSetting(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "key":
+		return ec.fieldContext_ServerSetting_key(ctx, field)
+	case "value":
+		return ec.fieldContext_ServerSetting_value(ctx, field)
+	case "default":
+		return ec.fieldContext_ServerSetting_default(ctx, field)
+	case "type":
+		return ec.fieldContext_ServerSetting_type(ctx, field)
+	case "kind":
+		return ec.fieldContext_ServerSetting_kind(ctx, field)
+	case "scope":
+		return ec.fieldContext_ServerSetting_scope(ctx, field)
+	case "source":
+		return ec.fieldContext_ServerSetting_source(ctx, field)
+	case "editable":
+		return ec.fieldContext_ServerSetting_editable(ctx, field)
+	case "description":
+		return ec.fieldContext_ServerSetting_description(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ServerSetting", field.Name)
+}
+
 func (ec *executionContext) childFields_SkipMarker(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "type":
@@ -3288,6 +3524,16 @@ func (ec *executionContext) childFields_Tracker(ctx context.Context, field graph
 		return ec.fieldContext_Tracker_iconUrl(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type Tracker", field.Name)
+}
+
+func (ec *executionContext) childFields_UpdateSettingResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "setting":
+		return ec.fieldContext_UpdateSettingResult_setting(ctx, field)
+	case "restartRequired":
+		return ec.fieldContext_UpdateSettingResult_restartRequired(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type UpdateSettingResult", field.Name)
 }
 
 func (ec *executionContext) childFields_VideoSource(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -4257,6 +4503,28 @@ func (ec *executionContext) field_Mutation_updateReadingProgress_args(ctx contex
 		return nil, err
 	}
 	args["durationSeconds"] = arg5
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateServerSetting_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "key",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["key"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "value",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["value"] = arg1
 	return args, nil
 }
 
@@ -5380,6 +5648,190 @@ func (ec *executionContext) _CheckBoxFilter_state(ctx context.Context, field gra
 }
 func (ec *executionContext) fieldContext_CheckBoxFilter_state(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("CheckBoxFilter", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _CloudflareSolver_mode(ctx context.Context, field graphql.CollectedField, obj *model.CloudflareSolver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CloudflareSolver_mode(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Mode, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v model.SolverMode) graphql.Marshaler {
+			return ec.marshalNSolverMode2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSolverMode(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CloudflareSolver_mode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CloudflareSolver", field, false, false, errors.New("field of type SolverMode does not have child fields"))
+}
+
+func (ec *executionContext) _CloudflareSolver_state(ctx context.Context, field graphql.CollectedField, obj *model.CloudflareSolver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CloudflareSolver_state(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.State, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v model.SolverState) graphql.Marshaler {
+			return ec.marshalNSolverState2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSolverState(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CloudflareSolver_state(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CloudflareSolver", field, false, false, errors.New("field of type SolverState does not have child fields"))
+}
+
+func (ec *executionContext) _CloudflareSolver_downloadProgress(ctx context.Context, field graphql.CollectedField, obj *model.CloudflareSolver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CloudflareSolver_downloadProgress(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DownloadProgress, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *float64) graphql.Marshaler {
+			return ec.marshalOFloat2ᚖfloat64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_CloudflareSolver_downloadProgress(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CloudflareSolver", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _CloudflareSolver_version(ctx context.Context, field graphql.CollectedField, obj *model.CloudflareSolver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CloudflareSolver_version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_CloudflareSolver_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CloudflareSolver", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CloudflareSolver_url(ctx context.Context, field graphql.CollectedField, obj *model.CloudflareSolver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CloudflareSolver_url(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.URL, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_CloudflareSolver_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CloudflareSolver", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CloudflareSolver_reachable(ctx context.Context, field graphql.CollectedField, obj *model.CloudflareSolver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CloudflareSolver_reachable(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Reachable, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CloudflareSolver_reachable(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CloudflareSolver", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _CloudflareSolver_error(ctx context.Context, field graphql.CollectedField, obj *model.CloudflareSolver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CloudflareSolver_error(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Error, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_CloudflareSolver_error(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CloudflareSolver", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CloudflareSolver_supportedOnPlatform(ctx context.Context, field graphql.CollectedField, obj *model.CloudflareSolver) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CloudflareSolver_supportedOnPlatform(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SupportedOnPlatform, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CloudflareSolver_supportedOnPlatform(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CloudflareSolver", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
 func (ec *executionContext) _Download_id(ctx context.Context, field graphql.CollectedField, obj *model.Download) (ret graphql.Marshaler) {
@@ -8527,6 +8979,105 @@ func (ec *executionContext) fieldContext_Mutation_syncRepositories(_ context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_updateServerSetting(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_updateServerSetting(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().UpdateServerSetting(ctx, fc.Args["key"].(string), fc.Args["value"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.UpdateSettingResult) graphql.Marshaler {
+			return ec.marshalNUpdateSettingResult2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐUpdateSettingResult(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_updateServerSetting(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_UpdateSettingResult(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateServerSetting_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_installCloudflareSolver(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_installCloudflareSolver(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Mutation().InstallCloudflareSolver(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.CloudflareSolver) graphql.Marshaler {
+			return ec.marshalNCloudflareSolver2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐCloudflareSolver(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_installCloudflareSolver(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_CloudflareSolver(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_uninstallCloudflareSolver(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_uninstallCloudflareSolver(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Mutation().UninstallCloudflareSolver(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_uninstallCloudflareSolver(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Mutation", field, true, true, errors.New("field of type Boolean does not have child fields"))
+}
+
 func (ec *executionContext) _Mutation_installExtension(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -10208,6 +10759,70 @@ func (ec *executionContext) fieldContext_Query_installedExtensions(_ context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_cloudflareSolver(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_cloudflareSolver(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Query().CloudflareSolver(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.CloudflareSolver) graphql.Marshaler {
+			return ec.marshalNCloudflareSolver2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐCloudflareSolver(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_cloudflareSolver(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_CloudflareSolver(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_serverSettings(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_serverSettings(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Query().ServerSettings(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.ServerSetting) graphql.Marshaler {
+			return ec.marshalNServerSetting2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐServerSettingᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_serverSettings(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ServerSetting(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_extensions(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -11681,6 +12296,213 @@ func (ec *executionContext) fieldContext_SeparatorFilter_name(_ context.Context,
 	return graphql.NewScalarFieldContext("SeparatorFilter", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _ServerSetting_key(ctx context.Context, field graphql.CollectedField, obj *model.ServerSetting) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ServerSetting_key(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Key, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ServerSetting_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ServerSetting", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ServerSetting_value(ctx context.Context, field graphql.CollectedField, obj *model.ServerSetting) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ServerSetting_value(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Value, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ServerSetting_value(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ServerSetting", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ServerSetting_default(ctx context.Context, field graphql.CollectedField, obj *model.ServerSetting) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ServerSetting_default(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Default, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ServerSetting_default(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ServerSetting", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ServerSetting_type(ctx context.Context, field graphql.CollectedField, obj *model.ServerSetting) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ServerSetting_type(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v model.SettingType) graphql.Marshaler {
+			return ec.marshalNSettingType2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSettingType(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ServerSetting_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ServerSetting", field, false, false, errors.New("field of type SettingType does not have child fields"))
+}
+
+func (ec *executionContext) _ServerSetting_kind(ctx context.Context, field graphql.CollectedField, obj *model.ServerSetting) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ServerSetting_kind(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Kind, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v model.SettingKind) graphql.Marshaler {
+			return ec.marshalNSettingKind2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSettingKind(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ServerSetting_kind(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ServerSetting", field, false, false, errors.New("field of type SettingKind does not have child fields"))
+}
+
+func (ec *executionContext) _ServerSetting_scope(ctx context.Context, field graphql.CollectedField, obj *model.ServerSetting) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ServerSetting_scope(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Scope, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v model.SettingScope) graphql.Marshaler {
+			return ec.marshalNSettingScope2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSettingScope(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ServerSetting_scope(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ServerSetting", field, false, false, errors.New("field of type SettingScope does not have child fields"))
+}
+
+func (ec *executionContext) _ServerSetting_source(ctx context.Context, field graphql.CollectedField, obj *model.ServerSetting) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ServerSetting_source(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Source, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v model.SettingSource) graphql.Marshaler {
+			return ec.marshalNSettingSource2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSettingSource(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ServerSetting_source(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ServerSetting", field, false, false, errors.New("field of type SettingSource does not have child fields"))
+}
+
+func (ec *executionContext) _ServerSetting_editable(ctx context.Context, field graphql.CollectedField, obj *model.ServerSetting) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ServerSetting_editable(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Editable, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ServerSetting_editable(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ServerSetting", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _ServerSetting_description(ctx context.Context, field graphql.CollectedField, obj *model.ServerSetting) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ServerSetting_description(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Description, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ServerSetting_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ServerSetting", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
 func (ec *executionContext) _SkipMarker_type(ctx context.Context, field graphql.CollectedField, obj *model.SkipMarker) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -12907,6 +13729,61 @@ func (ec *executionContext) _TriStateFilter_state(ctx context.Context, field gra
 }
 func (ec *executionContext) fieldContext_TriStateFilter_state(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("TriStateFilter", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _UpdateSettingResult_setting(ctx context.Context, field graphql.CollectedField, obj *model.UpdateSettingResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_UpdateSettingResult_setting(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Setting, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.ServerSetting) graphql.Marshaler {
+			return ec.marshalNServerSetting2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐServerSetting(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_UpdateSettingResult_setting(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateSettingResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ServerSetting(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UpdateSettingResult_restartRequired(ctx context.Context, field graphql.CollectedField, obj *model.UpdateSettingResult) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_UpdateSettingResult_restartRequired(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RestartRequired, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_UpdateSettingResult_restartRequired(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("UpdateSettingResult", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
 func (ec *executionContext) _VideoSource_label(ctx context.Context, field graphql.CollectedField, obj *model.VideoSource) (ret graphql.Marshaler) {
@@ -15211,6 +16088,79 @@ func (ec *executionContext) _CheckBoxFilter(ctx context.Context, sel ast.Selecti
 	return out
 }
 
+var cloudflareSolverImplementors = []string{"CloudflareSolver"}
+
+func (ec *executionContext) _CloudflareSolver(ctx context.Context, sel ast.SelectionSet, obj *model.CloudflareSolver) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, cloudflareSolverImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CloudflareSolver")
+		case "mode":
+			out.Values[i] = ec._CloudflareSolver_mode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "state":
+			out.Values[i] = ec._CloudflareSolver_state(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "downloadProgress":
+			out.Values[i] = ec._CloudflareSolver_downloadProgress(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "version":
+			out.Values[i] = ec._CloudflareSolver_version(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "url":
+			out.Values[i] = ec._CloudflareSolver_url(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "reachable":
+			out.Values[i] = ec._CloudflareSolver_reachable(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "error":
+			out.Values[i] = ec._CloudflareSolver_error(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "supportedOnPlatform":
+			out.Values[i] = ec._CloudflareSolver_supportedOnPlatform(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var downloadImplementors = []string{"Download"}
 
 func (ec *executionContext) _Download(ctx context.Context, sel ast.SelectionSet, obj *model.Download) graphql.Marshaler {
@@ -16773,6 +17723,27 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "updateServerSetting":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateServerSetting(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "installCloudflareSolver":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_installCloudflareSolver(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "uninstallCloudflareSolver":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_uninstallCloudflareSolver(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "installExtension":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_installExtension(ctx, field)
@@ -17194,6 +18165,50 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_installedExtensions(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "cloudflareSolver":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_cloudflareSolver(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "serverSettings":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_serverSettings(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -18011,6 +19026,84 @@ func (ec *executionContext) _SeparatorFilter(ctx context.Context, sel ast.Select
 	return out
 }
 
+var serverSettingImplementors = []string{"ServerSetting"}
+
+func (ec *executionContext) _ServerSetting(ctx context.Context, sel ast.SelectionSet, obj *model.ServerSetting) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, serverSettingImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ServerSetting")
+		case "key":
+			out.Values[i] = ec._ServerSetting_key(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "value":
+			out.Values[i] = ec._ServerSetting_value(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "default":
+			out.Values[i] = ec._ServerSetting_default(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "type":
+			out.Values[i] = ec._ServerSetting_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "kind":
+			out.Values[i] = ec._ServerSetting_kind(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "scope":
+			out.Values[i] = ec._ServerSetting_scope(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "source":
+			out.Values[i] = ec._ServerSetting_source(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "editable":
+			out.Values[i] = ec._ServerSetting_editable(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "description":
+			out.Values[i] = ec._ServerSetting_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var skipMarkerImplementors = []string{"SkipMarker"}
 
 func (ec *executionContext) _SkipMarker(ctx context.Context, sel ast.SelectionSet, obj *model.SkipMarker) graphql.Marshaler {
@@ -18582,6 +19675,49 @@ func (ec *executionContext) _TriStateFilter(ctx context.Context, sel ast.Selecti
 			}
 		case "state":
 			out.Values[i] = ec._TriStateFilter_state(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var updateSettingResultImplementors = []string{"UpdateSettingResult"}
+
+func (ec *executionContext) _UpdateSettingResult(ctx context.Context, sel ast.SelectionSet, obj *model.UpdateSettingResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateSettingResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateSettingResult")
+		case "setting":
+			out.Values[i] = ec._UpdateSettingResult_setting(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "restartRequired":
+			out.Values[i] = ec._UpdateSettingResult_restartRequired(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -19201,6 +20337,20 @@ func (ec *executionContext) marshalNChapter2ᚖtsunaguᚋbackendᚋinternalᚋap
 	return ec._Chapter(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNCloudflareSolver2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐCloudflareSolver(ctx context.Context, sel ast.SelectionSet, v model.CloudflareSolver) graphql.Marshaler {
+	return ec._CloudflareSolver(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCloudflareSolver2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐCloudflareSolver(ctx context.Context, sel ast.SelectionSet, v *model.CloudflareSolver) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CloudflareSolver(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNContentType2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐContentType(ctx context.Context, v any) (model.ContentType, error) {
 	var res model.ContentType
 	err := res.UnmarshalGQL(v)
@@ -19655,6 +20805,72 @@ func (ec *executionContext) marshalNSearchResponse2ᚖtsunaguᚋbackendᚋintern
 	return ec._SearchResponse(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNServerSetting2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐServerSettingᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ServerSetting) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNServerSetting2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐServerSetting(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNServerSetting2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐServerSetting(ctx context.Context, sel ast.SelectionSet, v *model.ServerSetting) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ServerSetting(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNSettingKind2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSettingKind(ctx context.Context, v any) (model.SettingKind, error) {
+	var res model.SettingKind
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSettingKind2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSettingKind(ctx context.Context, sel ast.SelectionSet, v model.SettingKind) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) unmarshalNSettingScope2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSettingScope(ctx context.Context, v any) (model.SettingScope, error) {
+	var res model.SettingScope
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSettingScope2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSettingScope(ctx context.Context, sel ast.SelectionSet, v model.SettingScope) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) unmarshalNSettingSource2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSettingSource(ctx context.Context, v any) (model.SettingSource, error) {
+	var res model.SettingSource
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSettingSource2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSettingSource(ctx context.Context, sel ast.SelectionSet, v model.SettingSource) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) unmarshalNSettingType2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSettingType(ctx context.Context, v any) (model.SettingType, error) {
+	var res model.SettingType
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSettingType2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSettingType(ctx context.Context, sel ast.SelectionSet, v model.SettingType) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) marshalNSkipMarker2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSkipMarkerᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SkipMarker) graphql.Marshaler {
 	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
 		fc := graphql.GetFieldContext(ctx)
@@ -19679,6 +20895,26 @@ func (ec *executionContext) marshalNSkipMarker2ᚖtsunaguᚋbackendᚋinternal�
 		return graphql.Null
 	}
 	return ec._SkipMarker(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNSolverMode2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSolverMode(ctx context.Context, v any) (model.SolverMode, error) {
+	var res model.SolverMode
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSolverMode2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSolverMode(ctx context.Context, sel ast.SelectionSet, v model.SolverMode) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) unmarshalNSolverState2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSolverState(ctx context.Context, v any) (model.SolverState, error) {
+	var res model.SolverState
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSolverState2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSolverState(ctx context.Context, sel ast.SelectionSet, v model.SolverState) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) marshalNStorageInfo2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐStorageInfo(ctx context.Context, sel ast.SelectionSet, v model.StorageInfo) graphql.Marshaler {
@@ -19892,6 +21128,20 @@ func (ec *executionContext) marshalNTracker2ᚖtsunaguᚋbackendᚋinternalᚋap
 		return graphql.Null
 	}
 	return ec._Tracker(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNUpdateSettingResult2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐUpdateSettingResult(ctx context.Context, sel ast.SelectionSet, v model.UpdateSettingResult) graphql.Marshaler {
+	return ec._UpdateSettingResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUpdateSettingResult2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐUpdateSettingResult(ctx context.Context, sel ast.SelectionSet, v *model.UpdateSettingResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UpdateSettingResult(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNVideoSource2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐVideoSourceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.VideoSource) graphql.Marshaler {
