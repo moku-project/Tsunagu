@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 )
 
 type ResolvedRuntime struct {
@@ -21,16 +22,16 @@ func resolveRuntime(jarRelPath string) (*ResolvedRuntime, error) {
 	}
 	var exeDir string
 	if exePath, err := os.Executable(); err == nil {
-		exeDir = filepath.Dir(exePath)
+		exeDir = stripExtendedPrefix(filepath.Dir(exePath))
 	}
 
-	if jar := os.Getenv("TSUNAGU_SANDBOX_JAR"); jar != "" && fileExists(jar) {
+	if jar := stripExtendedPrefix(os.Getenv("TSUNAGU_SANDBOX_JAR")); jar != "" && fileExists(jar) {
 		if javaBin := javaFromEnvOrPath(javaExeName); javaBin != "" {
 			return &ResolvedRuntime{JavaBin: javaBin, JarPath: jar, Source: "TSUNAGU_SANDBOX_JAR"}, nil
 		}
 	}
 
-	if resourceDir := os.Getenv("TSUNAGU_RESOURCE_DIR"); resourceDir != "" {
+	if resourceDir := stripExtendedPrefix(os.Getenv("TSUNAGU_RESOURCE_DIR")); resourceDir != "" {
 		javaBin := filepath.Join(resourceDir, "sandbox", "runtime", "bin", javaExeName)
 		jarPath := filepath.Join(resourceDir, "sandbox", jarRelPath)
 		if fileExists(javaBin) && fileExists(jarPath) {
@@ -56,15 +57,29 @@ func resolveRuntime(jarRelPath string) (*ResolvedRuntime, error) {
 }
 
 func javaFromEnvOrPath(javaExeName string) string {
-	if javaHome := os.Getenv("JAVA_HOME"); javaHome != "" {
+	if javaHome := stripExtendedPrefix(os.Getenv("JAVA_HOME")); javaHome != "" {
 		if c := filepath.Join(javaHome, "bin", javaExeName); fileExists(c) {
 			return c
 		}
 	}
 	if p, err := exec.LookPath(javaExeName); err == nil {
-		return p
+		return stripExtendedPrefix(p)
 	}
 	return ""
+}
+
+// stripExtendedPrefix removes the Windows extended-length path prefix (\\?\ or
+// \\?\UNC\). The HotSpot class loader resolves java.home from argv[0] and cannot
+// parse that prefix, which makes a jlink'd runtime abort with
+// "jimage file name is null" before main. Harmless on non-Windows.
+func stripExtendedPrefix(p string) string {
+	if strings.HasPrefix(p, `\\?\UNC\`) {
+		return `\\` + p[len(`\\?\UNC\`):]
+	}
+	if strings.HasPrefix(p, `\\?\`) {
+		return p[len(`\\?\`):]
+	}
+	return p
 }
 
 func locateSandboxJar(exeDir, jarRelPath string) string {
