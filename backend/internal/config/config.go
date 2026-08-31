@@ -62,7 +62,7 @@ func defaults() Config {
 		SandboxPort:       50051,
 		SandboxExtDir:     "sandbox/extensions",
 		SandboxStorageDir: "data/plugin-storage",
-		NovelEnabled:      false,
+		NovelEnabled:      true,
 		IdleReapEnabled:   true,
 		IdleTimeoutMin:    15,
 		TrackerPollHours:  6,
@@ -80,17 +80,62 @@ func Load() (*Config, error) {
 
 	path := os.Getenv("TSUNAGU_CONFIG")
 	if path == "" {
-		path = "tsunagu.toml"
+		if d := os.Getenv("TSUNAGU_DATA_DIR"); d != "" {
+			path = filepath.Join(d, "tsunagu.toml")
+		} else {
+			path = "tsunagu.toml"
+		}
 	}
 	if _, err := os.Stat(path); err == nil {
 		if _, err := toml.DecodeFile(path, &cfg); err != nil {
 			return nil, err
 		}
+	} else if os.IsNotExist(err) {
+		writeDefaultConfig(path)
 	}
 
 	applyEnvOverrides(&cfg)
 	cfg.applyDataDir()
 	return &cfg, nil
+}
+
+const defaultConfigTemplate = `# Tsunagu configuration. Every value below is a default -- uncomment and edit
+# to override. Environment variables and --data-dir still take precedence.
+
+# http_addr = ":6007"
+# public_url = "http://localhost:6007"
+
+# Enable light-novel extensions in the sandbox.
+# novel_enabled = true
+
+# Fetch cover art / descriptions from AniList & MyAnimeList automatically.
+# metadata_backfill = true
+
+# Shut the sandbox down after this many idle minutes (0 or idle_reap_enabled
+# = false keeps it running).
+# idle_reap_enabled = true
+# idle_timeout_minutes = 15
+
+# How often background tracker sync runs, in hours.
+# tracker_poll_hours = 6
+
+# JVM heap for the extension sandbox, in MB (0 = JVM default).
+# sandbox_heap_mb = 0
+
+# Require this bearer token on API requests when set.
+# api_token = ""
+
+# Expose net/http/pprof on this address when set, e.g. "localhost:6060".
+# pprof_addr = ""
+`
+
+func writeDefaultConfig(path string) {
+	if dir := filepath.Dir(path); dir != "" {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			return
+		}
+	}
+	_ = os.WriteFile(path, []byte(defaultConfigTemplate), 0o644)
 }
 
 func (c *Config) applyDataDir() {

@@ -199,13 +199,20 @@ func (s *Syncer) AddRepository(ctx context.Context, indexURL string, name string
 		}
 	}
 
+	if err := s.applyRepoIndex(ctx, repo.ID, parsed); err != nil {
+		return sqlcgen.Repository{}, err
+	}
+	return s.q.GetRepository(ctx, repo.ID)
+}
+
+func (s *Syncer) applyRepoIndex(ctx context.Context, repoID int64, parsed []repository.ParsedExtension) error {
 	for _, ext := range parsed {
 		contentType := ext.ContentType
 		if contentType == "" {
 			contentType = repository.ClassifyContentType(ext.PackageName)
 		}
-		_, err = s.q.UpsertExtension(ctx, sqlcgen.UpsertExtensionParams{
-			RepositoryID: repo.ID,
+		if _, err := s.q.UpsertExtension(ctx, sqlcgen.UpsertExtensionParams{
+			RepositoryID: repoID,
 			PackageName:  ext.PackageName,
 			Name:         ext.Name,
 			Version:      ext.VersionName,
@@ -215,21 +222,58 @@ func (s *Syncer) AddRepository(ctx context.Context, indexURL string, name string
 			ApkUrl:       ext.ApkURL,
 			JarUrl:       nullString(ext.JarURL),
 			IsNsfw:       ext.IsNsfw,
-		})
-		if err != nil {
-			return sqlcgen.Repository{}, fmt.Errorf("upsert extension %s: %w", ext.PackageName, err)
+		}); err != nil {
+			return fmt.Errorf("upsert extension %s: %w", ext.PackageName, err)
 		}
-
 	}
-
-	if err := s.q.TouchRepositorySync(ctx, repo.ID); err != nil {
-		return sqlcgen.Repository{}, fmt.Errorf("touch repository sync: %w", err)
+	if err := s.q.TouchRepositorySync(ctx, repoID); err != nil {
+		return fmt.Errorf("touch repository sync: %w", err)
 	}
-	return s.q.GetRepository(ctx, repo.ID)
+	return nil
 }
 
 func (s *Syncer) ListRepositories(ctx context.Context) ([]sqlcgen.Repository, error) {
 	return s.q.ListRepositories(ctx)
+}
+
+func (s *Syncer) SyncRepository(ctx context.Context, id int64) (sqlcgen.Repository, error) {
+	repo, err := s.q.GetRepository(ctx, id)
+	if err != nil {
+		return sqlcgen.Repository{}, fmt.Errorf("get repository %d: %w", id, err)
+	}
+	if strings.HasPrefix(repo.IndexUrl, "local:") {
+		return repo, nil
+	}
+	parsed, err := repository.FetchIndex(repo.IndexUrl)
+	if err != nil {
+		return sqlcgen.Repository{}, err
+	}
+	if err := s.applyRepoIndex(ctx, repo.ID, parsed); err != nil {
+		return sqlcgen.Repository{}, err
+	}
+	return s.q.GetRepository(ctx, repo.ID)
+}
+
+func (s *Syncer) SyncAllRepositories(ctx context.Context) ([]sqlcgen.Repository, error) {
+	repos, err := s.q.ListRepositories(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]sqlcgen.Repository, 0, len(repos))
+	for _, repo := range repos {
+		if strings.HasPrefix(repo.IndexUrl, "local:") {
+			out = append(out, repo)
+			continue
+		}
+		updated, err := s.SyncRepository(ctx, repo.ID)
+		if err != nil {
+			log.Printf("sync repository %d (%s): %v", repo.ID, repo.IndexUrl, err)
+			out = append(out, repo)
+			continue
+		}
+		out = append(out, updated)
+	}
+	return out, nil
 }
 
 const sideloadRepoURL = "local:sideload"

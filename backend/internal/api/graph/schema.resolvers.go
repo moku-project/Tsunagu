@@ -84,11 +84,11 @@ func (r *chapterResolver) Pages(ctx context.Context, obj *model.Chapter) ([]stri
 	if err != nil {
 		return nil, fmt.Errorf("sandbox unavailable: %w", err)
 	}
-	pages, err := client.GetPages(ctx, dctx.ExtensionPackageName, dctx.SourceEntryID, dctx.SourceChapterID)
+	urls, err := client.GetPageURLs(ctx, dctx.ExtensionPackageName, dctx.SourceEntryID, dctx.SourceChapterID)
 	if err != nil {
 		return nil, fmt.Errorf("fetching page list: %w", err)
 	}
-	return contentPageURLs(obj.MediaID, obj.ID, len(pages.GetPageUrls())), nil
+	return contentPageURLs(obj.MediaID, obj.ID, len(urls)), nil
 }
 
 func (r *chapterResolver) PageCount(ctx context.Context, obj *model.Chapter) (*int32, error) {
@@ -415,6 +415,30 @@ func (r *mutationResolver) DeleteRepository(ctx context.Context, repositoryID st
 		return false, err
 	}
 	return true, r.Sy.DeleteRepository(ctx, id)
+}
+
+func (r *mutationResolver) SyncRepository(ctx context.Context, repositoryID string) (*model.Repository, error) {
+	id, err := parseID(repositoryID)
+	if err != nil {
+		return nil, err
+	}
+	repo, err := r.Sy.SyncRepository(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return toRepository(repo), nil
+}
+
+func (r *mutationResolver) SyncRepositories(ctx context.Context) ([]*model.Repository, error) {
+	repos, err := r.Sy.SyncAllRepositories(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*model.Repository, 0, len(repos))
+	for _, repo := range repos {
+		out = append(out, toRepository(repo))
+	}
+	return out, nil
 }
 
 func (r *mutationResolver) InstallExtension(ctx context.Context, packageName string) (*model.Extension, error) {

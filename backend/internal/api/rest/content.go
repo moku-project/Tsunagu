@@ -74,6 +74,8 @@ func (h *ContentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		h.servePage(w, r, chapterID, pageNumber)
+	case "prefetch":
+		h.prefetchChapter(w, r, chapterID)
 	case "video":
 		switch {
 		case len(parts) == 4 && parts[3] == "probe":
@@ -132,31 +134,73 @@ func (h *ContentHandler) servePage(w http.ResponseWriter, r *http.Request, chapt
 		return
 	}
 
-	pages, err := client.GetPages(ctx, dctx.ExtensionPackageName, dctx.SourceEntryID, dctx.SourceChapterID)
+	urls, err := client.GetPageURLs(ctx, dctx.ExtensionPackageName, dctx.SourceEntryID, dctx.SourceChapterID)
 	if err != nil {
 		http.Error(w, "fetching page list failed", http.StatusBadGateway)
 		return
 	}
-	urls := pages.GetPageUrls()
 	if pageNumber > len(urls) {
 		http.Error(w, "page number out of range", http.StatusNotFound)
 		return
 	}
 
-	img, err := client.GetImageBytes(ctx, dctx.ExtensionPackageName, urls[pageNumber-1])
+	data, ct, err := fetchMangaImage(ctx, client, dctx.ExtensionPackageName, urls[pageNumber-1])
 	if err != nil {
 		http.Error(w, "fetching image failed", http.StatusBadGateway)
 		return
 	}
 
-	if ct := img.GetContentType(); ct != "" {
-		w.Header().Set("Content-Type", ct)
-	} else {
-		w.Header().Set("Content-Type", "image/jpeg")
+	if end := pageNumber + 3; pageNumber < len(urls) {
+		if end > len(urls) {
+			end = len(urls)
+		}
+		prefetchMangaImages(client, dctx.ExtensionPackageName, urls[pageNumber:end])
 	}
 
-	w.Header().Set("Cache-Control", "no-store")
-	_, _ = w.Write(img.GetData())
+	if ct == "" {
+		ct = "image/jpeg"
+	}
+	w.Header().Set("Content-Type", ct)
+	w.Header().Set("Content-Length", strconv.Itoa(len(data)))
+	w.Header().Set("Cache-Control", "public, max-age=86400")
+	_, _ = w.Write(data)
+}
+
+func (h *ContentHandler) prefetchChapter(w http.ResponseWriter, r *http.Request, chapterID int64) {
+	if rows, err := h.Q.ListMangaPages(r.Context(), chapterID); err == nil {
+		for _, row := range rows {
+			if row.LocalPath.Valid && row.LocalPath.String != "" {
+				w.WriteHeader(http.StatusNoContent)
+				return
+			}
+		}
+	}
+
+	dctx, err := h.Q.GetChapterDownloadContext(r.Context(), chapterID)
+	if err != nil || dctx.ContentType != "manga" {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+	client, err := h.Sc.Ensure(r.Context())
+	if err != nil {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 25*time.Second)
+		defer cancel()
+		urls, err := client.GetPageURLs(ctx, dctx.ExtensionPackageName, dctx.SourceEntryID, dctx.SourceChapterID)
+		if err != nil {
+			return
+		}
+		k := 6
+		if k > len(urls) {
+			k = len(urls)
+		}
+		prefetchMangaImages(client, dctx.ExtensionPackageName, urls[:k])
+	}()
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *ContentHandler) serveVideo(w http.ResponseWriter, r *http.Request, chapterID int64) {

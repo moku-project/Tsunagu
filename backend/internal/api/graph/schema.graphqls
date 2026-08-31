@@ -375,6 +375,8 @@ type Mutation {
   addRepository(indexUrl: String!, name: String): Repository!
   renameRepository(repositoryId: ID!, name: String!): Repository!
   deleteRepository(repositoryId: ID!): Boolean!
+  syncRepository(repositoryId: ID!): Repository!
+  syncRepositories: [Repository!]!
   installExtension(packageName: String!): Extension!
   installExternalExtension(url: String!): Extension!
   uninstallExtension(packageName: String!): Extension!

@@ -243,6 +243,8 @@ type ComplexityRoot struct {
 		StartLibraryUpdate       func(childComplexity int, folderID *string) int
 		StopDownloader           func(childComplexity int) int
 		SyncChapters             func(childComplexity int, mediaID string) int
+		SyncRepositories         func(childComplexity int) int
+		SyncRepository           func(childComplexity int, repositoryID string) int
 		TrackerLogin             func(childComplexity int, trackerKey string, token string) int
 		TrackerLogout            func(childComplexity int, trackerKey string) int
 		UnbindTrack              func(childComplexity int, linkID string) int
@@ -464,6 +466,8 @@ type MutationResolver interface {
 	AddRepository(ctx context.Context, indexURL string, name *string) (*model.Repository, error)
 	RenameRepository(ctx context.Context, repositoryID string, name string) (*model.Repository, error)
 	DeleteRepository(ctx context.Context, repositoryID string) (bool, error)
+	SyncRepository(ctx context.Context, repositoryID string) (*model.Repository, error)
+	SyncRepositories(ctx context.Context) ([]*model.Repository, error)
 	InstallExtension(ctx context.Context, packageName string) (*model.Extension, error)
 	InstallExternalExtension(ctx context.Context, url string) (*model.Extension, error)
 	UninstallExtension(ctx context.Context, packageName string) (*model.Extension, error)
@@ -1679,6 +1683,23 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.SyncChapters(childComplexity, args["mediaId"].(string)), true
+	case "Mutation.syncRepositories":
+		if e.ComplexityRoot.Mutation.SyncRepositories == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Mutation.SyncRepositories(childComplexity), true
+	case "Mutation.syncRepository":
+		if e.ComplexityRoot.Mutation.SyncRepository == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_syncRepository_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.SyncRepository(childComplexity, args["repositoryId"].(string)), true
 	case "Mutation.trackerLogin":
 		if e.ComplexityRoot.Mutation.TrackerLogin == nil {
 			break
@@ -3955,6 +3976,20 @@ func (ec *executionContext) field_Mutation_syncChapters_args(ctx context.Context
 		return nil, err
 	}
 	args["mediaId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_syncRepository_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "repositoryId",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["repositoryId"] = arg0
 	return args, nil
 }
 
@@ -8089,6 +8124,82 @@ func (ec *executionContext) fieldContext_Mutation_deleteRepository(ctx context.C
 	if fc.Args, err = ec.field_Mutation_deleteRepository_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_syncRepository(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_syncRepository(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().SyncRepository(ctx, fc.Args["repositoryId"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.Repository) graphql.Marshaler {
+			return ec.marshalNRepository2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐRepository(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_syncRepository(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Repository(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_syncRepository_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_syncRepositories(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_syncRepositories(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Mutation().SyncRepositories(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.Repository) graphql.Marshaler {
+			return ec.marshalNRepository2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐRepositoryᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_syncRepositories(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Repository(ctx, field)
+		},
 	}
 	return fc, nil
 }
@@ -16145,6 +16256,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "deleteRepository":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteRepository(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "syncRepository":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_syncRepository(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "syncRepositories":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_syncRepositories(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
