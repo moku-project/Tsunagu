@@ -14,6 +14,7 @@ type Querier interface {
 	AddMediaToFolder(ctx context.Context, arg AddMediaToFolderParams) error
 	AddMediaToLibrary(ctx context.Context, id int64) (Medium, error)
 	AddTagToMedia(ctx context.Context, arg AddTagToMediaParams) error
+	BackfillMissingCoversFromMetadata(ctx context.Context) (int64, error)
 	ClearDownloads(ctx context.Context) error
 	ClearDownloadsByStatus(ctx context.Context, statuses []string) error
 	ClearExtensionIconPaths(ctx context.Context) error
@@ -27,12 +28,14 @@ type Querier interface {
 	CountExtensions(ctx context.Context, arg CountExtensionsParams) (int64, error)
 	CountUnreadChaptersByMediaIDs(ctx context.Context, mediaIds []int64) ([]CountUnreadChaptersByMediaIDsRow, error)
 	CreateChapter(ctx context.Context, arg CreateChapterParams) (Chapter, error)
+	CreateContentFilterRule(ctx context.Context, arg CreateContentFilterRuleParams) (ContentFilterRule, error)
 	CreateFolder(ctx context.Context, arg CreateFolderParams) (Folder, error)
 	CreateGenre(ctx context.Context, name string) (Genre, error)
 	CreateLocalMedia(ctx context.Context, arg CreateLocalMediaParams) (Medium, error)
 	CreateRepository(ctx context.Context, arg CreateRepositoryParams) (Repository, error)
 	CreateTag(ctx context.Context, name string) (Tag, error)
 	DeleteAnimeEpisodeStream(ctx context.Context, chapterID int64) error
+	DeleteContentFilterRule(ctx context.Context, id int64) error
 	DeleteDownload(ctx context.Context, id int64) error
 	DeleteDownloadByChapter(ctx context.Context, chapterID int64) error
 	DeleteDownloadsByChapters(ctx context.Context, chapterIds []int64) error
@@ -46,6 +49,7 @@ type Querier interface {
 	DeleteTag(ctx context.Context, id int64) error
 	DeleteTrackerAccountByType(ctx context.Context, trackerType string) error
 	DeleteTrackerLink(ctx context.Context, id int64) error
+	DeleteUserContentFilterRules(ctx context.Context) error
 	EnqueueDownload(ctx context.Context, chapterID int64) (Download, error)
 	FailDownload(ctx context.Context, arg FailDownloadParams) error
 	GapFillMediaMetadata(ctx context.Context, arg GapFillMediaMetadataParams) (Medium, error)
@@ -53,6 +57,7 @@ type Querier interface {
 	GetChapter(ctx context.Context, id int64) (Chapter, error)
 	GetChapterByMediaAndExternalID(ctx context.Context, arg GetChapterByMediaAndExternalIDParams) (Chapter, error)
 	GetChapterDownloadContext(ctx context.Context, id int64) (GetChapterDownloadContextRow, error)
+	GetContentFilterInputs(ctx context.Context, id int64) (GetContentFilterInputsRow, error)
 	GetExtension(ctx context.Context, id int64) (Extension, error)
 	GetExtensionByPackageName(ctx context.Context, packageName string) (Extension, error)
 	GetExtensionsByIDs(ctx context.Context, ids []int64) ([]Extension, error)
@@ -63,6 +68,7 @@ type Querier interface {
 	GetLocalMediaByExternalID(ctx context.Context, externalID string) (Medium, error)
 	GetMedia(ctx context.Context, id int64) (Medium, error)
 	GetMediaByExtensionAndExternalID(ctx context.Context, arg GetMediaByExtensionAndExternalIDParams) (Medium, error)
+	GetMediaMetadataCover(ctx context.Context, mediaID int64) (string, error)
 	GetMetadataLink(ctx context.Context, arg GetMetadataLinkParams) (MetadataLink, error)
 	GetNovelChapterContent(ctx context.Context, chapterID int64) (NovelChapterContent, error)
 	GetQueuedDownloadByChapter(ctx context.Context, chapterID int64) (Download, error)
@@ -72,6 +78,8 @@ type Querier interface {
 	GetTrackerAccount(ctx context.Context, trackerType string) (TrackerAccount, error)
 	GetTrackerLink(ctx context.Context, id int64) (TrackerLink, error)
 	LatestChapterByMediaIDs(ctx context.Context, mediaIds []int64) ([]Chapter, error)
+	LibraryGenreFacets(ctx context.Context, minCount interface{}) ([]LibraryGenreFacetsRow, error)
+	LibraryTagFacets(ctx context.Context, minCount interface{}) ([]LibraryTagFacetsRow, error)
 	ListAllDownloads(ctx context.Context) ([]ListAllDownloadsRow, error)
 	ListAllEpisodeStreamPaths(ctx context.Context) ([]ListAllEpisodeStreamPathsRow, error)
 	ListAllMangaPagePaths(ctx context.Context) ([]MangaPage, error)
@@ -81,6 +89,7 @@ type Querier interface {
 	ListChaptersByMedia(ctx context.Context, mediaID int64) ([]Chapter, error)
 	ListChaptersMissingNumber(ctx context.Context) ([]ListChaptersMissingNumberRow, error)
 	ListCompletedChapterTitles(ctx context.Context, mediaID int64) ([]ListCompletedChapterTitlesRow, error)
+	ListContentFilterRules(ctx context.Context) ([]ContentFilterRule, error)
 	ListDownloadedEpisodeStreamsByChapterIDs(ctx context.Context, chapterIds []int64) ([]ListDownloadedEpisodeStreamsByChapterIDsRow, error)
 	ListDownloadedNovelContentByChapterIDs(ctx context.Context, chapterIds []int64) ([]NovelChapterContent, error)
 	ListExtensionLanguages(ctx context.Context, arg ListExtensionLanguagesParams) ([]string, error)
@@ -96,6 +105,7 @@ type Querier interface {
 	ListMediaByIDs(ctx context.Context, ids []int64) ([]Medium, error)
 	ListMediaForGenre(ctx context.Context, genreID int64) ([]Medium, error)
 	ListMediaForTag(ctx context.Context, tagID int64) ([]Medium, error)
+	ListMediaIDsWithSparseTags(ctx context.Context, mediaID int64) ([]int64, error)
 	ListMediaIDsWithTrackerLinks(ctx context.Context) ([]int64, error)
 	ListMediaIDsWithoutMetadataLink(ctx context.Context) ([]int64, error)
 	ListMediaInFolder(ctx context.Context, folderID int64) ([]Medium, error)
@@ -106,11 +116,13 @@ type Querier interface {
 	ListReadingProgressByMedia(ctx context.Context, mediaID int64) ([]ReadingProgress, error)
 	ListReadingProgressByMediaIDs(ctx context.Context, mediaIds []int64) ([]ReadingProgress, error)
 	ListRecentChapters(ctx context.Context, arg ListRecentChaptersParams) ([]ListRecentChaptersRow, error)
+	ListRecomputableMediaIDs(ctx context.Context) ([]int64, error)
 	ListRepositories(ctx context.Context) ([]Repository, error)
 	ListSettings(ctx context.Context) ([]ListSettingsRow, error)
 	ListTags(ctx context.Context) ([]Tag, error)
 	ListTagsByMediaIDs(ctx context.Context, mediaIds []int64) ([]ListTagsByMediaIDsRow, error)
 	ListTagsForMedia(ctx context.Context, mediaID int64) ([]Tag, error)
+	ListTagsWithWeightForMedia(ctx context.Context, mediaID int64) ([]ListTagsWithWeightForMediaRow, error)
 	ListTrackerAccounts(ctx context.Context) ([]TrackerAccount, error)
 	ListTrackerLinksByMedia(ctx context.Context, mediaID int64) ([]TrackerLink, error)
 	ListTrackerLinksByMediaIDs(ctx context.Context, mediaIds []int64) ([]TrackerLink, error)
@@ -136,6 +148,7 @@ type Querier interface {
 	SetDownloadPosition(ctx context.Context, arg SetDownloadPositionParams) error
 	SetExtensionEnabled(ctx context.Context, arg SetExtensionEnabledParams) (Extension, error)
 	SetFolderSortOrder(ctx context.Context, arg SetFolderSortOrderParams) (Folder, error)
+	SetMediaContentBlockRank(ctx context.Context, arg SetMediaContentBlockRankParams) error
 	SetMediaCoverOverride(ctx context.Context, arg SetMediaCoverOverrideParams) (Medium, error)
 	SetSetting(ctx context.Context, arg SetSettingParams) error
 	TouchMediaViewed(ctx context.Context, id int64) error

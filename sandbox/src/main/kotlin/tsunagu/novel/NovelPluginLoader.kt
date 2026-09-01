@@ -8,18 +8,21 @@ import tsunagu.loader.ContentType
 import tsunagu.loader.ExtensionLoadException
 import tsunagu.loader.LoadedExtension
 import java.io.File
+import java.util.concurrent.Callable
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.Executors
 
 object NovelPluginLoader {
+
+    private const val PROMISE_WRAP_GLUE = """
+        function __wrapPromise(v) { return Promise.resolve(v); }
+    """
 
     private const val FORM_DATA_GLUE = """
         function FormData() {
             this._entries = [];
         }
         FormData.prototype.append = function(k, v) { this._entries.push([k, v]); };
-    """
-
-    private const val PROMISE_WRAP_GLUE = """
-        function __wrapPromise(v) { return Promise.resolve(v); }
     """
 
     private const val URL_SEARCH_PARAMS_GLUE = """
@@ -38,6 +41,34 @@ object NovelPluginLoader {
         val rawCode = file.readText()
         val storageNamespace = file.nameWithoutExtension
 
+        val exec = Executors.newSingleThreadExecutor { r ->
+            Thread(r, "novel-js-$storageNamespace").apply { isDaemon = true }
+        }
+
+        val plugin = try {
+            exec.submit(Callable { buildPlugin(file, rawCode, storageNamespace, exec) }).get()
+        } catch (e: ExecutionException) {
+            exec.shutdownNow()
+            throw e.cause ?: e
+        } catch (e: Throwable) {
+            exec.shutdownNow()
+            throw e
+        }
+
+        return LoadedExtension(
+            packageName = plugin.id,
+            source = plugin,
+            classLoader = NovelPluginLoader::class.java.classLoader,
+            contentType = ContentType.NOVEL,
+        )
+    }
+
+    private fun buildPlugin(
+        file: File,
+        rawCode: String,
+        storageNamespace: String,
+        exec: java.util.concurrent.ExecutorService,
+    ): NovelPlugin {
         val context = Context.newBuilder("js", "regex")
             .allowHostAccess(HostAccess.ALL)
             .allowHostClassLookup { false }
@@ -83,13 +114,6 @@ object NovelPluginLoader {
         val lang = pluginValue.str("lang") ?: ""
         val version = pluginValue.str("version") ?: "0.0.0"
 
-        val plugin = NovelPlugin(id, name, site, lang, version, context, pluginValue)
-
-        return LoadedExtension(
-            packageName = id,
-            source = plugin,
-            classLoader = NovelPluginLoader::class.java.classLoader,
-            contentType = ContentType.NOVEL,
-        )
+        return NovelPlugin(id, name, site, lang, version, context, pluginValue, exec, Thread.currentThread())
     }
 }

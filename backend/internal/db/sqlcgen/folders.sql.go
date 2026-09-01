@@ -208,7 +208,7 @@ func (q *Queries) ListFoldersByMediaIDs(ctx context.Context, mediaIds []int64) (
 }
 
 const listMediaInFolder = `-- name: ListMediaInFolder :many
-SELECT m.id, m.extension_id, m.extension_name, m.external_id, m.content_type, m.title, m.cover_path, m.cover_local_path, m.description, m.status, m.author, m.artist, m.extension_removed_at, m.added_at, m.last_viewed_at, m.details_fetched_at, m.updated_at, m.chapters_synced_at, m.cover_override FROM media m
+SELECT m.id, m.extension_id, m.extension_name, m.external_id, m.content_type, m.title, m.cover_path, m.cover_local_path, m.description, m.status, m.author, m.artist, m.extension_removed_at, m.added_at, m.last_viewed_at, m.details_fetched_at, m.updated_at, m.chapters_synced_at, m.cover_override, m.content_block_rank FROM media m
 JOIN media_folders mf ON mf.media_id = m.id
 WHERE mf.folder_id = ?
 ORDER BY m.added_at DESC
@@ -243,6 +243,7 @@ func (q *Queries) ListMediaInFolder(ctx context.Context, folderID int64) ([]Medi
 			&i.UpdatedAt,
 			&i.ChaptersSyncedAt,
 			&i.CoverOverride,
+			&i.ContentBlockRank,
 		); err != nil {
 			return nil, err
 		}

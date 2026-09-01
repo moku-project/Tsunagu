@@ -34,6 +34,7 @@ type Config struct {
 	MALClientSecret      string
 	CloudflareSolverMode string
 	CloudflareSolverURL  string
+	ContentFilterLevel   string
 }
 
 func (c *Config) IdleTimeout() time.Duration {
@@ -63,6 +64,7 @@ func Defaults() Config {
 		MALClientID:          "611c821aee93c5e51411bfa86ca32597",
 		CloudflareSolverMode: "disabled",
 		CloudflareSolverURL:  "http://127.0.0.1:8191",
+		ContentFilterLevel:   "moderate",
 	}
 }
 

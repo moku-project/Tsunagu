@@ -11,17 +11,18 @@ import (
 )
 
 const addTagToMedia = `-- name: AddTagToMedia :exec
-INSERT INTO media_tags (media_id, tag_id) VALUES (?, ?)
-ON CONFLICT DO NOTHING
+INSERT INTO media_tags (media_id, tag_id, weight) VALUES (?, ?, ?)
+ON CONFLICT(media_id, tag_id) DO UPDATE SET weight = MAX(weight, excluded.weight)
 `
 
 type AddTagToMediaParams struct {
 	MediaID int64 `json:"media_id"`
 	TagID   int64 `json:"tag_id"`
+	Weight  int64 `json:"weight"`
 }
 
 func (q *Queries) AddTagToMedia(ctx context.Context, arg AddTagToMediaParams) error {
-	_, err := q.db.ExecContext(ctx, addTagToMedia, arg.MediaID, arg.TagID)
+	_, err := q.db.ExecContext(ctx, addTagToMedia, arg.MediaID, arg.TagID, arg.Weight)
 	return err
 }
 
@@ -48,7 +49,7 @@ func (q *Queries) DeleteTag(ctx context.Context, id int64) error {
 }
 
 const listMediaForTag = `-- name: ListMediaForTag :many
-SELECT m.id, m.extension_id, m.extension_name, m.external_id, m.content_type, m.title, m.cover_path, m.cover_local_path, m.description, m.status, m.author, m.artist, m.extension_removed_at, m.added_at, m.last_viewed_at, m.details_fetched_at, m.updated_at, m.chapters_synced_at, m.cover_override FROM media m
+SELECT m.id, m.extension_id, m.extension_name, m.external_id, m.content_type, m.title, m.cover_path, m.cover_local_path, m.description, m.status, m.author, m.artist, m.extension_removed_at, m.added_at, m.last_viewed_at, m.details_fetched_at, m.updated_at, m.chapters_synced_at, m.cover_override, m.content_block_rank FROM media m
 JOIN media_tags mt ON mt.media_id = m.id
 WHERE mt.tag_id = ?
 ORDER BY m.added_at DESC
@@ -83,6 +84,7 @@ func (q *Queries) ListMediaForTag(ctx context.Context, tagID int64) ([]Medium, e
 			&i.UpdatedAt,
 			&i.ChaptersSyncedAt,
 			&i.CoverOverride,
+			&i.ContentBlockRank,
 		); err != nil {
 			return nil, err
 		}
@@ -188,6 +190,42 @@ func (q *Queries) ListTagsForMedia(ctx context.Context, mediaID int64) ([]Tag, e
 	for rows.Next() {
 		var i Tag
 		if err := rows.Scan(&i.ID, &i.Name, &i.CreatedAt); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listTagsWithWeightForMedia = `-- name: ListTagsWithWeightForMedia :many
+SELECT t.name AS name, mt.weight AS weight
+FROM tags t
+JOIN media_tags mt ON mt.tag_id = t.id
+WHERE mt.media_id = ?
+ORDER BY mt.weight DESC, t.name
+`
+
+type ListTagsWithWeightForMediaRow struct {
+	Name   string `json:"name"`
+	Weight int64  `json:"weight"`
+}
+
+func (q *Queries) ListTagsWithWeightForMedia(ctx context.Context, mediaID int64) ([]ListTagsWithWeightForMediaRow, error) {
+	rows, err := q.db.QueryContext(ctx, listTagsWithWeightForMedia, mediaID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListTagsWithWeightForMediaRow{}
+	for rows.Next() {
+		var i ListTagsWithWeightForMediaRow
+		if err := rows.Scan(&i.Name, &i.Weight); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

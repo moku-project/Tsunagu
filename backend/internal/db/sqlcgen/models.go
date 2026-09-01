@@ -33,6 +33,17 @@ type Chapter struct {
 	Scanlator   string          `json:"scanlator"`
 }
 
+type ContentFilterRule struct {
+	ID         int64     `json:"id"`
+	Category   string    `json:"category"`
+	Field      string    `json:"field"`
+	Keyword    string    `json:"keyword"`
+	MinWeight  int64     `json:"min_weight"`
+	BlockLevel int64     `json:"block_level"`
+	IsDefault  int64     `json:"is_default"`
+	CreatedAt  time.Time `json:"created_at"`
+}
+
 type Download struct {
 	ID              int64           `json:"id"`
 	ChapterID       int64           `json:"chapter_id"`
@@ -106,6 +117,7 @@ type MediaGenre struct {
 type MediaTag struct {
 	MediaID int64 `json:"media_id"`
 	TagID   int64 `json:"tag_id"`
+	Weight  int64 `json:"weight"`
 }
 
 type Medium struct {
@@ -128,6 +140,7 @@ type Medium struct {
 	UpdatedAt          time.Time      `json:"updated_at"`
 	ChaptersSyncedAt   sql.NullTime   `json:"chapters_synced_at"`
 	CoverOverride      sql.NullString `json:"cover_override"`
+	ContentBlockRank   sql.NullInt64  `json:"content_block_rank"`
 }
 
 type MetadataLink struct {

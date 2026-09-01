@@ -14,10 +14,15 @@ import (
 	"tsunagu/backend/internal/db/sqlcgen"
 )
 
+type Recomputer interface {
+	RecomputeMedia(ctx context.Context, mediaID int64) error
+}
+
 type Manager struct {
 	db        *sql.DB
 	q         *sqlcgen.Queries
 	providers map[string]Provider
+	recompute Recomputer
 }
 
 func NewManager(db *sql.DB, q *sqlcgen.Queries) *Manager {
@@ -29,6 +34,8 @@ func NewManager(db *sql.DB, q *sqlcgen.Queries) *Manager {
 		},
 	}
 }
+
+func (m *Manager) SetRecomputer(r Recomputer) { m.recompute = r }
 
 const DefaultProvider = "anilist"
 
@@ -65,6 +72,12 @@ func (m *Manager) tryMatch(ctx context.Context, media sqlcgen.Medium) error {
 }
 
 func (m *Manager) EnrichLibrary(ctx context.Context) {
+	if n, err := m.q.BackfillMissingCoversFromMetadata(ctx); err != nil {
+		log.Printf("cover backfill: %v", err)
+	} else if n > 0 {
+		log.Printf("cover backfill: filled %d media covers from metadata links", n)
+	}
+
 	ids, err := m.q.ListMediaIDsWithoutMetadataLink(ctx)
 	if err != nil {
 		log.Printf("metadata backfill: %v", err)
@@ -98,6 +111,34 @@ func (m *Manager) EnrichLibrary(ctx context.Context) {
 		}
 	}
 	log.Printf("metadata backfill: done -- matched %d/%d", matched, len(ids))
+	m.refreshSparseTags(ctx)
+}
+
+// refreshSparseTags re-fetches the linked AniList entry for library items that
+// carry few tags, so older matches pick up the full (now un-capped) tag set.
+func (m *Manager) refreshSparseTags(ctx context.Context) {
+	ids, err := m.q.ListMediaIDsWithSparseTags(ctx, 5)
+	if err != nil || len(ids) == 0 {
+		return
+	}
+	log.Printf("metadata backfill: %d linked media with sparse tags, refreshing", len(ids))
+	for _, id := range ids {
+		if ctx.Err() != nil {
+			return
+		}
+		link, err := m.q.GetMetadataLink(ctx, sqlcgen.GetMetadataLinkParams{MediaID: id, Provider: DefaultProvider})
+		if err != nil {
+			continue
+		}
+		if _, err := m.Apply(ctx, id, DefaultProvider, link.ProviderID); err != nil {
+			log.Printf("metadata backfill: refresh tags for media %d: %v", id, err)
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(800 * time.Millisecond):
+		}
+	}
 }
 
 func (m *Manager) Search(ctx context.Context, provider, query string, ct ContentType) ([]Candidate, error) {
@@ -229,31 +270,33 @@ func (m *Manager) applyCandidate(ctx context.Context, mediaID int64, provider st
 		return sqlcgen.Medium{}, fmt.Errorf("gap-fill media %d: %w", mediaID, err)
 	}
 
-	if len(c.Genres) > 0 {
-		if existing, err := qtx.ListGenresForMedia(ctx, mediaID); err == nil && len(existing) == 0 {
-			for _, name := range c.Genres {
-				g, err := qtx.CreateGenre(ctx, name)
-				if err != nil {
-					return sqlcgen.Medium{}, err
-				}
-				if err := qtx.AddGenreToMedia(ctx, sqlcgen.AddGenreToMediaParams{MediaID: mediaID, GenreID: g.ID}); err != nil {
-					return sqlcgen.Medium{}, err
-				}
-			}
+	for _, name := range c.Genres {
+		if name == "" {
+			continue
+		}
+		g, err := qtx.CreateGenre(ctx, name)
+		if err != nil {
+			return sqlcgen.Medium{}, err
+		}
+		if err := qtx.AddGenreToMedia(ctx, sqlcgen.AddGenreToMediaParams{MediaID: mediaID, GenreID: g.ID}); err != nil {
+			return sqlcgen.Medium{}, err
 		}
 	}
 
-	if len(c.Tags) > 0 {
-		if existing, err := qtx.ListTagsForMedia(ctx, mediaID); err == nil && len(existing) == 0 {
-			for _, name := range c.Tags {
-				t, err := qtx.CreateTag(ctx, name)
-				if err != nil {
-					return sqlcgen.Medium{}, err
-				}
-				if err := qtx.AddTagToMedia(ctx, sqlcgen.AddTagToMediaParams{MediaID: mediaID, TagID: t.ID}); err != nil {
-					return sqlcgen.Medium{}, err
-				}
-			}
+	for i, name := range c.Tags {
+		if name == "" {
+			continue
+		}
+		t, err := qtx.CreateTag(ctx, name)
+		if err != nil {
+			return sqlcgen.Medium{}, err
+		}
+		var w int64
+		if i < len(c.TagWeights) {
+			w = int64(c.TagWeights[i])
+		}
+		if err := qtx.AddTagToMedia(ctx, sqlcgen.AddTagToMediaParams{MediaID: mediaID, TagID: t.ID, Weight: w}); err != nil {
+			return sqlcgen.Medium{}, err
 		}
 	}
 
@@ -271,6 +314,9 @@ func (m *Manager) applyCandidate(ctx context.Context, mediaID int64, provider st
 
 	if err := tx.Commit(); err != nil {
 		return sqlcgen.Medium{}, err
+	}
+	if m.recompute != nil {
+		go func() { _ = m.recompute.RecomputeMedia(context.Background(), mediaID) }()
 	}
 	return updated, nil
 }

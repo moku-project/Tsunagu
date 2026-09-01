@@ -80,6 +80,7 @@ message EntrySummary {
   string source_entry_id = 1;
   string title = 2;
   string cover_url = 3;
+  repeated string genres = 4;
 }
 
 message EntryRequest {

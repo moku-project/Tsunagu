@@ -64,6 +64,16 @@ type CloudflareSolver struct {
 	SupportedOnPlatform bool        `json:"supportedOnPlatform"`
 }
 
+type ContentFilterRule struct {
+	ID         string            `json:"id"`
+	Category   string            `json:"category"`
+	Field      FilterField       `json:"field"`
+	Keyword    string            `json:"keyword"`
+	MinWeight  int32             `json:"minWeight"`
+	BlockLevel ContentBlockLevel `json:"blockLevel"`
+	IsDefault  bool              `json:"isDefault"`
+}
+
 type Download struct {
 	ID              string         `json:"id"`
 	MediaID         string         `json:"mediaId"`
@@ -343,6 +353,12 @@ type SubtitleTrack struct {
 	URL  string `json:"url"`
 }
 
+type TagFacet struct {
+	Name      string `json:"name"`
+	Count     int32  `json:"count"`
+	MaxWeight int32  `json:"maxWeight"`
+}
+
 type TextFilter struct {
 	Name  string `json:"name"`
 	State string `json:"state"`
@@ -432,6 +448,61 @@ type VideoStream struct {
 	Subtitles   []*SubtitleTrack `json:"subtitles"`
 	AudioTracks []*AudioTrack    `json:"audioTracks"`
 	SkipMarkers []*SkipMarker    `json:"skipMarkers"`
+}
+
+type ContentBlockLevel string
+
+const (
+	ContentBlockLevelModerate ContentBlockLevel = "MODERATE"
+	ContentBlockLevelStrict   ContentBlockLevel = "STRICT"
+)
+
+var AllContentBlockLevel = []ContentBlockLevel{
+	ContentBlockLevelModerate,
+	ContentBlockLevelStrict,
+}
+
+func (e ContentBlockLevel) IsValid() bool {
+	switch e {
+	case ContentBlockLevelModerate, ContentBlockLevelStrict:
+		return true
+	}
+	return false
+}
+
+func (e ContentBlockLevel) String() string {
+	return string(e)
+}
+
+func (e *ContentBlockLevel) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ContentBlockLevel(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ContentBlockLevel", str)
+	}
+	return nil
+}
+
+func (e ContentBlockLevel) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ContentBlockLevel) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ContentBlockLevel) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
 }
 
 type ContentType string
@@ -545,6 +616,65 @@ func (e *DownloadStatus) UnmarshalJSON(b []byte) error {
 }
 
 func (e DownloadStatus) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type FilterField string
+
+const (
+	FilterFieldGenre       FilterField = "GENRE"
+	FilterFieldTag         FilterField = "TAG"
+	FilterFieldTitle       FilterField = "TITLE"
+	FilterFieldDescription FilterField = "DESCRIPTION"
+)
+
+var AllFilterField = []FilterField{
+	FilterFieldGenre,
+	FilterFieldTag,
+	FilterFieldTitle,
+	FilterFieldDescription,
+}
+
+func (e FilterField) IsValid() bool {
+	switch e {
+	case FilterFieldGenre, FilterFieldTag, FilterFieldTitle, FilterFieldDescription:
+		return true
+	}
+	return false
+}
+
+func (e FilterField) String() string {
+	return string(e)
+}
+
+func (e *FilterField) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = FilterField(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid FilterField", str)
+	}
+	return nil
+}
+
+func (e FilterField) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *FilterField) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e FilterField) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

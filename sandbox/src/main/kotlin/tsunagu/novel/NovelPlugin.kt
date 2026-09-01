@@ -2,6 +2,10 @@ package tsunagu.novel
 
 import org.graalvm.polyglot.Context
 import org.graalvm.polyglot.Value
+import java.util.concurrent.Callable
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.TimeUnit
 
 data class NovelItem(val name: String, val path: String, val cover: String? = null)
 
@@ -36,7 +40,21 @@ class NovelPlugin(
     val version: String,
     private val context: Context,
     private val pluginValue: Value,
+    private val exec: ExecutorService,
+    private val jsThread: Thread,
 ) : AutoCloseable {
+
+    // A JS Context is pinned to a single thread. Every operation that touches
+    // `context`, `pluginValue`, or any derived Value must run on `jsThread`,
+    // dispatched through `exec`. Callers block for the result.
+    private fun <T> onJs(block: () -> T): T {
+        if (Thread.currentThread() === jsThread) return block()
+        return try {
+            exec.submit(Callable { block() }).get()
+        } catch (e: ExecutionException) {
+            throw e.cause ?: e
+        }
+    }
 
     private val callAsync: Value = context.eval(
         "js",
@@ -69,22 +87,32 @@ class NovelPlugin(
         return box.getMember("value")
     }
 
-    fun popularNovels(pageNo: Int): List<NovelItem> =
+    fun popularNovels(pageNo: Int): List<NovelItem> = onJs {
         toValueList(callMethod("popularNovels", pageNo, emptyOptionsValue())).map(::toNovelItem)
+    }
 
     private fun emptyOptionsValue(): Value =
         context.eval("js", "({ filters: {}, showLatestNovels: false })")
 
-    fun searchNovels(searchTerm: String, pageNo: Int): List<NovelItem> =
+    fun searchNovels(searchTerm: String, pageNo: Int): List<NovelItem> = onJs {
         toValueList(callMethod("searchNovels", searchTerm, pageNo)).map(::toNovelItem)
+    }
 
-    fun parseNovel(novelPath: String): SourceNovel =
+    fun parseNovel(novelPath: String): SourceNovel = onJs {
         toSourceNovel(callMethod("parseNovel", novelPath))
+    }
 
-    fun parseChapter(chapterPath: String): String =
+    fun parseChapter(chapterPath: String): String = onJs {
         callMethod("parseChapter", chapterPath).asString()
+    }
 
-    override fun close() = context.close(true)
+    override fun close() {
+        try {
+            exec.submit { context.close(true) }.get(5, TimeUnit.SECONDS)
+        } catch (_: Throwable) {
+        }
+        exec.shutdownNow()
+    }
 
     private fun toValueList(v: Value): List<Value> = (0 until v.arraySize).map { v.getArrayElement(it) }
 

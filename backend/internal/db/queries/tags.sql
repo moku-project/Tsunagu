@@ -10,8 +10,15 @@ SELECT * FROM tags ORDER BY name;
 DELETE FROM tags WHERE id = ?;
 
 -- name: AddTagToMedia :exec
-INSERT INTO media_tags (media_id, tag_id) VALUES (?, ?)
-ON CONFLICT DO NOTHING;
+INSERT INTO media_tags (media_id, tag_id, weight) VALUES (?, ?, ?)
+ON CONFLICT(media_id, tag_id) DO UPDATE SET weight = MAX(weight, excluded.weight);
+
+-- name: ListTagsWithWeightForMedia :many
+SELECT t.name AS name, mt.weight AS weight
+FROM tags t
+JOIN media_tags mt ON mt.tag_id = t.id
+WHERE mt.media_id = ?
+ORDER BY mt.weight DESC, t.name;
 
 -- name: RemoveTagFromMedia :exec
 DELETE FROM media_tags WHERE media_id = ? AND tag_id = ?;

@@ -16,12 +16,29 @@ import (
 
 	"tsunagu/backend/internal/api/graph/model"
 	"tsunagu/backend/internal/config"
+	"tsunagu/backend/internal/contentfilter"
 	"tsunagu/backend/internal/db/sqlcgen"
 	"tsunagu/backend/internal/flaresolverr"
 	"tsunagu/backend/internal/metadata"
 	sandboxv1 "tsunagu/backend/internal/sandbox/gen/sandbox/v1"
 	"tsunagu/backend/internal/tracker"
 )
+
+func toContentFilterRule(r contentfilter.Rule) *model.ContentFilterRule {
+	bl := model.ContentBlockLevelModerate
+	if r.BlockLevel == 2 {
+		bl = model.ContentBlockLevelStrict
+	}
+	return &model.ContentFilterRule{
+		ID:         strconv.FormatInt(r.ID, 10),
+		Category:   r.Category,
+		Field:      model.FilterField(strings.ToUpper(r.Field)),
+		Keyword:    r.Keyword,
+		MinWeight:  int32(r.MinWeight),
+		BlockLevel: bl,
+		IsDefault:  r.IsDefault,
+	}
+}
 
 func toServerSetting(s config.EffectiveSetting) *model.ServerSetting {
 	return &model.ServerSetting{
@@ -698,6 +715,9 @@ func toProtoFilterNodes(ins []*model.FilterInput) []*sandboxv1.FilterNode {
 func (r *Resolver) toSearchResponse(ctx context.Context, ext sqlcgen.Extension, resp *sandboxv1.SearchResponse) (*model.SearchResponse, error) {
 	results := make([]*model.Media, 0, len(resp.Results))
 	for _, res := range resp.Results {
+		if r.Cf != nil && !r.Cf.BrowseAllowed(res.Title, res.GetGenres()) {
+			continue
+		}
 		row, err := r.Q.UpsertMediaBare(ctx, sqlcgen.UpsertMediaBareParams{
 			ExtensionID:   sql.NullInt64{Int64: ext.ID, Valid: true},
 			ExtensionName: ext.Name,

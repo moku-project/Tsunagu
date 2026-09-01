@@ -48,20 +48,29 @@ func (h *CoverProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	effectiveURL := ""
+	var candidates []string
 	if entry.CoverOverride.Valid && entry.CoverOverride.String != "" {
-		effectiveURL = entry.CoverOverride.String
-	} else if entry.CoverPath.Valid {
-		effectiveURL = entry.CoverPath.String
+		candidates = append(candidates, entry.CoverOverride.String)
 	}
-	if effectiveURL == "" {
+	if entry.CoverPath.Valid && entry.CoverPath.String != "" {
+		candidates = append(candidates, entry.CoverPath.String)
+	}
+	if mc, err := h.Q.GetMediaMetadataCover(ctx, entryID); err == nil && mc != "" {
+		candidates = append(candidates, mc)
+	}
+	if len(candidates) == 0 {
 		http.Error(w, "no cover available for this entry", http.StatusNotFound)
 		return
 	}
 
 	destName := strconv.FormatInt(entryID, 10)
-	localPath, err := image.DownloadToFile(effectiveURL, h.CoverCacheDir, destName)
-	if err != nil {
+	var localPath string
+	for _, u := range candidates {
+		if localPath, err = image.DownloadToFile(u, h.CoverCacheDir, destName); err == nil {
+			break
+		}
+	}
+	if localPath == "" {
 		http.Error(w, "fetching cover failed", http.StatusBadGateway)
 		return
 	}

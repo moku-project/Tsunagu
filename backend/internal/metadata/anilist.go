@@ -14,10 +14,8 @@ import (
 
 const anilistAPI = "https://graphql.anilist.co"
 
-const minTagRank = 60
-
 const (
-	maxTags    = 15
+	maxTags    = 40
 	maxAuthors = 4
 )
 
@@ -195,11 +193,13 @@ func toCandidate(m alMedia) Candidate {
 	}
 
 	var tags []string
+	var tagWeights []int
 	for _, t := range m.Tags {
-		if t.Rank < minTagRank || t.IsGeneralSpoiler || t.IsMediaSpoiler {
+		if t.IsGeneralSpoiler || t.IsMediaSpoiler {
 			continue
 		}
 		tags = append(tags, t.Name)
+		tagWeights = append(tagWeights, t.Rank)
 		if len(tags) == maxTags {
 			break
 		}
@@ -221,6 +221,7 @@ func toCandidate(m alMedia) Candidate {
 		Authors:      authors,
 		Genres:       m.Genres,
 		Tags:         tags,
+		TagWeights:   tagWeights,
 		StartYear:    m.StartDate.Year,
 		IsAdult:      m.IsAdult,
 	}

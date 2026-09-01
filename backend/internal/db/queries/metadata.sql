@@ -16,6 +16,25 @@ ON CONFLICT(media_id, provider) DO UPDATE SET
     matched_at = CURRENT_TIMESTAMP
 RETURNING *;
 
+-- name: BackfillMissingCoversFromMetadata :execrows
+UPDATE media SET cover_path = (
+    SELECT ml.cover_url FROM metadata_links ml
+    WHERE ml.media_id = media.id AND ml.cover_url IS NOT NULL AND ml.cover_url != ''
+    ORDER BY ml.confidence DESC LIMIT 1
+)
+WHERE (cover_path IS NULL OR cover_path = '')
+  AND (cover_local_path IS NULL OR cover_local_path = '')
+  AND (cover_override IS NULL OR cover_override = '')
+  AND EXISTS (
+    SELECT 1 FROM metadata_links ml
+    WHERE ml.media_id = media.id AND ml.cover_url IS NOT NULL AND ml.cover_url != ''
+  );
+
+-- name: GetMediaMetadataCover :one
+SELECT cover_url FROM metadata_links
+WHERE media_id = ? AND cover_url IS NOT NULL AND cover_url != ''
+ORDER BY confidence DESC LIMIT 1;
+
 -- name: DeleteMetadataLink :exec
 DELETE FROM metadata_links WHERE media_id = ? AND provider = ?;
 

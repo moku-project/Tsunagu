@@ -1,0 +1,2105 @@
+2026/09/01 11:00:25.159692 === Tsunagu dev (unknown) starting, pid 10743 ===
+2026/09/01 11:00:25.195042 sandbox: spawning /nix/store/1slz0vmmgsd7p6i4c0jaywkpw56wl2yg-openjdk-21.0.12+8/lib/openjdk/bin/java -cp /home/shozikan/Projects/Manga/Tsunagu/sandbox/build/libs/sandbox-0.1.0-all.jar tsunagu.MainKt (source: JAVA_HOME/PATH)
+2026/09/01 11:00:25.505489 [sandbox] [main] INFO eu.kanade.tachiyomi.network.TlsSetup - TLS: Conscrypt provider installed (v2.5.2)
+2026/09/01 11:00:26.107801 [sandbox] tsunagu sandbox listening on :50051
+2026/09/01 11:00:26.917664 sandbox: ready at localhost:50051
+2026/09/01 11:00:29.971960 tsunagu dev listening on [::]:6007
+2026/09/01 11:00:29.972818 metadata backfill: 1 unmatched media, working through them (~1m)
+2026/09/01 11:00:31.386529 metadata backfill: done -- matched 0/1
+2026/09/01 11:00:31.777999 tracker poll: reconciled 2 media
+2026/09/01 11:00:32.931064 POST /api/graphql 200 1.884902739s
+2026/09/01 11:03:10.173076 POST /api/graphql 200 1.898924616s
+2026/09/01 11:03:12.182061 POST /api/graphql 200 1.840157038s
+2026/09/01 11:03:13.792912 POST /api/graphql 200 1.699241858s
+2026/09/01 11:19:10.193613 sandbox: idle for 15m0s, reaping process
+2026/09/01 12:11:36.876357 POST /api/graphql 200 1.74411871s
+2026/09/01 12:14:10.526168 POST /api/graphql 200 1.950526314s
+2026/09/01 12:14:59.710197 sandbox: spawning /nix/store/1slz0vmmgsd7p6i4c0jaywkpw56wl2yg-openjdk-21.0.12+8/lib/openjdk/bin/java -cp /home/shozikan/Projects/Manga/Tsunagu/sandbox/build/libs/sandbox-0.1.0-all.jar tsunagu.MainKt (source: JAVA_HOME/PATH)
+2026/09/01 12:14:59.964107 [sandbox] [main] INFO eu.kanade.tachiyomi.network.TlsSetup - TLS: Conscrypt provider installed (v2.5.2)
+2026/09/01 12:15:00.463694 [sandbox] tsunagu sandbox listening on :50051
+2026/09/01 12:15:01.350970 sandbox: ready at localhost:50051
+2026/09/01 12:15:02.410015 [sandbox] [grpc-default-executor-2] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: IllegalStateException: Multi threaded access requested by thread Thread[#29,grpc-default-executor-2,5,main] but is not allowed for language(s) js. @ NovelPlugin.callMethod:56; NovelPlugin.parseChapter:85; ExtensionServiceImpl.getChapterText:377
+2026/09/01 12:15:02.411383 GET /content/373/9696/text 502 2.701477862s
+2026/09/01 12:15:09.603613 [sandbox] [grpc-default-executor-2] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: IllegalStateException: Multi threaded access requested by thread Thread[#29,grpc-default-executor-2,5,main] but is not allowed for language(s) js. @ NovelPlugin.callMethod:56; NovelPlugin.parseChapter:85; ExtensionServiceImpl.getChapterText:377
+2026/09/01 12:15:09.604329 GET /content/373/9696/text 502 4.032815ms
+2026/09/01 12:15:26.533325 [sandbox] [grpc-default-executor-2] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: IllegalStateException: Multi threaded access requested by thread Thread[#29,grpc-default-executor-2,5,main] but is not allowed for language(s) js. @ NovelPlugin.callMethod:56; NovelPlugin.parseChapter:85; ExtensionServiceImpl.getChapterText:377
+2026/09/01 12:15:26.534117 GET /content/373/9710/text 502 3.952416ms
+2026/09/01 12:16:06.057689 POST /api/graphql 200 1.926550445s
+2026/09/01 12:16:06.108900 POST /api/graphql 200 1.086007376s
+2026/09/01 12:16:09.081722 POST /api/graphql 200 772.992936ms
+2026/09/01 12:16:09.134345 POST /api/graphql 200 824.716084ms
+2026/09/01 12:20:26.721557 [sandbox] Exception in thread "OkHttp TaskRunner" 
+2026/09/01 12:20:26.721665 [sandbox] Exception in thread "OkHttp TaskRunner" 
+2026/09/01 12:20:26.721776 [sandbox] java.lang.NoClassDefFoundError: okio/internal/_AtomicKt
+2026/09/01 12:20:26.721946 [sandbox] 	at okio.internal.DefaultSocket$SocketSource.close(DefaultSocket.kt:145)
+	at okio.RealBufferedSource.close(RealBufferedSource.kt:493)
+2026/09/01 12:20:26.721968 [sandbox] 	at okhttp3.internal.http2.Http2Reader.close(Http2Reader.kt:396)
+2026/09/01 12:20:26.721975 [sandbox] 	at okhttp3.internal._UtilCommonKt.closeQuietly(-UtilCommon.kt:284)
+2026/09/01 12:20:26.721992 [sandbox] 	at okhttp3.internal.http2.Http2Connection$ReaderRunnable.invoke(Http2Connection.kt:639)
+2026/09/01 12:20:26.722018 [sandbox] 	at okhttp3.internal.http2.Http2Connection$ReaderRunnable.invoke(Http2Connection.kt:619)
+2026/09/01 12:20:26.722035 [sandbox] 	at okhttp3.internal.concurrent.TaskQueue$execute$1.runOnce(TaskQueue.kt:112)
+	at okhttp3.internal.concurrent.TaskRunner$runnable$1.run(TaskRunner.kt:81)
+2026/09/01 12:20:26.722065 [sandbox] 	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+2026/09/01 12:20:26.722090 [sandbox] 	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+2026/09/01 12:20:26.722099 [sandbox] 	at java.base/java.lang.Thread.run(Thread.java:1583)
+2026/09/01 12:20:26.722223 [sandbox] Caused by: java.lang.ClassNotFoundException: okio.internal._AtomicKt
+	at java.base/jdk.internal.loader.BuiltinClassLoader.loadClass(BuiltinClassLoader.java:641)
+2026/09/01 12:20:26.722239 [sandbox] 	at java.base/jdk.internal.loader.ClassLoaders$AppClassLoader.loadClass(ClassLoaders.java:188)
+2026/09/01 12:20:26.722261 [sandbox] 	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:526)
+2026/09/01 12:20:26.722272 [sandbox] 	... 11 more
+2026/09/01 12:20:26.722420 [sandbox] java.lang.NoClassDefFoundError: org/conscrypt/SessionSnapshot
+2026/09/01 12:20:26.722524 [sandbox] 	at org.conscrypt.ConscryptEngine.transitionTo(ConscryptEngine.java:1830)
+2026/09/01 12:20:26.722547 [sandbox] 	at org.conscrypt.ConscryptEngine.closeOutbound(ConscryptEngine.java:489)
+2026/09/01 12:20:26.722565 [sandbox] 	at org.conscrypt.ConscryptEngineSocket.close(ConscryptEngineSocket.java:456)
+2026/09/01 12:20:26.722584 [sandbox] 	at okhttp3.internal._UtilJvmKt.closeQuietly(-UtilJvm.kt:287)
+2026/09/01 12:20:26.722602 [sandbox] 	at okhttp3.internal.connection.RealConnectionPool.closeConnections(RealConnectionPool.kt:261)
+2026/09/01 12:20:26.722621 [sandbox] 	at okhttp3.internal.connection.RealConnectionPool$cleanupTask$1.runOnce(RealConnectionPool.kt:50)
+2026/09/01 12:20:26.722634 [sandbox] 	at okhttp3.internal.concurrent.TaskRunner$runnable$1.run(TaskRunner.kt:81)
+2026/09/01 12:20:26.722658 [sandbox] 	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+2026/09/01 12:20:26.722677 [sandbox] 	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+2026/09/01 12:20:26.722700 [sandbox] 	at java.base/java.lang.Thread.run(Thread.java:1583)
+2026/09/01 12:20:26.722758 [sandbox] Caused by: java.lang.ClassNotFoundException: org.conscrypt.SessionSnapshot
+2026/09/01 12:20:26.722776 [sandbox] 	at java.base/jdk.internal.loader.BuiltinClassLoader.loadClass(BuiltinClassLoader.java:641)
+2026/09/01 12:20:26.722794 [sandbox] 	at java.base/jdk.internal.loader.ClassLoaders$AppClassLoader.loadClass(ClassLoaders.java:188)
+2026/09/01 12:20:26.722806 [sandbox] 	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:526)
+2026/09/01 12:20:26.722820 [sandbox] 	... 10 more
+2026/09/01 12:26:55.164494 POST /api/graphql 200 1.887430907s
+2026/09/01 12:29:46.592834 [sandbox] [grpc-default-worker-ELG-3-2] WARN io.grpc.netty.shaded.io.netty.channel.AbstractChannelHandlerContext - An exception 'java.lang.NoClassDefFoundError: io/grpc/netty/shaded/io/netty/handler/codec/http2/Http2ConnectionHandler$ClosingChannelFutureListener' [enable DEBUG level for full stacktrace] was thrown by a user handler's exceptionCaught() method while handling the following exception:
+2026/09/01 12:29:46.592911 [sandbox] java.lang.NoClassDefFoundError: io/grpc/netty/shaded/io/netty/handler/codec/http2/Http2ConnectionHandler$ClosingChannelFutureListener
+2026/09/01 12:29:46.592983 [sandbox] 	at io.grpc.netty.shaded.io.netty.handler.codec.http2.Http2ConnectionHandler.newClosingChannelFutureListener(Http2ConnectionHandler.java:498)
+2026/09/01 12:29:46.592998 [sandbox] 	at io.grpc.netty.shaded.io.netty.handler.codec.http2.Http2ConnectionHandler.onConnectionError(Http2ConnectionHandler.java:689)
+2026/09/01 12:29:46.593018 [sandbox] 	at io.grpc.netty.shaded.io.grpc.netty.NettyServerHandler.onConnectionError(NettyServerHandler.java:590)
+2026/09/01 12:29:46.593056 [sandbox] 	at io.grpc.netty.shaded.io.netty.handler.codec.http2.Http2ConnectionHandler.onError(Http2ConnectionHandler.java:654)
+2026/09/01 12:29:46.593082 [sandbox] 	at io.grpc.netty.shaded.io.netty.handler.codec.http2.Http2ConnectionHandler$FrameDecoder.decode(Http2ConnectionHandler.java:395)
+2026/09/01 12:29:46.593090 [sandbox] 	at io.grpc.netty.shaded.io.netty.handler.codec.http2.Http2ConnectionHandler.decode(Http2ConnectionHandler.java:453)
+2026/09/01 12:29:46.593120 [sandbox] 	at io.grpc.netty.shaded.io.netty.handler.codec.ByteToMessageDecoder.decodeRemovalReentryProtection(ByteToMessageDecoder.java:529)
+2026/09/01 12:29:46.593130 [sandbox] 	at io.grpc.netty.shaded.io.netty.handler.codec.ByteToMessageDecoder.callDecode(ByteToMessageDecoder.java:468)
+2026/09/01 12:29:46.593153 [sandbox] 	at io.grpc.netty.shaded.io.netty.handler.codec.ByteToMessageDecoder.channelRead(ByteToMessageDecoder.java:290)
+2026/09/01 12:29:46.593163 [sandbox] 	at io.grpc.netty.shaded.io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:444)
+2026/09/01 12:29:46.593186 [sandbox] 	at io.grpc.netty.shaded.io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:420)
+2026/09/01 12:29:46.593197 [sandbox] 	at io.grpc.netty.shaded.io.netty.channel.AbstractChannelHandlerContext.fireChannelRead(AbstractChannelHandlerContext.java:412)
+2026/09/01 12:29:46.593221 [sandbox] 	at io.grpc.netty.shaded.io.netty.channel.DefaultChannelPipeline$HeadContext.channelRead(DefaultChannelPipeline.java:1410)
+2026/09/01 12:29:46.593233 [sandbox] 	at io.grpc.netty.shaded.io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:440)
+2026/09/01 12:29:46.593252 [sandbox] 	at io.grpc.netty.shaded.io.netty.channel.AbstractChannelHandlerContext.invokeChannelRead(AbstractChannelHandlerContext.java:420)
+2026/09/01 12:29:46.593269 [sandbox] 	at io.grpc.netty.shaded.io.netty.channel.DefaultChannelPipeline.fireChannelRead(DefaultChannelPipeline.java:919)
+2026/09/01 12:29:46.593288 [sandbox] 	at io.grpc.netty.shaded.io.netty.channel.epoll.AbstractEpollStreamChannel$EpollStreamUnsafe.epollInReady(AbstractEpollStreamChannel.java:800)
+2026/09/01 12:29:46.593302 [sandbox] 	at io.grpc.netty.shaded.io.netty.channel.epoll.EpollEventLoop.processReady(EpollEventLoop.java:509)
+2026/09/01 12:29:46.593322 [sandbox] 	at io.grpc.netty.shaded.io.netty.channel.epoll.EpollEventLoop.run(EpollEventLoop.java:407)
+2026/09/01 12:29:46.593337 [sandbox] 	at io.grpc.netty.shaded.io.netty.util.concurrent.SingleThreadEventExecutor$4.run(SingleThreadEventExecutor.java:997)
+2026/09/01 12:29:46.593358 [sandbox] 	at io.grpc.netty.shaded.io.netty.util.internal.ThreadExecutorMap$2.run(ThreadExecutorMap.java:74)
+2026/09/01 12:29:46.593370 [sandbox] 	at io.grpc.netty.shaded.io.netty.util.concurrent.FastThreadLocalRunnable.run(FastThreadLocalRunnable.java:30)
+2026/09/01 12:29:46.593393 [sandbox] 	at java.base/java.lang.Thread.run(Thread.java:1583)
+2026/09/01 12:29:46.593481 [sandbox] Caused by: java.lang.ClassNotFoundException: io.grpc.netty.shaded.io.netty.handler.codec.http2.Http2ConnectionHandler$ClosingChannelFutureListener
+2026/09/01 12:29:46.593499 [sandbox] 	at java.base/jdk.internal.loader.BuiltinClassLoader.loadClass(BuiltinClassLoader.java:641)
+2026/09/01 12:29:46.593517 [sandbox] 	at java.base/jdk.internal.loader.ClassLoaders$AppClassLoader.loadClass(ClassLoaders.java:188)
+2026/09/01 12:29:46.593534 [sandbox] 	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:526)
+2026/09/01 12:29:46.593543 [sandbox] 	... 23 more
+2026/09/01 12:29:51.592345 [sandbox] [grpc-default-worker-ELG-3-2] WARN io.grpc.netty.shaded.io.netty.util.concurrent.DefaultPromise - An exception was thrown by io.grpc.netty.shaded.io.grpc.netty.NettyServerTransport$1TerminationNotifier.operationComplete()
+2026/09/01 12:29:51.592397 [sandbox] java.lang.NoClassDefFoundError: com/google/common/collect/Lists
+2026/09/01 12:29:51.592472 [sandbox] 	at com.google.common.collect.ImmutableList.indexOf(ImmutableList.java:428)
+2026/09/01 12:29:51.592503 [sandbox] 	at com.google.common.collect.ImmutableList.contains(ImmutableList.java:438)
+	at io.grpc.netty.shaded.io.grpc.netty.NettyServerTransport.getLogLevel(NettyServerTransport.java:201)
+2026/09/01 12:29:51.592535 [sandbox] 	at io.grpc.netty.shaded.io.grpc.netty.NettyServerTransport.notifyTerminated(NettyServerTransport.java:209)
+	at io.grpc.netty.shaded.io.grpc.netty.NettyServerTransport.access$100(NettyServerTransport.java:51)
+	at io.grpc.netty.shaded.io.grpc.netty.NettyServerTransport$1TerminationNotifier.operationComplete(NettyServerTransport.java:147)
+2026/09/01 12:29:51.592549 [sandbox] 	at io.grpc.netty.shaded.io.grpc.netty.NettyServerTransport$1TerminationNotifier.operationComplete(NettyServerTransport.java:140)
+2026/09/01 12:29:51.592558 [sandbox] 	at io.grpc.netty.shaded.io.netty.util.concurrent.DefaultPromise.notifyListener0(DefaultPromise.java:590)
+2026/09/01 12:29:51.592572 [sandbox] 	at io.grpc.netty.shaded.io.netty.util.concurrent.DefaultPromise.notifyListeners0(DefaultPromise.java:583)
+2026/09/01 12:29:51.592588 [sandbox] 	at io.grpc.netty.shaded.io.netty.util.concurrent.DefaultPromise.notifyListenersNow(DefaultPromise.java:559)
+2026/09/01 12:29:51.592615 [sandbox] 	at io.grpc.netty.shaded.io.netty.util.concurrent.DefaultPromise.notifyListeners(DefaultPromise.java:492)
+2026/09/01 12:29:51.592625 [sandbox] 	at io.grpc.netty.shaded.io.netty.util.concurrent.DefaultPromise.setValue0(DefaultPromise.java:636)
+2026/09/01 12:29:51.592643 [sandbox] 	at io.grpc.netty.shaded.io.netty.util.concurrent.DefaultPromise.setSuccess0(DefaultPromise.java:625)
+2026/09/01 12:29:51.592654 [sandbox] 	at io.grpc.netty.shaded.io.netty.util.concurrent.DefaultPromise.trySuccess(DefaultPromise.java:105)
+2026/09/01 12:29:51.592664 [sandbox] 	at io.grpc.netty.shaded.io.netty.channel.DefaultChannelPromise.trySuccess(DefaultChannelPromise.java:84)
+2026/09/01 12:29:51.592674 [sandbox] 	at io.grpc.netty.shaded.io.netty.channel.AbstractChannel$CloseFuture.setClosed(AbstractChannel.java:1164)
+2026/09/01 12:29:51.592685 [sandbox] 	at io.grpc.netty.shaded.io.netty.channel.AbstractChannel$AbstractUnsafe.doClose0(AbstractChannel.java:755)
+2026/09/01 12:29:51.592696 [sandbox] 	at io.grpc.netty.shaded.io.netty.channel.AbstractChannel$AbstractUnsafe.close(AbstractChannel.java:731)
+2026/09/01 12:29:51.592706 [sandbox] 	at io.grpc.netty.shaded.io.netty.channel.AbstractChannel$AbstractUnsafe.close(AbstractChannel.java:620)
+2026/09/01 12:29:51.592718 [sandbox] 	at io.grpc.netty.shaded.io.netty.channel.epoll.AbstractEpollChannel$AbstractEpollUnsafe.shutdownInput(AbstractEpollChannel.java:522)
+2026/09/01 12:29:51.592736 [sandbox] 	at io.grpc.netty.shaded.io.netty.channel.epoll.AbstractEpollStreamChannel$EpollStreamUnsafe.epollInReady(AbstractEpollStreamChannel.java:823)
+2026/09/01 12:29:51.592747 [sandbox] 	at io.grpc.netty.shaded.io.netty.channel.epoll.EpollEventLoop.processReady(EpollEventLoop.java:509)
+2026/09/01 12:29:51.592753 [sandbox] 	at io.grpc.netty.shaded.io.netty.channel.epoll.EpollEventLoop.run(EpollEventLoop.java:407)
+2026/09/01 12:29:51.592764 [sandbox] 	at io.grpc.netty.shaded.io.netty.util.concurrent.SingleThreadEventExecutor$4.run(SingleThreadEventExecutor.java:997)
+2026/09/01 12:29:51.592774 [sandbox] 	at io.grpc.netty.shaded.io.netty.util.internal.ThreadExecutorMap$2.run(ThreadExecutorMap.java:74)
+2026/09/01 12:29:51.592784 [sandbox] 	at io.grpc.netty.shaded.io.netty.util.concurrent.FastThreadLocalRunnable.run(FastThreadLocalRunnable.java:30)
+2026/09/01 12:29:51.592798 [sandbox] 	at java.base/java.lang.Thread.run(Thread.java:1583)
+2026/09/01 12:29:51.592888 [sandbox] Caused by: java.lang.ClassNotFoundException: com.google.common.collect.Lists
+2026/09/01 12:29:51.592905 [sandbox] 	at java.base/jdk.internal.loader.BuiltinClassLoader.loadClass(BuiltinClassLoader.java:641)
+2026/09/01 12:29:51.592919 [sandbox] 	at java.base/jdk.internal.loader.ClassLoaders$AppClassLoader.loadClass(ClassLoaders.java:188)
+2026/09/01 12:29:51.592934 [sandbox] 	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:526)
+2026/09/01 12:29:51.592946 [sandbox] 	... 27 more
+2026/09/01 12:29:51.593297 [sandbox] [grpc-default-worker-ELG-3-2] WARN io.grpc.netty.shaded.io.netty.channel.AbstractChannelHandlerContext - An exception 'java.lang.NoClassDefFoundError: io/grpc/netty/shaded/io/netty/handler/codec/http2/Http2ConnectionHandler$ClosingChannelFutureListener' [enable DEBUG level for full stacktrace] was thrown by a user handler's exceptionCaught() method while handling the following exception:
+2026/09/01 12:29:51.593320 [sandbox] java.lang.NoClassDefFoundError: io/grpc/netty/shaded/io/netty/channel/AbstractChannel$AbstractUnsafe$7
+2026/09/01 12:29:51.593360 [sandbox] 	at io.grpc.netty.shaded.io.netty.channel.AbstractChannel$AbstractUnsafe.deregister(AbstractChannel.java:804)
+2026/09/01 12:29:51.593371 [sandbox] 	at io.grpc.netty.shaded.io.netty.channel.AbstractChannel$AbstractUnsafe.fireChannelInactiveAndDeregister(AbstractChannel.java:764)
+2026/09/01 12:29:51.593386 [sandbox] 	at io.grpc.netty.shaded.io.netty.channel.AbstractChannel$AbstractUnsafe.close(AbstractChannel.java:747)
+2026/09/01 12:29:51.593398 [sandbox] 	at io.grpc.netty.shaded.io.netty.channel.AbstractChannel$AbstractUnsafe.close(AbstractChannel.java:620)
+2026/09/01 12:29:51.593414 [sandbox] 	at io.grpc.netty.shaded.io.netty.channel.epoll.AbstractEpollChannel$AbstractEpollUnsafe.shutdownInput(AbstractEpollChannel.java:522)
+2026/09/01 12:29:51.593421 [sandbox] 	at io.grpc.netty.shaded.io.netty.channel.epoll.AbstractEpollStreamChannel$EpollStreamUnsafe.epollInReady(AbstractEpollStreamChannel.java:823)
+2026/09/01 12:29:51.593438 [sandbox] 	at io.grpc.netty.shaded.io.netty.channel.epoll.EpollEventLoop.processReady(EpollEventLoop.java:509)
+2026/09/01 12:29:51.593448 [sandbox] 	at io.grpc.netty.shaded.io.netty.channel.epoll.EpollEventLoop.run(EpollEventLoop.java:407)
+2026/09/01 12:29:51.593463 [sandbox] 	at io.grpc.netty.shaded.io.netty.util.concurrent.SingleThreadEventExecutor$4.run(SingleThreadEventExecutor.java:997)
+2026/09/01 12:29:51.593479 [sandbox] 	at io.grpc.netty.shaded.io.netty.util.internal.ThreadExecutorMap$2.run(ThreadExecutorMap.java:74)
+2026/09/01 12:29:51.593487 [sandbox] 	at io.grpc.netty.shaded.io.netty.util.concurrent.FastThreadLocalRunnable.run(FastThreadLocalRunnable.java:30)
+2026/09/01 12:29:51.593503 [sandbox] 	at java.base/java.lang.Thread.run(Thread.java:1583)
+2026/09/01 12:29:51.593546 [sandbox] Caused by: java.lang.ClassNotFoundException: io.grpc.netty.shaded.io.netty.channel.AbstractChannel$AbstractUnsafe$7
+2026/09/01 12:29:51.593561 [sandbox] 	at java.base/jdk.internal.loader.BuiltinClassLoader.loadClass(BuiltinClassLoader.java:641)
+2026/09/01 12:29:51.593574 [sandbox] 	at java.base/jdk.internal.loader.ClassLoaders$AppClassLoader.loadClass(ClassLoaders.java:188)
+2026/09/01 12:29:51.593585 [sandbox] 	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:526)
+2026/09/01 12:29:51.593594 [sandbox] 	... 12 more
+2026/09/01 12:33:11.994706 sandbox: idle for 15m0s, reaping process
+2026/09/01 12:40:21.545215 shutting down
+2026/09/01 12:40:22.999990 === Tsunagu dev (unknown) starting, pid 278019 ===
+2026/09/01 12:40:23.015917 sandbox: spawning /nix/store/1slz0vmmgsd7p6i4c0jaywkpw56wl2yg-openjdk-21.0.12+8/lib/openjdk/bin/java -cp /home/shozikan/Projects/Manga/Tsunagu/sandbox/build/libs/sandbox-0.1.0-all.jar tsunagu.MainKt (source: JAVA_HOME/PATH)
+2026/09/01 12:40:23.301611 [sandbox] [main] INFO eu.kanade.tachiyomi.network.TlsSetup - TLS: Conscrypt provider installed (v2.5.2)
+2026/09/01 12:40:23.775937 [sandbox] tsunagu sandbox listening on :50051
+2026/09/01 12:40:24.640652 sandbox: ready at localhost:50051
+2026/09/01 12:40:27.556772 tsunagu dev listening on [::]:6007
+2026/09/01 12:40:27.556963 metadata backfill: 1 unmatched media, working through them (~1m)
+2026/09/01 12:40:28.103955 tracker poll: reconciled 2 media
+2026/09/01 12:40:28.636930 metadata backfill: done -- matched 0/1
+2026/09/01 12:40:37.137549 POST /api/graphql 200 1.85003099s
+2026/09/01 14:28:07.056255 === Tsunagu dev (unknown) starting, pid 214951 ===
+2026/09/01 14:28:07.096458 sandbox: spawning /nix/store/1slz0vmmgsd7p6i4c0jaywkpw56wl2yg-openjdk-21.0.12+8/lib/openjdk/bin/java -cp /home/shozikan/Projects/Manga/Tsunagu/sandbox/build/libs/sandbox-0.1.0-all.jar tsunagu.MainKt (source: JAVA_HOME/PATH)
+2026/09/01 14:28:07.363886 [sandbox] [main] INFO eu.kanade.tachiyomi.network.TlsSetup - TLS: Conscrypt provider installed (v2.5.2)
+2026/09/01 14:28:07.889691 [sandbox] tsunagu sandbox listening on :50051
+2026/09/01 14:28:08.786904 sandbox: ready at localhost:50051
+2026/09/01 14:28:11.716115 tsunagu dev listening on [::]:6007
+2026/09/01 14:28:11.716245 metadata backfill: 1 unmatched media, working through them (~1m)
+2026/09/01 14:28:11.720410 content filter: recomputed 6 media
+2026/09/01 14:28:12.163229 tracker poll: reconciled 2 media
+2026/09/01 14:28:12.835621 metadata backfill: done -- matched 0/1
+2026/09/01 14:28:41.790877 content filter: recomputed 6 media
+2026/09/01 14:28:43.820635 content filter: recomputed 6 media
+2026/09/01 14:28:55.163970 content filter: recomputed 6 media
+2026/09/01 14:28:57.190998 content filter: recomputed 6 media
+2026/09/01 14:28:59.227394 content filter: recomputed 6 media
+2026/09/01 14:31:31.248773 POST /api/graphql 200 1.151018951s
+2026/09/01 14:31:32.083873 POST /api/graphql 200 1.99307587s
+2026/09/01 14:31:35.282944 [sandbox] [grpc-default-executor-3] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 14:31:35.286144 POST /api/graphql 200 551.382248ms
+2026/09/01 14:31:35.350124 POST /api/graphql 200 615.420287ms
+2026/09/01 14:31:35.389098 [sandbox] [grpc-default-executor-5] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 14:31:35.390198 POST /api/graphql 200 655.3855ms
+2026/09/01 14:31:35.529641 GET /proxy/cover/886 502 148.371102ms
+2026/09/01 14:31:35.530535 GET /proxy/cover/887 502 139.358939ms
+2026/09/01 14:31:35.531504 GET /proxy/cover/885 502 152.130256ms
+2026/09/01 14:31:35.565858 GET /proxy/cover/888 502 34.218745ms
+2026/09/01 14:31:35.567221 GET /proxy/cover/890 502 35.236563ms
+2026/09/01 14:31:35.600629 GET /proxy/cover/889 502 33.916224ms
+2026/09/01 14:31:35.603643 GET /proxy/cover/891 502 36.013536ms
+2026/09/01 14:31:35.636613 GET /proxy/cover/892 502 35.088213ms
+2026/09/01 14:31:35.637148 GET /proxy/cover/893 502 33.050884ms
+2026/09/01 14:31:35.665343 GET /proxy/cover/894 502 36.680153ms
+2026/09/01 14:31:35.673164 GET /proxy/cover/895 502 35.026336ms
+2026/09/01 14:31:35.691394 [sandbox] [grpc-default-executor-3] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 14:31:35.707402 GET /proxy/cover/896 502 41.169693ms
+2026/09/01 14:31:35.711497 GET /proxy/cover/897 502 37.868222ms
+2026/09/01 14:31:35.727357 GET /proxy/cover/899 502 34.119227ms
+2026/09/01 14:31:35.741748 [sandbox] [grpc-default-executor-5] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 14:31:35.742212 GET /proxy/cover/898 502 34.056499ms
+2026/09/01 14:31:35.744324 GET /proxy/cover/902 502 32.330426ms
+2026/09/01 14:31:35.786629 GET /proxy/cover/903 502 43.575276ms
+2026/09/01 14:31:35.789587 GET /proxy/cover/900 502 46.39489ms
+2026/09/01 14:31:35.790882 GET /proxy/cover/905 502 46.198199ms
+2026/09/01 14:31:35.795167 [sandbox] [grpc-default-executor-5] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 14:31:35.827465 GET /proxy/cover/904 502 36.821099ms
+2026/09/01 14:31:35.829155 GET /proxy/cover/906 502 37.764837ms
+2026/09/01 14:31:35.833361 GET /proxy/cover/939 502 35.248776ms
+2026/09/01 14:31:35.863605 GET /proxy/cover/908 502 33.763848ms
+2026/09/01 14:31:35.870919 GET /proxy/cover/901 502 36.575105ms
+2026/09/01 14:31:35.897983 GET /proxy/cover/907 502 33.427513ms
+2026/09/01 14:31:35.905788 GET /proxy/cover/940 502 34.045157ms
+2026/09/01 14:31:35.932452 GET /proxy/cover/941 502 33.673878ms
+2026/09/01 14:31:35.941132 GET /proxy/cover/942 502 34.586327ms
+2026/09/01 14:31:35.965703 GET /proxy/cover/945 502 32.529761ms
+2026/09/01 14:31:35.978740 GET /proxy/cover/944 502 36.834824ms
+2026/09/01 14:31:36.000287 GET /proxy/cover/943 502 33.922016ms
+2026/09/01 14:31:36.012737 GET /proxy/cover/946 502 33.199543ms
+2026/09/01 14:31:36.034036 GET /proxy/cover/949 502 33.136595ms
+2026/09/01 14:31:36.046963 GET /proxy/cover/948 502 33.268203ms
+2026/09/01 14:31:36.049441 [sandbox] [grpc-default-executor-3] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 14:31:36.066929 GET /proxy/cover/947 502 32.094712ms
+2026/09/01 14:31:36.080948 GET /proxy/cover/950 502 33.253906ms
+2026/09/01 14:31:36.084536 GET /proxy/cover/951 502 33.812729ms
+2026/09/01 14:31:36.116352 GET /proxy/cover/953 502 34.587549ms
+2026/09/01 14:31:36.118334 GET /proxy/cover/955 502 33.271449ms
+2026/09/01 14:31:36.151435 GET /proxy/cover/956 502 32.644077ms
+2026/09/01 14:31:36.152108 GET /proxy/cover/954 502 35.075249ms
+2026/09/01 14:31:36.176981 POST /api/graphql 200 539.270213ms
+2026/09/01 14:31:36.185267 GET /proxy/cover/957 502 33.14942ms
+2026/09/01 14:31:36.186241 GET /proxy/cover/959 502 33.838088ms
+2026/09/01 14:31:36.211047 GET /proxy/cover/958 502 33.453983ms
+2026/09/01 14:31:36.220185 [sandbox] [grpc-default-executor-4] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 14:31:36.220340 GET /proxy/cover/961 502 34.544177ms
+2026/09/01 14:31:36.221128 GET /proxy/cover/960 502 34.449329ms
+2026/09/01 14:31:36.259700 GET /proxy/cover/962 502 38.865932ms
+2026/09/01 14:31:36.259968 GET /proxy/cover/952 502 38.172706ms
+2026/09/01 14:31:36.261300 GET /proxy/cover/885 502 39.36389ms
+2026/09/01 14:31:36.294976 GET /proxy/cover/886 502 33.652888ms
+2026/09/01 14:31:36.298685 GET /proxy/cover/887 502 36.888245ms
+2026/09/01 14:31:36.309206 [sandbox] [grpc-default-executor-3] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ d.intercept:-1; CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10
+2026/09/01 14:31:36.328958 GET /proxy/cover/888 502 33.103072ms
+2026/09/01 14:31:36.333441 GET /proxy/cover/890 502 34.097777ms
+2026/09/01 14:31:36.336180 [sandbox] [grpc-default-executor-5] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 14:31:36.344390 GET /proxy/cover/889 502 33.623553ms
+2026/09/01 14:31:36.354085 POST /api/graphql 200 525.02049ms
+2026/09/01 14:31:36.367627 GET /proxy/cover/891 502 33.129161ms
+2026/09/01 14:31:36.371620 GET /proxy/cover/966 502 33.387989ms
+2026/09/01 14:31:36.377918 GET /proxy/cover/963 502 32.80969ms
+2026/09/01 14:31:36.395278 GET /proxy/cover/965 502 40.305595ms
+2026/09/01 14:31:36.403024 GET /proxy/cover/964 502 34.575056ms
+2026/09/01 14:31:36.406865 GET /proxy/cover/967 502 34.521986ms
+2026/09/01 14:31:36.429364 GET /proxy/cover/968 502 33.095659ms
+2026/09/01 14:31:36.437233 GET /proxy/cover/892 502 33.52155ms
+2026/09/01 14:31:36.441366 GET /proxy/cover/893 502 33.963163ms
+2026/09/01 14:31:36.467792 GET /proxy/cover/894 502 37.381565ms
+2026/09/01 14:31:36.474860 GET /proxy/cover/895 502 36.65731ms
+2026/09/01 14:31:36.477466 GET /proxy/cover/896 502 35.347301ms
+2026/09/01 14:31:36.505313 GET /proxy/cover/897 502 36.228972ms
+2026/09/01 14:31:36.510570 GET /proxy/cover/899 502 35.079617ms
+2026/09/01 14:31:36.511828 GET /proxy/cover/898 502 33.817058ms
+2026/09/01 14:31:36.542298 GET /proxy/cover/902 502 35.717468ms
+2026/09/01 14:31:36.546332 GET /proxy/cover/900 502 33.935881ms
+2026/09/01 14:31:36.546711 GET /proxy/cover/903 502 35.318087ms
+2026/09/01 14:31:36.577220 GET /proxy/cover/905 502 34.043514ms
+2026/09/01 14:31:36.580589 GET /proxy/cover/904 502 33.735965ms
+2026/09/01 14:31:36.581730 GET /proxy/cover/906 502 34.552113ms
+2026/09/01 14:31:36.613580 GET /proxy/cover/939 502 33.665001ms
+2026/09/01 14:31:36.616988 GET /proxy/cover/907 502 34.770645ms
+2026/09/01 14:31:36.617154 GET /proxy/cover/908 502 35.994351ms
+2026/09/01 14:31:36.652195 GET /proxy/cover/940 502 33.448964ms
+2026/09/01 14:31:36.654056 GET /proxy/cover/941 502 34.835227ms
+2026/09/01 14:31:36.670212 GET /proxy/cover/942 502 36.012585ms
+2026/09/01 14:31:36.690419 GET /proxy/cover/945 502 39.743166ms
+2026/09/01 14:31:36.692097 GET /proxy/cover/944 502 39.234086ms
+2026/09/01 14:31:36.695682 GET /proxy/cover/943 502 40.736367ms
+2026/09/01 14:31:36.714900 GET /proxy/cover/946 502 44.006179ms
+2026/09/01 14:31:36.729832 GET /proxy/cover/949 502 38.402829ms
+2026/09/01 14:31:36.731880 GET /proxy/cover/948 502 35.7552ms
+2026/09/01 14:31:36.739985 GET /proxy/cover/901 502 47.375338ms
+2026/09/01 14:31:36.753492 GET /proxy/cover/947 502 36.546001ms
+2026/09/01 14:31:36.770782 GET /proxy/cover/950 502 40.074339ms
+2026/09/01 14:31:36.771215 GET /proxy/cover/951 502 38.82261ms
+2026/09/01 14:31:36.777103 GET /proxy/cover/953 502 36.404533ms
+2026/09/01 14:31:36.798914 GET /proxy/cover/955 502 44.599637ms
+2026/09/01 14:31:36.807698 GET /proxy/cover/954 502 36.298353ms
+2026/09/01 14:31:36.812566 GET /proxy/cover/885 502 34.926579ms
+2026/09/01 14:31:36.813610 GET /proxy/cover/956 502 41.856648ms
+2026/09/01 14:31:36.842325 GET /proxy/cover/886 502 42.390744ms
+2026/09/01 14:31:36.856893 GET /proxy/cover/887 502 43.428109ms
+2026/09/01 14:31:36.860350 GET /proxy/cover/888 502 46.207578ms
+2026/09/01 14:31:36.879339 GET /proxy/cover/890 502 35.749359ms
+2026/09/01 14:31:36.894116 GET /proxy/cover/889 502 35.920542ms
+2026/09/01 14:31:36.895766 GET /proxy/cover/957 502 34.818825ms
+2026/09/01 14:31:36.914775 GET /proxy/cover/959 502 34.538938ms
+2026/09/01 14:31:36.929207 GET /proxy/cover/958 502 34.186253ms
+2026/09/01 14:31:36.930710 GET /proxy/cover/961 502 34.21099ms
+2026/09/01 14:31:36.950121 GET /proxy/cover/960 502 34.070134ms
+2026/09/01 14:31:36.966708 GET /proxy/cover/962 502 36.216489ms
+2026/09/01 14:31:36.969064 GET /proxy/cover/952 502 37.753185ms
+2026/09/01 14:31:36.990394 GET /proxy/cover/891 502 39.423253ms
+2026/09/01 14:31:37.002345 GET /proxy/cover/892 502 34.535382ms
+2026/09/01 14:31:37.005156 GET /proxy/cover/893 502 35.671261ms
+2026/09/01 14:31:37.019417 GET /proxy/cover/894 502 36.500695ms
+2026/09/01 14:31:37.025693 GET /proxy/cover/895 502 34.064103ms
+2026/09/01 14:31:37.036946 GET /proxy/cover/896 502 33.35675ms
+2026/09/01 14:31:37.038866 GET /proxy/cover/897 502 33.016108ms
+2026/09/01 14:31:37.056250 GET /proxy/cover/899 502 35.965396ms
+2026/09/01 14:31:37.060195 GET /proxy/cover/898 502 33.748909ms
+2026/09/01 14:31:37.071554 GET /proxy/cover/902 502 34.032844ms
+2026/09/01 14:31:37.073983 GET /proxy/cover/903 502 34.133874ms
+2026/09/01 14:31:37.085006 GET /proxy/cover/900 502 33.530718ms
+2026/09/01 14:31:37.089738 GET /proxy/cover/905 502 32.619941ms
+2026/09/01 14:31:37.093270 GET /proxy/cover/904 502 32.56089ms
+2026/09/01 14:31:37.104553 GET /proxy/cover/906 502 32.185262ms
+2026/09/01 14:31:37.106411 GET /proxy/cover/966 502 31.879366ms
+2026/09/01 14:31:37.120345 GET /proxy/cover/963 502 34.583912ms
+2026/09/01 14:31:37.125565 GET /proxy/cover/964 502 31.731978ms
+2026/09/01 14:31:37.126717 GET /proxy/cover/965 502 36.172606ms
+2026/09/01 14:31:37.139308 GET /proxy/cover/967 502 33.891919ms
+2026/09/01 14:31:37.140817 GET /proxy/cover/968 502 33.79178ms
+2026/09/01 14:31:37.159000 GET /proxy/cover/939 502 32.333101ms
+2026/09/01 14:31:37.163881 GET /proxy/cover/908 502 36.469896ms
+2026/09/01 14:31:37.172397 GET /proxy/cover/907 502 32.210329ms
+2026/09/01 14:31:37.174797 GET /proxy/cover/885 502 33.528274ms
+2026/09/01 14:31:37.194524 GET /proxy/cover/886 502 34.862698ms
+2026/09/01 14:31:37.196585 GET /proxy/cover/887 502 32.099651ms
+2026/09/01 14:31:37.206348 GET /proxy/cover/888 502 33.402787ms
+2026/09/01 14:31:37.207643 GET /proxy/cover/890 502 32.36428ms
+2026/09/01 14:31:37.227903 GET /proxy/cover/889 502 32.198187ms
+2026/09/01 14:31:37.228648 GET /proxy/cover/940 502 31.375657ms
+2026/09/01 14:31:37.240666 GET /proxy/cover/941 502 33.537731ms
+2026/09/01 14:31:37.242211 GET /proxy/cover/942 502 33.683195ms
+2026/09/01 14:31:37.261008 GET /proxy/cover/945 502 32.489646ms
+2026/09/01 14:31:37.263385 GET /proxy/cover/944 502 34.389216ms
+2026/09/01 14:31:37.275154 GET /proxy/cover/943 502 34.039336ms
+2026/09/01 14:31:37.277728 GET /proxy/cover/946 502 35.183623ms
+2026/09/01 14:31:37.294976 GET /proxy/cover/949 502 33.415892ms
+2026/09/01 14:31:37.295928 GET /proxy/cover/948 502 31.946933ms
+2026/09/01 14:31:37.309810 GET /proxy/cover/947 502 34.275682ms
+2026/09/01 14:31:37.313315 GET /proxy/cover/950 502 35.119332ms
+2026/09/01 14:31:37.328655 GET /proxy/cover/951 502 33.164067ms
+2026/09/01 14:31:37.330321 GET /proxy/cover/901 502 34.029719ms
+2026/09/01 14:31:37.343970 GET /proxy/cover/953 502 33.198742ms
+2026/09/01 14:31:37.346948 GET /proxy/cover/955 502 32.459068ms
+2026/09/01 14:31:37.362609 GET /proxy/cover/954 502 32.801233ms
+2026/09/01 14:31:37.363528 GET /proxy/cover/956 502 32.653234ms
+2026/09/01 14:31:37.385218 GET /proxy/cover/959 502 37.392025ms
+2026/09/01 14:31:37.385315 GET /proxy/cover/957 502 40.241455ms
+2026/09/01 14:31:37.397498 GET /proxy/cover/958 502 33.873043ms
+2026/09/01 14:31:37.398871 GET /proxy/cover/961 502 34.876604ms
+2026/09/01 14:31:37.399403 GET /proxy/cover/891 502 32.206162ms
+2026/09/01 14:31:37.423352 GET /proxy/cover/892 502 36.822942ms
+2026/09/01 14:31:37.430082 GET /proxy/cover/893 502 43.391611ms
+2026/09/01 14:31:37.434966 GET /proxy/cover/960 502 36.284287ms
+2026/09/01 14:31:37.435009 GET /proxy/cover/952 502 35.133498ms
+2026/09/01 14:31:37.434987 GET /proxy/cover/962 502 35.5535ms
+2026/09/01 14:31:37.537443 GET /proxy/cover/887 502 32.912363ms
+2026/09/01 14:31:37.537451 GET /proxy/cover/885 502 33.073316ms
+2026/09/01 14:31:37.538950 GET /proxy/cover/886 502 34.411487ms
+2026/09/01 14:31:37.539947 GET /proxy/cover/890 502 35.385724ms
+2026/09/01 14:31:37.540091 GET /proxy/cover/888 502 35.532571ms
+2026/09/01 14:31:37.569959 GET /proxy/cover/889 502 31.586774ms
+2026/09/01 14:31:37.570633 GET /proxy/cover/894 502 32.136401ms
+2026/09/01 14:31:37.572173 GET /proxy/cover/895 502 32.829406ms
+2026/09/01 14:31:37.572176 GET /proxy/cover/896 502 31.747627ms
+2026/09/01 14:31:37.572524 GET /proxy/cover/897 502 31.965739ms
+2026/09/01 14:31:37.603246 GET /proxy/cover/899 502 32.761969ms
+2026/09/01 14:31:37.603552 GET /proxy/cover/898 502 32.474407ms
+2026/09/01 14:31:37.605031 GET /proxy/cover/902 502 32.372886ms
+2026/09/01 14:31:37.606252 GET /proxy/cover/903 502 33.414309ms
+2026/09/01 14:31:37.607183 GET /proxy/cover/900 502 34.201202ms
+2026/09/01 14:31:37.636496 GET /proxy/cover/905 502 32.089993ms
+2026/09/01 14:31:37.636834 GET /proxy/cover/904 502 32.256206ms
+2026/09/01 14:31:37.638002 GET /proxy/cover/906 502 32.513681ms
+2026/09/01 14:31:37.639816 GET /proxy/cover/939 502 32.807585ms
+2026/09/01 14:31:37.640023 GET /proxy/cover/908 502 32.308535ms
+2026/09/01 14:31:37.670738 GET /proxy/cover/907 502 32.993565ms
+2026/09/01 14:31:37.670859 GET /proxy/cover/940 502 32.853532ms
+2026/09/01 14:31:37.671873 GET /proxy/cover/941 502 33.316845ms
+2026/09/01 14:31:37.672699 GET /proxy/cover/942 502 32.384398ms
+2026/09/01 14:31:37.672858 GET /proxy/cover/945 502 32.295039ms
+2026/09/01 14:31:37.705022 GET /proxy/cover/943 502 32.988036ms
+2026/09/01 14:31:37.707010 GET /proxy/cover/944 502 35.100566ms
+2026/09/01 14:31:37.707013 GET /proxy/cover/946 502 34.666648ms
+2026/09/01 14:31:37.707606 GET /proxy/cover/949 502 34.340994ms
+2026/09/01 14:31:37.708540 GET /proxy/cover/948 502 35.082312ms
+2026/09/01 14:31:37.739894 GET /proxy/cover/950 502 32.106524ms
+2026/09/01 14:31:37.740206 GET /proxy/cover/947 502 34.046791ms
+2026/09/01 14:31:37.740392 GET /proxy/cover/951 502 32.352498ms
+2026/09/01 14:31:37.741711 GET /proxy/cover/953 502 33.514878ms
+2026/09/01 14:31:37.742288 GET /proxy/cover/955 502 33.295675ms
+2026/09/01 14:31:37.774227 GET /proxy/cover/963 502 33.247354ms
+2026/09/01 14:31:37.774303 GET /proxy/cover/965 502 33.258134ms
+2026/09/01 14:31:37.775152 GET /proxy/cover/964 502 32.920247ms
+2026/09/01 14:31:37.775625 GET /proxy/cover/966 502 34.838573ms
+2026/09/01 14:31:37.775710 GET /proxy/cover/967 502 33.086982ms
+2026/09/01 14:31:37.807388 GET /proxy/cover/968 502 32.471973ms
+2026/09/01 14:31:37.809289 GET /proxy/cover/901 502 34.213084ms
+2026/09/01 14:31:39.546917 GET /proxy/cover/969 502 32.492972ms
+2026/09/01 14:31:39.547810 GET /proxy/cover/974 502 32.554147ms
+2026/09/01 14:31:39.548552 GET /proxy/cover/971 502 34.07315ms
+2026/09/01 14:31:39.548787 GET /proxy/cover/972 502 33.295795ms
+2026/09/01 14:31:39.550317 GET /proxy/cover/970 502 35.775017ms
+2026/09/01 14:31:39.580609 GET /proxy/cover/976 502 32.870374ms
+2026/09/01 14:31:39.582788 GET /proxy/cover/977 502 33.566526ms
+2026/09/01 14:31:39.582862 GET /proxy/cover/975 502 34.737612ms
+2026/09/01 14:31:39.583914 GET /proxy/cover/973 502 34.805009ms
+2026/09/01 14:31:39.669540 GET /proxy/cover/979 502 37.071981ms
+2026/09/01 14:31:39.670344 GET /proxy/cover/978 502 37.413636ms
+2026/09/01 14:31:39.671009 GET /proxy/cover/983 502 38.102994ms
+2026/09/01 14:31:39.673248 GET /proxy/cover/981 502 40.247656ms
+2026/09/01 14:31:39.674187 GET /proxy/cover/980 502 41.219477ms
+2026/09/01 14:31:39.704535 GET /proxy/cover/982 502 34.000864ms
+2026/09/01 14:31:39.704608 GET /proxy/cover/984 502 33.862243ms
+2026/09/01 14:31:39.707516 GET /proxy/cover/1350 502 36.010932ms
+2026/09/01 14:31:39.708705 GET /proxy/cover/985 502 34.803867ms
+2026/09/01 14:31:42.598389 [sandbox] [grpc-default-executor-2] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 523 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 14:31:42.599285 POST /api/graphql 200 7.864670795s
+2026/09/01 14:31:48.579967 GET /proxy/cover/886 502 34.10468ms
+2026/09/01 14:31:48.957300 sync: caching cover for entry 1352 failed: rpc error: code = Internal desc = java.lang.IllegalStateException: extension eu.kanade.tachiyomi.animeextension.en.aniwaves is not an HttpSource
+2026/09/01 14:31:50.122408 POST /api/graphql 200 1.681985927s
+2026/09/01 14:33:30.588919 POST /api/graphql 200 2.144957256s
+2026/09/01 14:33:36.431146 [sandbox] [grpc-default-executor-6] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 14:33:36.431352 [sandbox] [grpc-default-executor-8] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 14:33:36.509944 [sandbox] [grpc-default-executor-11] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 14:33:36.536359 [sandbox] [grpc-default-executor-9] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 14:33:36.575101 [sandbox] E/BatCave: Failed to fetch filter data
+java.io.IOException: Connection reset
+	at keiyoushi.a.b.a(Unknown Source)
+	at keiyoushi.a.b.a(Unknown Source)
+	at eu.kanade.tachiyomi.a.a.a.a.a(Unknown Source)
+	at eu.kanade.tachiyomi.a.a.a.a.a(Unknown Source)
+	at keiyoushi.source.f.invokeSuspend(Unknown Source)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.internal.LimitedDispatcher$Worker.run(LimitedDispatcher.kt:124)
+	at kotlinx.coroutines.scheduling.TaskImpl.run(Tasks.kt:89)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler.runSafely(CoroutineScheduler.kt:586)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.executeTask(CoroutineScheduler.kt:798)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:717)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:704)
+Caused by: java.net.SocketException: Connection reset
+	at java.base/sun.nio.ch.NioSocketImpl.implRead(NioSocketImpl.java:318)
+	at java.base/sun.nio.ch.NioSocketImpl.read(NioSocketImpl.java:346)
+	at java.base/sun.nio.ch.NioSocketImpl$1.read(NioSocketImpl.java:796)
+	at java.base/java.net.Socket$SocketInputStream.read(Socket.java:1099)
+	at org.conscrypt.ConscryptEngineSocket$SSLInputStream.readFromSocket(ConscryptEngineSocket.java:920)
+	at org.conscrypt.ConscryptEngineSocket$SSLInputStream.processDataFromSocket(ConscryptEngineSocket.java:884)
+	at org.conscrypt.ConscryptEngineSocket$SSLInputStream.access$100(ConscryptEngineSocket.java:706)
+	at org.conscrypt.ConscryptEngineSocket.doHandshake(ConscryptEngineSocket.java:230)
+	at org.conscrypt.ConscryptEngineSocket.startHandshake(ConscryptEngineSocket.java:209)
+	at okhttp3.internal.connection.ConnectPlan.connectTls(ConnectPlan.kt:364)
+	at okhttp3.internal.connection.ConnectPlan.connectTlsEtc(ConnectPlan.kt:213)
+	at okhttp3.internal.connection.FastFallbackExchangeFinder.find(FastFallbackExchangeFinder.kt:80)
+	at okhttp3.internal.connection.RealCall.initExchange$okhttp(RealCall.kt:306)
+	at okhttp3.internal.connection.ConnectInterceptor.intercept(ConnectInterceptor.kt:32)
+	at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:332)
+	at okhttp3.internal.cache.CacheInterceptor.intercept(CacheInterceptor.kt:98)
+	at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:332)
+	at okhttp3.internal.http.BridgeInterceptor.intercept(BridgeInterceptor.kt:83)
+	at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:332)
+	at okhttp3.internal.http.RetryAndFollowUpInterceptor.intercept(RetryAndFollowUpInterceptor.kt:72)
+	at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:332)
+	at okhttp3.CompressionInterceptor.intercept(CompressionInterceptor.kt:52)
+	at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:332)
+	at eu.kanade.tachiyomi.network.interceptor.CloudflareInterceptor.intercept(CloudflareInterceptor.kt:36)
+	at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:332)
+	at eu.kanade.tachiyomi.a.a.a.x.a(Unknown Source)
+	at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:332)
+	at eu.kanade.tachiyomi.network.interceptor.UserAgentInterceptor.intercept(UserAgentInterceptor.kt:21)
+	at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:332)
+	at eu.kanade.tachiyomi.network.interceptor.UncaughtExceptionInterceptor.intercept(UncaughtExceptionInterceptor.kt:10)
+	at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:332)
+	at okhttp3.internal.connection.RealCall.getResponseWithInterceptorChain$okhttp(RealCall.kt:234)
+	at okhttp3.internal.connection.RealCall$AsyncCall.run(RealCall.kt:582)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+	Suppressed: java.net.SocketException: Connection reset
+		... 36 more
+	Suppressed: java.net.SocketException: Connection reset
+		... 36 more
+
+2026/09/01 14:33:36.637371 [sandbox] [grpc-default-executor-8] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: IOException: Connection reset <- SocketException: Connection reset @ CloudflareInterceptor.intercept:36; x.a:-1; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10
+2026/09/01 14:33:36.930401 POST /api/graphql 200 668.357185ms
+2026/09/01 14:33:37.205978 GET /proxy/cover/1158 502 67.676826ms
+2026/09/01 14:33:37.206474 GET /proxy/cover/1364 502 112.209086ms
+2026/09/01 14:33:37.208197 GET /proxy/cover/1365 502 110.795311ms
+2026/09/01 14:33:37.208541 GET /proxy/cover/1363 502 139.547404ms
+2026/09/01 14:33:37.213763 GET /proxy/cover/1157 502 31.988492ms
+2026/09/01 14:33:37.239585 GET /proxy/cover/1156 502 30.500828ms
+2026/09/01 14:33:37.239684 GET /proxy/cover/1366 502 30.408043ms
+2026/09/01 14:33:37.240697 GET /proxy/cover/1367 502 31.260049ms
+2026/09/01 14:33:37.246170 GET /proxy/cover/1162 502 31.173185ms
+2026/09/01 14:33:37.260743 GET /proxy/cover/1161 502 32.033417ms
+2026/09/01 14:33:42.557435 GET /proxy/cover/1158 502 31.327276ms
+2026/09/01 14:33:43.003463 sync: caching cover for entry 1368 failed: rpc error: code = Internal desc = java.lang.IllegalStateException: extension eu.kanade.tachiyomi.animeextension.en.aniwaves is not an HttpSource
+2026/09/01 14:33:43.896434 POST /api/graphql 200 1.394318393s
+2026/09/01 14:33:51.263717 POST /api/graphql 200 15.001748446s
+2026/09/01 14:33:51.340810 GET /proxy/cover/1363 502 43.605795ms
+2026/09/01 14:33:51.342558 GET /proxy/cover/1364 502 45.334411ms
+2026/09/01 14:33:51.342654 GET /proxy/cover/1156 502 44.788523ms
+2026/09/01 14:33:51.342772 GET /proxy/cover/1157 502 45.41834ms
+2026/09/01 14:33:51.342944 GET /proxy/cover/1158 502 45.56166ms
+2026/09/01 14:33:51.342947 GET /proxy/cover/1365 502 45.676506ms
+2026/09/01 14:33:51.371769 GET /proxy/cover/1366 502 30.224637ms
+2026/09/01 14:33:51.398604 GET /proxy/cover/1367 502 55.433183ms
+2026/09/01 14:33:51.398726 GET /proxy/cover/1162 502 55.341419ms
+2026/09/01 14:33:51.399795 GET /proxy/cover/1161 502 56.248309ms
+2026/09/01 14:33:56.029098 [sandbox] [grpc-default-executor-7] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; AnimeCatalogueSource.getSearchAnime$suspendImpl:26
+2026/09/01 14:34:04.691027 POST /api/graphql 200 2.245848273s
+2026/09/01 14:34:09.075433 [sandbox] [grpc-default-executor-8] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 14:34:09.097266 [sandbox] [grpc-default-executor-7] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: IOException: Connection reset <- SocketException: Connection reset @ CloudflareInterceptor.intercept:36; x.a:-1; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10
+2026/09/01 14:34:09.101992 [sandbox] [grpc-default-executor-11] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 14:34:09.102077 [sandbox] [grpc-default-executor-9] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 14:34:09.111453 [sandbox] E/BatCave: Failed to fetch filter data
+java.io.IOException: Connection reset
+	at keiyoushi.a.b.a(Unknown Source)
+	at keiyoushi.a.b.a(Unknown Source)
+	at eu.kanade.tachiyomi.a.a.a.a.a(Unknown Source)
+	at eu.kanade.tachiyomi.a.a.a.a.a(Unknown Source)
+	at keiyoushi.source.f.invokeSuspend(Unknown Source)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.internal.LimitedDispatcher$Worker.run(LimitedDispatcher.kt:124)
+	at kotlinx.coroutines.scheduling.TaskImpl.run(Tasks.kt:89)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler.runSafely(CoroutineScheduler.kt:586)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.executeTask(CoroutineScheduler.kt:798)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:717)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:704)
+Caused by: java.net.SocketException: Connection reset
+	at java.base/sun.nio.ch.NioSocketImpl.implRead(NioSocketImpl.java:318)
+	at java.base/sun.nio.ch.NioSocketImpl.read(NioSocketImpl.java:346)
+	at java.base/sun.nio.ch.NioSocketImpl$1.read(NioSocketImpl.java:796)
+	at java.base/java.net.Socket$SocketInputStream.read(Socket.java:1099)
+	at org.conscrypt.ConscryptEngineSocket$SSLInputStream.readFromSocket(ConscryptEngineSocket.java:920)
+	at org.conscrypt.ConscryptEngineSocket$SSLInputStream.processDataFromSocket(ConscryptEngineSocket.java:884)
+	at org.conscrypt.ConscryptEngineSocket$SSLInputStream.access$100(ConscryptEngineSocket.java:706)
+	at org.conscrypt.ConscryptEngineSocket.doHandshake(ConscryptEngineSocket.java:230)
+	at org.conscrypt.ConscryptEngineSocket.startHandshake(ConscryptEngineSocket.java:209)
+	at okhttp3.internal.connection.ConnectPlan.connectTls(ConnectPlan.kt:364)
+	at okhttp3.internal.connection.ConnectPlan.connectTlsEtc(ConnectPlan.kt:213)
+	at okhttp3.internal.connection.FastFallbackExchangeFinder.find(FastFallbackExchangeFinder.kt:80)
+	at okhttp3.internal.connection.RealCall.initExchange$okhttp(RealCall.kt:306)
+	at okhttp3.internal.connection.ConnectInterceptor.intercept(ConnectInterceptor.kt:32)
+	at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:332)
+	at okhttp3.internal.cache.CacheInterceptor.intercept(CacheInterceptor.kt:98)
+	at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:332)
+	at okhttp3.internal.http.BridgeInterceptor.intercept(BridgeInterceptor.kt:83)
+	at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:332)
+	at okhttp3.internal.http.RetryAndFollowUpInterceptor.intercept(RetryAndFollowUpInterceptor.kt:72)
+	at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:332)
+	at okhttp3.CompressionInterceptor.intercept(CompressionInterceptor.kt:52)
+	at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:332)
+	at eu.kanade.tachiyomi.network.interceptor.CloudflareInterceptor.intercept(CloudflareInterceptor.kt:36)
+	at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:332)
+	at eu.kanade.tachiyomi.a.a.a.x.a(Unknown Source)
+	at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:332)
+	at eu.kanade.tachiyomi.network.interceptor.UserAgentInterceptor.intercept(UserAgentInterceptor.kt:21)
+	at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:332)
+	at eu.kanade.tachiyomi.network.interceptor.UncaughtExceptionInterceptor.intercept(UncaughtExceptionInterceptor.kt:10)
+	at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:332)
+	at okhttp3.internal.connection.RealCall.getResponseWithInterceptorChain$okhttp(RealCall.kt:234)
+	at okhttp3.internal.connection.RealCall$AsyncCall.run(RealCall.kt:582)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+	Suppressed: java.net.SocketException: Connection reset
+		... 36 more
+	Suppressed: java.net.SocketException: Connection reset
+		... 36 more
+
+2026/09/01 14:34:09.117024 [sandbox] [grpc-default-executor-6] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 14:34:09.134956 GET /proxy/cover/1364 502 31.365698ms
+2026/09/01 14:34:09.135221 GET /proxy/cover/1363 502 31.808974ms
+2026/09/01 14:34:09.153418 GET /proxy/cover/1365 502 34.935665ms
+2026/09/01 14:34:09.167534 GET /proxy/cover/1158 502 31.470856ms
+2026/09/01 14:34:09.167722 GET /proxy/cover/1157 502 31.490012ms
+2026/09/01 14:34:09.185020 GET /proxy/cover/1156 502 30.675317ms
+2026/09/01 14:34:09.199610 GET /proxy/cover/1366 502 31.048079ms
+2026/09/01 14:34:09.200186 GET /proxy/cover/1367 502 31.423416ms
+2026/09/01 14:34:09.217017 GET /proxy/cover/1162 502 31.245872ms
+2026/09/01 14:34:09.233344 GET /proxy/cover/1161 502 31.863666ms
+2026/09/01 14:34:09.368677 GET /proxy/cover/1364 502 35.832957ms
+2026/09/01 14:34:09.369064 GET /proxy/cover/1365 502 35.826123ms
+2026/09/01 14:34:09.369079 GET /proxy/cover/1363 502 36.27009ms
+2026/09/01 14:34:09.369999 GET /proxy/cover/1158 502 36.759573ms
+2026/09/01 14:34:09.400554 GET /proxy/cover/1157 502 31.065703ms
+2026/09/01 14:34:09.402602 GET /proxy/cover/1367 502 32.291122ms
+2026/09/01 14:34:09.403139 GET /proxy/cover/1366 502 33.241042ms
+2026/09/01 14:34:09.403993 GET /proxy/cover/1156 502 34.133534ms
+2026/09/01 14:34:09.432566 GET /proxy/cover/1162 502 30.818938ms
+2026/09/01 14:34:09.433879 GET /proxy/cover/1161 502 30.702077ms
+2026/09/01 14:34:09.496666 GET /proxy/cover/1363 502 31.413618ms
+2026/09/01 14:34:09.496680 GET /proxy/cover/1364 502 31.367101ms
+2026/09/01 14:34:09.498478 GET /proxy/cover/1365 502 33.113682ms
+2026/09/01 14:34:09.498751 GET /proxy/cover/1158 502 33.305083ms
+2026/09/01 14:34:09.498790 GET /proxy/cover/1157 502 33.294302ms
+2026/09/01 14:34:09.528781 GET /proxy/cover/1156 502 30.893809ms
+2026/09/01 14:34:09.529141 GET /proxy/cover/1366 502 31.065732ms
+2026/09/01 14:34:09.529524 GET /proxy/cover/1367 502 30.11995ms
+2026/09/01 14:34:09.530925 GET /proxy/cover/1162 502 31.294574ms
+2026/09/01 14:34:23.935562 POST /api/graphql 200 15.001522811s
+2026/09/01 14:34:23.989526 GET /proxy/cover/1158 502 33.785679ms
+2026/09/01 14:34:23.989597 GET /proxy/cover/1363 502 34.558224ms
+2026/09/01 14:34:23.991172 GET /proxy/cover/1364 502 36.074181ms
+2026/09/01 14:34:23.992955 GET /proxy/cover/1365 502 37.769887ms
+2026/09/01 14:34:23.993027 GET /proxy/cover/1157 502 37.199762ms
+2026/09/01 14:34:23.993027 GET /proxy/cover/1156 502 37.19322ms
+2026/09/01 14:34:24.023524 GET /proxy/cover/1366 502 32.627926ms
+2026/09/01 14:34:24.050580 GET /proxy/cover/1367 502 59.527108ms
+2026/09/01 14:34:24.050645 GET /proxy/cover/1162 502 58.942176ms
+2026/09/01 14:34:24.052590 GET /proxy/cover/1161 502 58.994914ms
+2026/09/01 14:34:28.796682 [sandbox] [grpc-default-executor-10] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; AnimeCatalogueSource.getSearchAnime$suspendImpl:26
+2026/09/01 14:35:28.714208 POST /api/graphql 200 2.133520924s
+2026/09/01 14:35:30.568377 [sandbox] [grpc-default-executor-15] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 14:35:30.757224 [sandbox] [grpc-default-executor-15] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 14:35:30.848217 [sandbox] [grpc-default-executor-14] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 14:35:30.885287 [sandbox] [grpc-default-executor-15] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 14:35:30.889727 [sandbox] [grpc-default-executor-15] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 14:35:30.967800 POST /api/graphql 200 593.208368ms
+2026/09/01 14:35:31.007725 [sandbox] [grpc-default-executor-14] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 14:35:31.024261 GET /proxy/cover/885 502 31.603446ms
+2026/09/01 14:35:31.024453 GET /proxy/cover/886 502 30.192968ms
+2026/09/01 14:35:31.040612 GET /proxy/cover/887 502 31.672507ms
+2026/09/01 14:35:31.056896 GET /proxy/cover/888 502 31.247426ms
+2026/09/01 14:35:31.073190 GET /proxy/cover/890 502 31.805146ms
+2026/09/01 14:35:31.087815 GET /proxy/cover/889 502 30.456675ms
+2026/09/01 14:35:31.108319 GET /proxy/cover/891 502 34.472463ms
+2026/09/01 14:35:31.134336 GET /proxy/cover/892 502 46.015606ms
+2026/09/01 14:35:31.146978 GET /proxy/cover/893 502 37.529704ms
+2026/09/01 14:35:31.167320 GET /proxy/cover/894 502 32.344192ms
+2026/09/01 14:35:31.180071 GET /proxy/cover/895 502 32.5452ms
+2026/09/01 14:35:31.199682 GET /proxy/cover/896 502 31.624496ms
+2026/09/01 14:35:31.212280 GET /proxy/cover/897 502 31.589961ms
+2026/09/01 14:35:31.227547 [sandbox] [grpc-default-executor-14] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ d.intercept:-1; CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10
+2026/09/01 14:35:31.231684 GET /proxy/cover/899 502 31.238578ms
+2026/09/01 14:35:31.232074 GET /proxy/cover/898 502 31.463883ms
+2026/09/01 14:35:31.260097 GET /proxy/cover/902 502 47.305396ms
+2026/09/01 14:35:31.262389 GET /proxy/cover/900 502 30.001326ms
+2026/09/01 14:35:31.262577 GET /proxy/cover/903 502 30.439112ms
+2026/09/01 14:35:31.291681 GET /proxy/cover/905 502 30.980582ms
+2026/09/01 14:35:31.293380 GET /proxy/cover/904 502 30.425476ms
+2026/09/01 14:35:31.294265 GET /proxy/cover/906 502 31.236494ms
+2026/09/01 14:35:31.323598 GET /proxy/cover/939 502 30.727876ms
+2026/09/01 14:35:31.324594 GET /proxy/cover/908 502 30.359431ms
+2026/09/01 14:35:31.325197 GET /proxy/cover/901 502 30.38521ms
+2026/09/01 14:35:31.327198 [sandbox] [grpc-default-executor-15] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 14:35:31.356209 GET /proxy/cover/885 502 30.478185ms
+2026/09/01 14:35:31.356248 GET /proxy/cover/886 502 30.333583ms
+2026/09/01 14:35:31.358969 GET /proxy/cover/887 502 30.310219ms
+2026/09/01 14:35:31.389082 GET /proxy/cover/890 502 31.844029ms
+2026/09/01 14:35:31.389083 GET /proxy/cover/888 502 31.981068ms
+2026/09/01 14:35:31.421484 GET /proxy/cover/891 502 31.349748ms
+2026/09/01 14:35:31.422102 GET /proxy/cover/889 502 32.048484ms
+2026/09/01 14:35:31.453677 GET /proxy/cover/892 502 31.215445ms
+2026/09/01 14:35:31.454360 GET /proxy/cover/893 502 31.691983ms
+2026/09/01 14:35:31.487796 GET /proxy/cover/894 502 33.192701ms
+2026/09/01 14:35:31.488692 GET /proxy/cover/895 502 33.846724ms
+2026/09/01 14:35:31.510275 POST /api/graphql 200 539.955605ms
+2026/09/01 14:35:31.522179 GET /proxy/cover/896 502 32.866306ms
+2026/09/01 14:35:31.616922 GET /proxy/cover/886 502 30.512921ms
+2026/09/01 14:35:31.617219 GET /proxy/cover/885 502 31.241073ms
+2026/09/01 14:35:31.617857 GET /proxy/cover/887 502 30.922863ms
+2026/09/01 14:35:31.649052 GET /proxy/cover/890 502 30.764525ms
+2026/09/01 14:35:31.649132 GET /proxy/cover/888 502 31.116077ms
+2026/09/01 14:35:31.649878 GET /proxy/cover/889 502 31.417565ms
+2026/09/01 14:35:31.682077 GET /proxy/cover/892 502 31.400523ms
+2026/09/01 14:35:31.682116 GET /proxy/cover/891 502 31.842447ms
+2026/09/01 14:35:31.683462 GET /proxy/cover/893 502 32.579485ms
+2026/09/01 14:35:31.716132 GET /proxy/cover/894 502 31.880859ms
+2026/09/01 14:35:31.717607 GET /proxy/cover/895 502 32.411579ms
+2026/09/01 14:35:31.748487 GET /proxy/cover/897 502 31.309582ms
+2026/09/01 14:35:31.748987 GET /proxy/cover/899 502 30.637095ms
+2026/09/01 14:35:31.782598 GET /proxy/cover/902 502 32.942009ms
+2026/09/01 14:35:31.782727 GET /proxy/cover/898 502 33.347643ms
+2026/09/01 14:35:31.815348 GET /proxy/cover/903 502 31.842376ms
+2026/09/01 14:35:31.818622 GET /proxy/cover/900 502 34.977885ms
+2026/09/01 14:35:31.839807 GET /proxy/cover/905 502 32.240797ms
+2026/09/01 14:35:31.849541 GET /proxy/cover/904 502 33.44673ms
+2026/09/01 14:35:31.850878 GET /proxy/cover/906 502 31.837046ms
+2026/09/01 14:35:31.872918 GET /proxy/cover/939 502 32.50208ms
+2026/09/01 14:35:31.882223 GET /proxy/cover/908 502 32.065797ms
+2026/09/01 14:35:31.883289 GET /proxy/cover/901 502 31.914212ms
+2026/09/01 14:35:31.891091 GET /proxy/cover/896 502 31.105037ms
+2026/09/01 14:35:31.902094 [sandbox] [grpc-default-executor-15] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 14:35:32.016540 GET /proxy/cover/885 502 31.847656ms
+2026/09/01 14:35:32.018373 GET /proxy/cover/887 502 32.030651ms
+2026/09/01 14:35:32.018850 GET /proxy/cover/886 502 32.903105ms
+2026/09/01 14:35:32.019109 GET /proxy/cover/888 502 32.541694ms
+2026/09/01 14:35:32.049379 GET /proxy/cover/890 502 31.908612ms
+2026/09/01 14:35:32.049625 GET /proxy/cover/889 502 30.718658ms
+2026/09/01 14:35:32.050580 GET /proxy/cover/891 502 31.332556ms
+2026/09/01 14:35:32.051358 GET /proxy/cover/892 502 31.928148ms
+2026/09/01 14:35:32.081384 GET /proxy/cover/893 502 30.835729ms
+2026/09/01 14:35:32.081483 GET /proxy/cover/894 502 30.668484ms
+2026/09/01 14:35:32.082292 GET /proxy/cover/895 502 31.167374ms
+2026/09/01 14:35:32.082986 GET /proxy/cover/897 502 31.217118ms
+2026/09/01 14:35:32.113123 GET /proxy/cover/899 502 30.70344ms
+2026/09/01 14:35:32.366910 POST /api/graphql 200 682.44333ms
+2026/09/01 14:35:32.476413 GET /proxy/cover/885 502 30.546374ms
+2026/09/01 14:35:32.477427 GET /proxy/cover/886 502 31.210115ms
+2026/09/01 14:35:32.478228 GET /proxy/cover/887 502 31.557249ms
+2026/09/01 14:35:32.478873 GET /proxy/cover/888 502 32.004882ms
+2026/09/01 14:35:32.508451 GET /proxy/cover/890 502 30.827103ms
+2026/09/01 14:35:32.508510 GET /proxy/cover/889 502 30.509825ms
+2026/09/01 14:35:32.509641 GET /proxy/cover/891 502 30.921591ms
+2026/09/01 14:35:32.509678 GET /proxy/cover/892 502 30.308475ms
+2026/09/01 14:35:32.541259 GET /proxy/cover/893 502 31.497797ms
+2026/09/01 14:35:32.541268 GET /proxy/cover/894 502 31.459525ms
+2026/09/01 14:35:32.541492 GET /proxy/cover/896 502 31.060433ms
+2026/09/01 14:35:32.542145 GET /proxy/cover/895 502 31.891509ms
+2026/09/01 14:35:32.574774 GET /proxy/cover/899 502 32.084844ms
+2026/09/01 14:35:32.574894 GET /proxy/cover/897 502 32.435784ms
+2026/09/01 14:35:32.575137 GET /proxy/cover/902 502 32.27948ms
+2026/09/01 14:35:32.575183 GET /proxy/cover/898 502 32.443088ms
+2026/09/01 14:35:32.607553 GET /proxy/cover/903 502 31.351511ms
+2026/09/01 14:35:32.608338 GET /proxy/cover/900 502 31.853808ms
+2026/09/01 14:35:32.608976 GET /proxy/cover/905 502 32.363027ms
+2026/09/01 14:35:32.608974 GET /proxy/cover/904 502 32.360353ms
+2026/09/01 14:35:32.636937 GET /proxy/cover/906 502 31.761795ms
+2026/09/01 14:35:32.639781 GET /proxy/cover/939 502 31.452783ms
+2026/09/01 14:35:32.640003 GET /proxy/cover/908 502 31.259348ms
+2026/09/01 14:35:32.640410 GET /proxy/cover/901 502 31.057096ms
+2026/09/01 14:35:32.777959 GET /proxy/cover/885 502 32.579065ms
+2026/09/01 14:35:32.778101 GET /proxy/cover/887 502 32.605554ms
+2026/09/01 14:35:32.779603 GET /proxy/cover/886 502 34.061959ms
+2026/09/01 14:35:32.779667 GET /proxy/cover/890 502 34.056358ms
+2026/09/01 14:35:32.780462 GET /proxy/cover/888 502 34.928161ms
+2026/09/01 14:35:32.812049 GET /proxy/cover/889 502 32.694432ms
+2026/09/01 14:35:32.812605 GET /proxy/cover/891 502 33.040364ms
+2026/09/01 14:35:32.812898 GET /proxy/cover/892 502 32.422049ms
+2026/09/01 14:35:32.813637 GET /proxy/cover/893 502 33.057997ms
+2026/09/01 14:35:32.813650 GET /proxy/cover/894 502 32.882316ms
+2026/09/01 14:35:32.844012 GET /proxy/cover/895 502 31.377911ms
+2026/09/01 14:35:32.844195 GET /proxy/cover/897 502 30.954684ms
+2026/09/01 14:35:32.844897 GET /proxy/cover/896 502 31.819443ms
+2026/09/01 14:35:32.846416 GET /proxy/cover/898 502 32.297444ms
+2026/09/01 14:35:32.846868 GET /proxy/cover/899 502 32.821181ms
+2026/09/01 14:35:32.875000 GET /proxy/cover/902 502 30.33215ms
+2026/09/01 14:35:34.236538 GET /proxy/cover/896 502 33.211416ms
+2026/09/01 14:35:34.639147 sync: caching cover for entry 1369 failed: rpc error: code = Internal desc = java.lang.IllegalStateException: extension eu.kanade.tachiyomi.animeextension.en.aniwaves is not an HttpSource
+2026/09/01 14:35:35.709869 POST /api/graphql 200 1.573482765s
+2026/09/01 14:35:38.374209 POST /api/graphql 200 7.999667193s
+2026/09/01 14:35:38.629160 GET /proxy/cover/1369 502 32.046912ms
+2026/09/01 14:35:43.544903 GET /proxy/cover/1369 502 32.216481ms
+2026/09/01 14:35:48.867191 POST /api/graphql 200 2.094940461s
+2026/09/01 14:35:50.141285 [sandbox] [grpc-default-executor-13] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 14:35:53.875208 [sandbox] [grpc-default-executor-14] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 14:35:53.932020 [sandbox] [grpc-default-executor-14] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 14:35:53.991612 [sandbox] [grpc-default-executor-12] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 14:35:54.006131 [sandbox] [grpc-default-executor-14] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 14:35:54.010076 [sandbox] [grpc-default-executor-14] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 14:35:54.092907 [sandbox] [grpc-default-executor-12] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 14:35:54.161611 GET /proxy/cover/885 502 30.498975ms
+2026/09/01 14:35:54.163145 GET /proxy/cover/886 502 30.690275ms
+2026/09/01 14:35:54.170292 [sandbox] [grpc-default-executor-12] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ d.intercept:-1; CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10
+2026/09/01 14:35:54.195357 GET /proxy/cover/888 502 31.613856ms
+2026/09/01 14:35:54.195375 GET /proxy/cover/887 502 32.917082ms
+2026/09/01 14:35:54.199624 [sandbox] [grpc-default-executor-12] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 14:35:54.222925 GET /proxy/cover/890 502 51.500702ms
+2026/09/01 14:35:54.229928 GET /proxy/cover/889 502 32.006235ms
+2026/09/01 14:35:54.251039 GET /proxy/cover/891 502 49.456139ms
+2026/09/01 14:35:54.278534 GET /proxy/cover/892 502 47.695401ms
+2026/09/01 14:35:54.283701 GET /proxy/cover/893 502 31.514338ms
+2026/09/01 14:35:54.309871 GET /proxy/cover/894 502 30.493204ms
+2026/09/01 14:35:54.336761 GET /proxy/cover/895 502 52.092327ms
+2026/09/01 14:35:54.343138 GET /proxy/cover/896 502 32.243542ms
+2026/09/01 14:35:54.369373 GET /proxy/cover/897 502 31.486375ms
+2026/09/01 14:35:54.396509 GET /proxy/cover/898 502 44.621418ms
+2026/09/01 14:35:54.396517 GET /proxy/cover/899 502 52.70982ms
+2026/09/01 14:35:54.407955 GET /proxy/cover/902 502 35.814561ms
+2026/09/01 14:35:54.434476 GET /proxy/cover/903 502 36.479195ms
+2026/09/01 14:35:54.436767 GET /proxy/cover/901 502 39.100444ms
+2026/09/01 14:35:54.466207 GET /proxy/cover/900 502 30.870926ms
+2026/09/01 14:35:54.467784 GET /proxy/cover/905 502 30.419845ms
+2026/09/01 14:35:54.498564 GET /proxy/cover/904 502 31.325452ms
+2026/09/01 14:35:54.498853 GET /proxy/cover/939 502 30.643367ms
+2026/09/01 14:35:54.499534 GET /proxy/cover/906 502 31.991577ms
+2026/09/01 14:35:54.530762 GET /proxy/cover/908 502 30.521327ms
+2026/09/01 14:35:54.554311 GET /proxy/cover/885 502 31.577588ms
+2026/09/01 14:35:54.563848 GET /proxy/cover/886 502 31.401024ms
+2026/09/01 14:35:54.600030 GET /proxy/cover/887 502 34.833693ms
+2026/09/01 14:35:54.604627 GET /proxy/cover/888 502 30.946508ms
+2026/09/01 14:35:54.633229 GET /proxy/cover/890 502 32.357707ms
+2026/09/01 14:35:54.636380 GET /proxy/cover/889 502 31.313039ms
+2026/09/01 14:35:54.666436 GET /proxy/cover/891 502 32.388386ms
+2026/09/01 14:35:54.671940 GET /proxy/cover/892 502 35.143908ms
+2026/09/01 14:35:54.697491 GET /proxy/cover/893 502 32.425234ms
+2026/09/01 14:35:54.704595 GET /proxy/cover/894 502 33.000339ms
+2026/09/01 14:35:54.705508 GET /proxy/cover/895 502 32.946026ms
+2026/09/01 14:35:54.707923 [sandbox] [grpc-default-executor-15] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 14:35:54.730224 GET /proxy/cover/896 502 31.634745ms
+2026/09/01 14:35:54.736756 GET /proxy/cover/897 502 30.447367ms
+2026/09/01 14:35:54.742547 GET /proxy/cover/899 502 32.477093ms
+2026/09/01 14:35:54.762288 GET /proxy/cover/898 502 30.138956ms
+2026/09/01 14:35:54.763835 GET /proxy/cover/902 502 30.299599ms
+2026/09/01 14:35:54.770006 GET /proxy/cover/901 502 32.213466ms
+2026/09/01 14:35:54.795075 GET /proxy/cover/903 502 31.375747ms
+2026/09/01 14:35:54.797789 GET /proxy/cover/885 502 33.357391ms
+2026/09/01 14:35:54.803341 GET /proxy/cover/886 502 32.307443ms
+2026/09/01 14:35:54.830235 GET /proxy/cover/887 502 34.037312ms
+2026/09/01 14:35:54.832453 GET /proxy/cover/888 502 34.021904ms
+2026/09/01 14:35:54.836920 GET /proxy/cover/890 502 33.031347ms
+2026/09/01 14:35:54.870124 GET /proxy/cover/900 502 37.25155ms
+2026/09/01 14:35:54.878572 GET /proxy/cover/889 502 47.618436ms
+2026/09/01 14:35:54.878641 GET /proxy/cover/905 502 40.740164ms
+2026/09/01 14:35:54.915707 GET /proxy/cover/904 502 44.38898ms
+2026/09/01 14:35:54.920551 GET /proxy/cover/939 502 40.905916ms
+2026/09/01 14:35:54.931257 GET /proxy/cover/906 502 51.675852ms
+2026/09/01 14:35:54.956549 GET /proxy/cover/908 502 39.776348ms
+2026/09/01 14:35:54.961315 GET /proxy/cover/891 502 40.270429ms
+2026/09/01 14:35:54.975298 GET /proxy/cover/892 502 43.459688ms
+2026/09/01 14:35:54.988408 GET /proxy/cover/893 502 39.309378ms
+2026/09/01 14:35:54.993972 GET /proxy/cover/894 502 36.42943ms
+2026/09/01 14:35:55.002089 GET /proxy/cover/895 502 39.853814ms
+2026/09/01 14:35:55.016421 GET /proxy/cover/896 502 40.216548ms
+2026/09/01 14:35:55.026556 GET /proxy/cover/885 502 42.264326ms
+2026/09/01 14:35:55.058389 GET /proxy/cover/886 502 69.217959ms
+2026/09/01 14:35:55.058405 GET /proxy/cover/887 502 63.678491ms
+2026/09/01 14:35:55.058415 GET /proxy/cover/888 502 55.699454ms
+2026/09/01 14:35:55.062288 GET /proxy/cover/890 502 45.182626ms
+2026/09/01 14:35:55.069141 GET /proxy/cover/889 502 41.590537ms
+2026/09/01 14:35:55.094680 GET /proxy/cover/897 502 35.082793ms
+2026/09/01 14:35:55.094798 GET /proxy/cover/899 502 34.960663ms
+2026/09/01 14:35:55.101558 GET /proxy/cover/898 502 41.582581ms
+2026/09/01 14:35:55.105134 GET /proxy/cover/902 502 42.362581ms
+2026/09/01 14:35:55.121427 GET /proxy/cover/901 502 51.798272ms
+2026/09/01 14:35:55.140760 GET /proxy/cover/903 502 44.926163ms
+2026/09/01 14:35:55.140802 GET /proxy/cover/900 502 44.816055ms
+2026/09/01 14:35:55.147661 GET /proxy/cover/905 502 45.478583ms
+2026/09/01 14:35:55.155800 GET /proxy/cover/904 502 50.002959ms
+2026/09/01 14:35:55.167804 GET /proxy/cover/906 502 45.622494ms
+2026/09/01 14:35:55.193960 GET /proxy/cover/939 502 52.243351ms
+2026/09/01 14:35:55.194045 GET /proxy/cover/892 502 45.929793ms
+2026/09/01 14:35:55.193960 GET /proxy/cover/891 502 52.081106ms
+2026/09/01 14:35:55.212262 GET /proxy/cover/908 502 56.082626ms
+2026/09/01 14:35:59.837926 GET /proxy/cover/896 502 31.050323ms
+2026/09/01 14:36:01.731675 POST /api/graphql 200 7.920542364s
+2026/09/01 14:36:05.118516 [sandbox] [grpc-default-executor-16] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 14:36:05.224623 [sandbox] [grpc-default-executor-16] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 14:36:05.299451 [sandbox] [grpc-default-executor-15] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 14:36:05.330643 [sandbox] [grpc-default-executor-16] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 14:36:05.337552 [sandbox] [grpc-default-executor-16] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 14:36:05.379003 GET /proxy/cover/885 502 31.441451ms
+2026/09/01 14:36:05.381870 GET /proxy/cover/886 502 33.636568ms
+2026/09/01 14:36:05.390659 [sandbox] [grpc-default-executor-12] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 14:36:05.413097 GET /proxy/cover/887 502 33.204183ms
+2026/09/01 14:36:05.440087 GET /proxy/cover/888 502 57.178972ms
+2026/09/01 14:36:05.440372 GET /proxy/cover/890 502 48.430095ms
+2026/09/01 14:36:05.518971 GET /proxy/cover/889 502 78.264438ms
+2026/09/01 14:36:05.540254 GET /proxy/cover/891 502 99.332149ms
+2026/09/01 14:36:05.553952 GET /proxy/cover/892 502 33.999381ms
+2026/09/01 14:36:05.559083 [sandbox] [grpc-default-executor-12] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ d.intercept:-1; CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10
+2026/09/01 14:36:05.576292 GET /proxy/cover/893 502 34.983926ms
+2026/09/01 14:36:05.579734 [sandbox] [grpc-default-executor-16] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 14:36:05.602565 GET /proxy/cover/894 502 47.600011ms
+2026/09/01 14:36:05.602616 GET /proxy/cover/895 502 42.272312ms
+2026/09/01 14:36:05.615563 GET /proxy/cover/896 502 34.533227ms
+2026/09/01 14:36:05.636756 GET /proxy/cover/897 502 32.505827ms
+2026/09/01 14:36:05.643660 GET /proxy/cover/899 502 31.390324ms
+2026/09/01 14:36:05.648624 GET /proxy/cover/898 502 32.482343ms
+2026/09/01 14:36:05.675875 GET /proxy/cover/902 502 31.518185ms
+2026/09/01 14:36:05.679905 GET /proxy/cover/901 502 30.425245ms
+2026/09/01 14:36:05.710348 GET /proxy/cover/903 502 33.449184ms
+2026/09/01 14:36:05.714780 GET /proxy/cover/900 502 34.252579ms
+2026/09/01 14:36:05.746591 GET /proxy/cover/905 502 35.282469ms
+2026/09/01 14:36:05.748968 GET /proxy/cover/904 502 33.450276ms
+2026/09/01 14:36:05.778323 GET /proxy/cover/906 502 30.798429ms
+2026/09/01 14:36:05.780887 GET /proxy/cover/939 502 31.150703ms
+2026/09/01 14:36:05.810476 GET /proxy/cover/908 502 31.010879ms
+2026/09/01 14:36:05.812435 GET /proxy/cover/940 502 30.793369ms
+2026/09/01 14:36:05.812952 GET /proxy/cover/941 502 30.969131ms
+2026/09/01 14:36:05.814583 [sandbox] [grpc-default-executor-16] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 14:36:05.844007 GET /proxy/cover/942 502 30.681719ms
+2026/09/01 14:36:05.846416 GET /proxy/cover/945 502 32.665357ms
+2026/09/01 14:36:05.846557 GET /proxy/cover/944 502 30.712808ms
+2026/09/01 14:36:05.864056 GET /proxy/cover/943 502 32.069545ms
+2026/09/01 14:36:05.878807 GET /proxy/cover/946 502 31.850762ms
+2026/09/01 14:36:05.881116 GET /proxy/cover/949 502 33.914021ms
+2026/09/01 14:36:05.896035 GET /proxy/cover/948 502 31.340911ms
+2026/09/01 14:36:05.910925 GET /proxy/cover/947 502 31.54182ms
+2026/09/01 14:36:05.913124 GET /proxy/cover/907 502 31.641087ms
+2026/09/01 14:36:05.930519 GET /proxy/cover/950 502 33.675862ms
+2026/09/01 14:36:05.934361 GET /proxy/cover/951 502 30.976705ms
+2026/09/01 14:36:05.944664 GET /proxy/cover/952 502 30.97376ms
+2026/09/01 14:36:05.962545 GET /proxy/cover/953 502 31.072435ms
+2026/09/01 14:36:05.966049 GET /proxy/cover/955 502 31.108243ms
+2026/09/01 14:36:05.976035 GET /proxy/cover/954 502 31.014376ms
+2026/09/01 14:36:05.995492 GET /proxy/cover/956 502 32.105572ms
+2026/09/01 14:36:05.999685 GET /proxy/cover/957 502 32.487952ms
+2026/09/01 14:36:06.007478 GET /proxy/cover/959 502 30.819048ms
+2026/09/01 14:36:06.027150 GET /proxy/cover/958 502 30.848754ms
+2026/09/01 14:36:06.031382 GET /proxy/cover/961 502 30.996522ms
+2026/09/01 14:36:06.039215 GET /proxy/cover/960 502 31.087474ms
+2026/09/01 14:36:06.059389 GET /proxy/cover/962 502 31.030596ms
+2026/09/01 14:36:06.063457 GET /proxy/cover/885 502 31.029585ms
+2026/09/01 14:36:06.070019 GET /proxy/cover/886 502 29.916097ms
+2026/09/01 14:36:06.092053 GET /proxy/cover/887 502 31.530969ms
+2026/09/01 14:36:06.095838 GET /proxy/cover/888 502 31.729684ms
+2026/09/01 14:36:06.100797 GET /proxy/cover/890 502 30.142943ms
+2026/09/01 14:36:06.106690 GET /proxy/cover/889 502 30.27368ms
+2026/09/01 14:36:06.126889 GET /proxy/cover/891 502 30.29511ms
+2026/09/01 14:36:06.131303 GET /proxy/cover/892 502 29.89155ms
+2026/09/01 14:36:06.138819 GET /proxy/cover/893 502 31.523645ms
+2026/09/01 14:36:06.157766 GET /proxy/cover/894 502 30.083311ms
+2026/09/01 14:36:06.162395 GET /proxy/cover/895 502 30.511648ms
+2026/09/01 14:36:06.169852 GET /proxy/cover/896 502 30.510777ms
+2026/09/01 14:36:06.176951 GET /proxy/cover/897 502 30.587151ms
+2026/09/01 14:36:06.189000 GET /proxy/cover/899 502 30.222354ms
+2026/09/01 14:36:06.196637 GET /proxy/cover/898 502 33.471957ms
+2026/09/01 14:36:06.201824 GET /proxy/cover/902 502 31.084378ms
+2026/09/01 14:36:06.208645 GET /proxy/cover/901 502 31.104746ms
+2026/09/01 14:36:06.219885 GET /proxy/cover/903 502 30.323193ms
+2026/09/01 14:36:06.228987 GET /proxy/cover/900 502 31.661165ms
+2026/09/01 14:36:06.232428 GET /proxy/cover/905 502 30.005124ms
+2026/09/01 14:36:06.239935 GET /proxy/cover/904 502 30.589786ms
+2026/09/01 14:36:06.252141 GET /proxy/cover/906 502 31.566737ms
+2026/09/01 14:36:06.260594 GET /proxy/cover/939 502 30.96866ms
+2026/09/01 14:36:06.263153 GET /proxy/cover/908 502 30.251348ms
+2026/09/01 14:36:06.269801 GET /proxy/cover/940 502 29.376639ms
+2026/09/01 14:36:06.283690 GET /proxy/cover/941 502 30.345255ms
+2026/09/01 14:36:06.292111 GET /proxy/cover/942 502 30.565931ms
+2026/09/01 14:36:06.295061 GET /proxy/cover/945 502 31.355228ms
+2026/09/01 14:36:06.301861 GET /proxy/cover/944 502 31.563892ms
+2026/09/01 14:36:06.315427 GET /proxy/cover/943 502 31.23955ms
+2026/09/01 14:36:06.324897 GET /proxy/cover/946 502 31.920183ms
+2026/09/01 14:36:06.325727 GET /proxy/cover/949 502 29.964898ms
+2026/09/01 14:36:06.332792 GET /proxy/cover/948 502 30.425285ms
+2026/09/01 14:36:06.348225 GET /proxy/cover/885 502 32.018638ms
+2026/09/01 14:36:06.356971 GET /proxy/cover/886 502 31.348035ms
+2026/09/01 14:36:06.357930 GET /proxy/cover/947 502 31.610129ms
+2026/09/01 14:36:06.359238 GET /proxy/cover/950 502 31.399983ms
+2026/09/01 14:36:06.366399 GET /proxy/cover/951 502 32.836721ms
+2026/09/01 14:36:06.380090 GET /proxy/cover/952 502 31.235673ms
+2026/09/01 14:36:06.388872 GET /proxy/cover/953 502 31.276019ms
+2026/09/01 14:36:06.389492 GET /proxy/cover/955 502 30.80937ms
+2026/09/01 14:36:06.389757 GET /proxy/cover/954 502 30.174393ms
+2026/09/01 14:36:06.397861 GET /proxy/cover/956 502 30.818376ms
+2026/09/01 14:36:06.413968 GET /proxy/cover/957 502 33.013544ms
+2026/09/01 14:36:06.420932 GET /proxy/cover/958 502 30.451786ms
+2026/09/01 14:36:06.422098 GET /proxy/cover/961 502 31.454907ms
+2026/09/01 14:36:06.422277 GET /proxy/cover/959 502 32.156789ms
+2026/09/01 14:36:06.429098 GET /proxy/cover/960 502 30.390881ms
+2026/09/01 14:36:06.446202 GET /proxy/cover/962 502 31.091811ms
+2026/09/01 14:36:06.452766 GET /proxy/cover/907 502 30.951688ms
+2026/09/01 14:36:06.453106 GET /proxy/cover/887 502 30.343291ms
+2026/09/01 14:36:06.454412 GET /proxy/cover/888 502 31.498619ms
+2026/09/01 14:36:06.459917 GET /proxy/cover/890 502 30.175325ms
+2026/09/01 14:36:06.477938 GET /proxy/cover/889 502 31.019927ms
+2026/09/01 14:36:06.484565 GET /proxy/cover/891 502 30.897095ms
+2026/09/01 14:36:06.486565 GET /proxy/cover/892 502 32.690885ms
+2026/09/01 14:36:06.487351 GET /proxy/cover/893 502 32.079954ms
+2026/09/01 14:36:06.490734 GET /proxy/cover/894 502 30.224348ms
+2026/09/01 14:36:06.509743 GET /proxy/cover/895 502 31.118291ms
+2026/09/01 14:36:06.515367 GET /proxy/cover/896 502 30.208567ms
+2026/09/01 14:36:06.517624 GET /proxy/cover/897 502 30.660269ms
+2026/09/01 14:36:06.519504 GET /proxy/cover/899 502 31.769178ms
+2026/09/01 14:36:06.522385 GET /proxy/cover/898 502 31.312057ms
+2026/09/01 14:36:06.545663 GET /proxy/cover/902 502 35.409528ms
+2026/09/01 14:36:06.550059 GET /proxy/cover/901 502 34.208956ms
+2026/09/01 14:36:06.552082 GET /proxy/cover/900 502 32.038426ms
+2026/09/01 14:36:06.553094 GET /proxy/cover/903 502 34.442136ms
+2026/09/01 14:36:06.557157 GET /proxy/cover/905 502 34.18957ms
+2026/09/01 14:36:06.577473 GET /proxy/cover/904 502 30.691778ms
+2026/09/01 14:36:06.585636 GET /proxy/cover/906 502 35.04438ms
+2026/09/01 14:36:06.586243 GET /proxy/cover/939 502 33.41486ms
+2026/09/01 14:36:06.586963 GET /proxy/cover/908 502 33.370646ms
+2026/09/01 14:36:06.588909 GET /proxy/cover/940 502 31.10137ms
+2026/09/01 14:36:06.614855 GET /proxy/cover/941 502 36.213384ms
+2026/09/01 14:36:06.625662 GET /proxy/cover/942 502 39.131142ms
+2026/09/01 14:36:06.625765 GET /proxy/cover/943 502 36.352476ms
+2026/09/01 14:36:06.625700 GET /proxy/cover/945 502 38.739113ms
+2026/09/01 14:36:06.625716 GET /proxy/cover/944 502 38.295316ms
+2026/09/01 14:36:06.650649 GET /proxy/cover/946 502 34.541383ms
+2026/09/01 14:36:13.237231 [sandbox] [grpc-default-executor-13] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 14:36:20.031700 POST /api/graphql 200 15.001381906s
+2026/09/01 14:36:24.441410 [sandbox] [grpc-default-executor-14] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 15:15:05.940899 GET /proxy/cover/886 502 130.481288ms
+2026/09/01 15:15:05.941450 GET /proxy/cover/889 502 126.77565ms
+2026/09/01 15:15:05.941493 GET /proxy/cover/885 502 131.108913ms
+2026/09/01 15:15:05.941712 GET /proxy/cover/888 502 130.00744ms
+2026/09/01 15:15:05.942098 GET /proxy/cover/887 502 130.477874ms
+2026/09/01 15:15:05.942130 GET /proxy/cover/890 502 127.85827ms
+2026/09/01 15:15:05.974102 GET /proxy/cover/891 502 31.629482ms
+2026/09/01 15:15:05.974801 GET /proxy/cover/894 502 31.58669ms
+2026/09/01 15:15:05.975335 GET /proxy/cover/892 502 32.414438ms
+2026/09/01 15:15:05.975375 GET /proxy/cover/893 502 32.402564ms
+2026/09/01 15:15:05.976963 GET /proxy/cover/895 502 33.534083ms
+2026/09/01 15:15:05.977764 GET /proxy/cover/896 502 34.259487ms
+2026/09/01 15:15:06.005959 GET /proxy/cover/897 502 30.581982ms
+2026/09/01 15:15:06.006501 GET /proxy/cover/899 502 30.487889ms
+2026/09/01 15:15:06.007528 GET /proxy/cover/902 502 31.205775ms
+2026/09/01 15:15:06.007902 GET /proxy/cover/898 502 31.635857ms
+2026/09/01 15:15:06.009248 GET /proxy/cover/901 502 31.740552ms
+2026/09/01 15:15:06.009407 GET /proxy/cover/903 502 31.152769ms
+2026/09/01 15:15:06.039268 GET /proxy/cover/904 502 31.19418ms
+2026/09/01 15:15:06.039285 GET /proxy/cover/900 502 32.105219ms
+2026/09/01 15:15:06.041022 GET /proxy/cover/908 502 30.728282ms
+2026/09/01 15:15:06.041161 GET /proxy/cover/906 502 32.732967ms
+2026/09/01 15:15:06.041934 GET /proxy/cover/905 502 34.529044ms
+2026/09/01 15:15:06.042174 GET /proxy/cover/939 502 32.066081ms
+2026/09/01 15:15:06.071389 GET /proxy/cover/941 502 30.747185ms
+2026/09/01 15:15:06.071764 GET /proxy/cover/940 502 31.342434ms
+2026/09/01 15:15:06.073805 GET /proxy/cover/943 502 31.114641ms
+2026/09/01 15:15:06.073829 GET /proxy/cover/944 502 31.294474ms
+2026/09/01 15:15:06.074526 GET /proxy/cover/942 502 32.631231ms
+2026/09/01 15:15:06.074669 GET /proxy/cover/945 502 32.571968ms
+2026/09/01 15:15:06.104923 GET /proxy/cover/949 502 32.446903ms
+2026/09/01 15:15:06.104934 GET /proxy/cover/946 502 32.734048ms
+2026/09/01 15:15:06.106095 GET /proxy/cover/947 502 31.724318ms
+2026/09/01 15:15:06.106785 GET /proxy/cover/948 502 32.508399ms
+2026/09/01 15:15:06.107329 GET /proxy/cover/950 502 32.190516ms
+2026/09/01 15:15:06.107688 GET /proxy/cover/951 502 32.416014ms
+2026/09/01 15:15:06.136929 GET /proxy/cover/952 502 30.764667ms
+2026/09/01 15:15:06.137647 GET /proxy/cover/953 502 31.293022ms
+2026/09/01 15:15:06.138427 GET /proxy/cover/954 502 31.291801ms
+2026/09/01 15:15:06.138778 GET /proxy/cover/956 502 31.105169ms
+2026/09/01 15:15:06.138865 GET /proxy/cover/955 502 32.160737ms
+2026/09/01 15:15:06.140034 GET /proxy/cover/957 502 31.468529ms
+2026/09/01 15:15:06.169347 GET /proxy/cover/961 502 30.296828ms
+2026/09/01 15:15:06.170362 GET /proxy/cover/958 502 31.985631ms
+2026/09/01 15:15:06.170445 GET /proxy/cover/962 502 30.904271ms
+2026/09/01 15:15:06.172132 GET /proxy/cover/959 502 34.145278ms
+2026/09/01 15:15:06.172177 GET /proxy/cover/907 502 31.555818ms
+2026/09/01 15:15:06.174008 GET /proxy/cover/960 502 34.532238ms
+2026/09/01 15:15:11.216155 GET /proxy/cover/886 502 30.887179ms
+2026/09/01 15:15:11.216926 GET /proxy/cover/887 502 30.635128ms
+2026/09/01 15:15:11.217893 GET /proxy/cover/885 502 32.686817ms
+2026/09/01 15:15:11.218743 GET /proxy/cover/888 502 30.218513ms
+2026/09/01 15:15:11.219349 GET /proxy/cover/889 502 30.069658ms
+2026/09/01 15:15:11.219436 GET /proxy/cover/890 502 30.532304ms
+2026/09/01 15:15:11.248619 GET /proxy/cover/891 502 31.388686ms
+2026/09/01 15:15:11.249387 GET /proxy/cover/893 502 30.699593ms
+2026/09/01 15:15:11.250084 GET /proxy/cover/892 502 32.357045ms
+2026/09/01 15:15:11.250838 GET /proxy/cover/894 502 31.575361ms
+2026/09/01 15:15:11.252576 GET /proxy/cover/896 502 32.064021ms
+2026/09/01 15:15:11.252867 GET /proxy/cover/895 502 32.638464ms
+2026/09/01 15:15:11.280146 GET /proxy/cover/897 502 30.449686ms
+2026/09/01 15:15:11.281426 GET /proxy/cover/899 502 31.227315ms
+2026/09/01 15:15:11.283360 GET /proxy/cover/898 502 32.861857ms
+2026/09/01 15:15:11.283389 GET /proxy/cover/902 502 32.066704ms
+2026/09/01 15:15:11.285454 GET /proxy/cover/903 502 31.84221ms
+2026/09/01 15:15:11.285790 GET /proxy/cover/901 502 32.29236ms
+2026/09/01 15:15:11.313262 GET /proxy/cover/905 502 31.256873ms
+2026/09/01 15:15:11.313993 GET /proxy/cover/900 502 32.852615ms
+2026/09/01 15:15:11.314920 GET /proxy/cover/906 502 30.746985ms
+2026/09/01 15:15:11.316280 GET /proxy/cover/904 502 32.29243ms
+2026/09/01 15:15:11.316613 GET /proxy/cover/908 502 30.011231ms
+2026/09/01 15:15:11.317382 GET /proxy/cover/939 502 31.018781ms
+2026/09/01 15:15:11.345244 GET /proxy/cover/941 502 30.816376ms
+2026/09/01 15:15:11.345836 GET /proxy/cover/940 502 31.698913ms
+2026/09/01 15:15:11.346539 GET /proxy/cover/942 502 31.10153ms
+2026/09/01 15:15:11.347058 GET /proxy/cover/945 502 30.296975ms
+2026/09/01 15:15:11.348109 GET /proxy/cover/943 502 29.823805ms
+2026/09/01 15:15:11.348865 GET /proxy/cover/944 502 31.805482ms
+2026/09/01 15:15:11.376337 GET /proxy/cover/946 502 30.059554ms
+2026/09/01 15:15:11.376656 GET /proxy/cover/949 502 30.002239ms
+2026/09/01 15:15:11.377718 GET /proxy/cover/948 502 30.768723ms
+2026/09/01 15:15:11.378045 GET /proxy/cover/947 502 30.611588ms
+2026/09/01 15:15:11.378701 GET /proxy/cover/951 502 29.43073ms
+2026/09/01 15:15:11.379905 GET /proxy/cover/950 502 31.050583ms
+2026/09/01 15:15:11.408108 GET /proxy/cover/952 502 30.717055ms
+2026/09/01 15:15:11.409315 GET /proxy/cover/955 502 31.119784ms
+2026/09/01 15:15:11.409798 GET /proxy/cover/953 502 32.186762ms
+2026/09/01 15:15:11.410591 GET /proxy/cover/954 502 32.123159ms
+2026/09/01 15:15:11.411131 GET /proxy/cover/957 502 30.754835ms
+2026/09/01 15:15:11.411132 GET /proxy/cover/956 502 31.780369ms
+2026/09/01 15:15:11.440630 GET /proxy/cover/959 502 31.479215ms
+2026/09/01 15:15:11.440896 GET /proxy/cover/958 502 30.952504ms
+2026/09/01 15:15:11.441546 GET /proxy/cover/961 502 31.287804ms
+2026/09/01 15:15:11.442286 GET /proxy/cover/907 502 30.569272ms
+2026/09/01 15:15:11.443066 GET /proxy/cover/960 502 32.110372ms
+2026/09/01 15:15:11.443762 GET /proxy/cover/962 502 32.156583ms
+2026/09/01 15:15:20.812672 [sandbox] [grpc-default-executor-19] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 15:15:20.960627 [sandbox] [grpc-default-executor-19] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 15:15:21.037289 GET /proxy/cover/886 502 31.033711ms
+2026/09/01 15:15:21.037429 GET /proxy/cover/885 502 31.525607ms
+2026/09/01 15:15:21.056760 [sandbox] [grpc-default-executor-20] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 15:15:21.070057 GET /proxy/cover/887 502 31.518318ms
+2026/09/01 15:15:21.070707 GET /proxy/cover/888 502 31.980427ms
+2026/09/01 15:15:21.071640 [sandbox] [grpc-default-executor-17] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 15:15:21.091873 GET /proxy/cover/890 502 33.510525ms
+2026/09/01 15:15:21.095502 [sandbox] [grpc-default-executor-20] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 15:15:21.106172 GET /proxy/cover/891 502 32.759331ms
+2026/09/01 15:15:21.107057 GET /proxy/cover/889 502 33.764368ms
+2026/09/01 15:15:21.130062 GET /proxy/cover/892 502 31.989842ms
+2026/09/01 15:15:21.140876 GET /proxy/cover/893 502 32.420851ms
+2026/09/01 15:15:21.162799 GET /proxy/cover/894 502 30.332086ms
+2026/09/01 15:15:21.192899 GET /proxy/cover/895 502 30.966688ms
+2026/09/01 15:15:21.194470 GET /proxy/cover/896 502 30.847952ms
+2026/09/01 15:15:21.225616 GET /proxy/cover/899 502 30.239096ms
+2026/09/01 15:15:21.226389 GET /proxy/cover/897 502 32.365337ms
+2026/09/01 15:15:21.237184 [sandbox] [grpc-default-executor-17] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 15:15:21.257288 GET /proxy/cover/898 502 30.584676ms
+2026/09/01 15:15:21.258118 GET /proxy/cover/902 502 31.053231ms
+2026/09/01 15:15:21.271050 GET /proxy/cover/901 502 32.503874ms
+2026/09/01 15:15:21.288624 GET /proxy/cover/903 502 30.622713ms
+2026/09/01 15:15:21.290212 GET /proxy/cover/900 502 31.32472ms
+2026/09/01 15:15:21.322718 GET /proxy/cover/905 502 33.407209ms
+2026/09/01 15:15:21.325120 GET /proxy/cover/904 502 34.490055ms
+2026/09/01 15:15:21.354583 GET /proxy/cover/906 502 30.941513ms
+2026/09/01 15:15:21.355859 [sandbox] [grpc-default-executor-17] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ d.intercept:-1; CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10
+2026/09/01 15:15:21.358424 GET /proxy/cover/939 502 32.213106ms
+2026/09/01 15:15:21.387697 GET /proxy/cover/908 502 32.053756ms
+2026/09/01 15:15:21.389034 [sandbox] [grpc-default-executor-17] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 15:15:21.390233 GET /proxy/cover/940 502 33.343485ms
+2026/09/01 15:15:21.392571 GET /proxy/cover/941 502 33.258215ms
+2026/09/01 15:15:21.421096 GET /proxy/cover/942 502 30.62946ms
+2026/09/01 15:15:21.423122 GET /proxy/cover/944 502 29.745055ms
+2026/09/01 15:15:21.423324 GET /proxy/cover/945 502 32.483452ms
+2026/09/01 15:15:21.455842 GET /proxy/cover/943 502 31.547012ms
+2026/09/01 15:15:21.456094 GET /proxy/cover/946 502 31.568146ms
+2026/09/01 15:15:21.456976 GET /proxy/cover/907 502 34.386739ms
+2026/09/01 15:15:21.489998 GET /proxy/cover/949 502 31.416857ms
+2026/09/01 15:15:21.492413 GET /proxy/cover/948 502 33.546016ms
+2026/09/01 15:15:21.521636 GET /proxy/cover/947 502 30.543951ms
+2026/09/01 15:15:21.524032 GET /proxy/cover/950 502 30.761691ms
+2026/09/01 15:15:21.553307 GET /proxy/cover/951 502 30.685856ms
+2026/09/01 15:15:21.555155 GET /proxy/cover/952 502 30.137695ms
+2026/09/01 15:15:21.588359 GET /proxy/cover/953 502 33.934506ms
+2026/09/01 15:15:21.589963 GET /proxy/cover/955 502 34.226297ms
+2026/09/01 15:15:21.620780 GET /proxy/cover/956 502 30.08887ms
+2026/09/01 15:15:21.620810 GET /proxy/cover/954 502 31.406651ms
+2026/09/01 15:15:21.653174 GET /proxy/cover/957 502 31.145668ms
+2026/09/01 15:15:21.654100 GET /proxy/cover/959 502 31.856809ms
+2026/09/01 15:15:21.684918 GET /proxy/cover/958 502 30.62138ms
+2026/09/01 15:15:21.686625 GET /proxy/cover/961 502 31.92298ms
+2026/09/01 15:15:21.715537 GET /proxy/cover/960 502 29.550103ms
+2026/09/01 15:15:21.717346 GET /proxy/cover/962 502 30.045638ms
+2026/09/01 15:15:21.737173 GET /proxy/cover/885 502 31.684536ms
+2026/09/01 15:15:21.747948 GET /proxy/cover/886 502 29.949822ms
+2026/09/01 15:15:21.769375 GET /proxy/cover/887 502 31.262289ms
+2026/09/01 15:15:21.779813 GET /proxy/cover/888 502 30.807228ms
+2026/09/01 15:15:21.801056 GET /proxy/cover/890 502 30.485219ms
+2026/09/01 15:15:21.801887 POST /api/graphql 200 529.655313ms
+2026/09/01 15:15:21.810885 GET /proxy/cover/889 502 29.974616ms
+2026/09/01 15:15:21.825484 GET /proxy/cover/891 502 30.299441ms
+2026/09/01 15:15:21.829233 [sandbox] [grpc-default-executor-17] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 15:15:21.833860 GET /proxy/cover/892 502 30.619214ms
+2026/09/01 15:15:21.842363 GET /proxy/cover/893 502 30.210834ms
+2026/09/01 15:15:21.861752 GET /proxy/cover/894 502 31.078537ms
+2026/09/01 15:15:21.865246 GET /proxy/cover/895 502 30.560904ms
+2026/09/01 15:15:21.874425 GET /proxy/cover/896 502 31.439494ms
+2026/09/01 15:15:21.895507 GET /proxy/cover/897 502 32.465265ms
+2026/09/01 15:15:21.898767 GET /proxy/cover/899 502 32.579498ms
+2026/09/01 15:15:21.907289 GET /proxy/cover/898 502 31.879577ms
+2026/09/01 15:15:21.927781 GET /proxy/cover/902 502 31.104343ms
+2026/09/01 15:15:21.929982 GET /proxy/cover/901 502 30.391287ms
+2026/09/01 15:15:21.938133 GET /proxy/cover/903 502 30.134246ms
+2026/09/01 15:15:21.959125 GET /proxy/cover/900 502 30.498443ms
+2026/09/01 15:15:21.960986 GET /proxy/cover/905 502 30.487606ms
+2026/09/01 15:15:21.969271 GET /proxy/cover/904 502 30.304395ms
+2026/09/01 15:15:21.982954 GET /proxy/cover/906 502 29.282114ms
+2026/09/01 15:15:21.991184 GET /proxy/cover/939 502 29.65411ms
+2026/09/01 15:15:22.001812 GET /proxy/cover/908 502 32.041336ms
+2026/09/01 15:15:22.013739 GET /proxy/cover/940 502 30.267058ms
+2026/09/01 15:15:22.021861 GET /proxy/cover/941 502 30.223227ms
+2026/09/01 15:15:22.033304 GET /proxy/cover/942 502 30.90776ms
+2026/09/01 15:15:22.044898 GET /proxy/cover/945 502 30.473089ms
+2026/09/01 15:15:22.052916 GET /proxy/cover/944 502 30.406742ms
+2026/09/01 15:15:22.064069 GET /proxy/cover/943 502 30.101145ms
+2026/09/01 15:15:22.075224 GET /proxy/cover/946 502 29.770584ms
+2026/09/01 15:15:22.084328 GET /proxy/cover/949 502 30.716551ms
+2026/09/01 15:15:22.094611 GET /proxy/cover/948 502 30.035661ms
+2026/09/01 15:15:22.110957 GET /proxy/cover/947 502 35.133215ms
+2026/09/01 15:15:22.114550 GET /proxy/cover/907 502 29.676508ms
+2026/09/01 15:15:22.125445 GET /proxy/cover/950 502 30.155893ms
+2026/09/01 15:15:22.141506 GET /proxy/cover/951 502 29.706655ms
+2026/09/01 15:15:22.142538 GET /proxy/cover/952 502 30.273438ms
+2026/09/01 15:15:22.145360 GET /proxy/cover/953 502 30.417941ms
+2026/09/01 15:15:22.156211 GET /proxy/cover/955 502 30.296014ms
+2026/09/01 15:15:22.174414 GET /proxy/cover/956 502 31.38911ms
+2026/09/01 15:15:22.175048 GET /proxy/cover/954 502 33.075316ms
+2026/09/01 15:15:22.176210 GET /proxy/cover/957 502 30.413279ms
+2026/09/01 15:15:22.188995 GET /proxy/cover/959 502 31.750127ms
+2026/09/01 15:15:22.206252 GET /proxy/cover/958 502 31.009908ms
+2026/09/01 15:15:22.206919 GET /proxy/cover/961 502 31.377071ms
+2026/09/01 15:15:22.207761 GET /proxy/cover/885 502 31.089908ms
+2026/09/01 15:15:22.219379 GET /proxy/cover/886 502 29.598252ms
+2026/09/01 15:15:22.226296 GET /proxy/cover/887 502 29.917945ms
+2026/09/01 15:15:22.238428 GET /proxy/cover/888 502 30.89938ms
+2026/09/01 15:15:22.239396 GET /proxy/cover/962 502 31.160747ms
+2026/09/01 15:15:22.239715 GET /proxy/cover/960 502 31.915543ms
+2026/09/01 15:15:22.250117 GET /proxy/cover/890 502 30.141145ms
+2026/09/01 15:15:22.257694 GET /proxy/cover/889 502 30.376738ms
+2026/09/01 15:15:22.270934 GET /proxy/cover/891 502 31.262302ms
+2026/09/01 15:15:22.272063 GET /proxy/cover/892 502 32.011303ms
+2026/09/01 15:15:22.272447 GET /proxy/cover/893 502 32.074452ms
+2026/09/01 15:15:22.282700 GET /proxy/cover/894 502 32.017569ms
+2026/09/01 15:15:22.288789 GET /proxy/cover/895 502 30.634194ms
+2026/09/01 15:15:22.303929 GET /proxy/cover/896 502 32.024978ms
+2026/09/01 15:15:22.304819 GET /proxy/cover/897 502 32.241472ms
+2026/09/01 15:15:22.305475 GET /proxy/cover/899 502 32.514768ms
+2026/09/01 15:15:22.315304 GET /proxy/cover/898 502 31.826128ms
+2026/09/01 15:15:22.320643 GET /proxy/cover/902 502 31.081658ms
+2026/09/01 15:15:22.336142 GET /proxy/cover/903 502 30.896553ms
+2026/09/01 15:15:22.336230 GET /proxy/cover/901 502 31.299506ms
+2026/09/01 15:15:22.337329 GET /proxy/cover/900 502 31.353812ms
+2026/09/01 15:15:22.347027 GET /proxy/cover/905 502 30.882649ms
+2026/09/01 15:15:22.352539 GET /proxy/cover/904 502 31.387556ms
+2026/09/01 15:15:22.368334 GET /proxy/cover/906 502 31.45267ms
+2026/09/01 15:15:22.368626 GET /proxy/cover/908 502 30.776952ms
+2026/09/01 15:15:22.369577 GET /proxy/cover/939 502 32.48772ms
+2026/09/01 15:15:22.381925 GET /proxy/cover/940 502 33.830292ms
+2026/09/01 15:15:22.383143 GET /proxy/cover/941 502 29.959809ms
+2026/09/01 15:15:22.399961 GET /proxy/cover/942 502 30.766416ms
+2026/09/01 15:15:22.400445 GET /proxy/cover/945 502 31.06645ms
+2026/09/01 15:15:22.401281 GET /proxy/cover/944 502 31.072013ms
+2026/09/01 15:15:22.413124 GET /proxy/cover/943 502 30.438292ms
+2026/09/01 15:15:22.413344 GET /proxy/cover/946 502 29.49026ms
+2026/09/01 15:15:22.431579 GET /proxy/cover/949 502 30.771238ms
+2026/09/01 15:15:22.433096 GET /proxy/cover/947 502 31.301911ms
+2026/09/01 15:15:22.433189 GET /proxy/cover/948 502 32.120618ms
+2026/09/01 15:15:22.444800 GET /proxy/cover/950 502 30.770446ms
+2026/09/01 15:15:22.445054 GET /proxy/cover/951 502 30.840662ms
+2026/09/01 15:15:22.465134 GET /proxy/cover/952 502 32.772686ms
+2026/09/01 15:15:22.465297 GET /proxy/cover/953 502 31.484781ms
+2026/09/01 15:15:22.466022 GET /proxy/cover/955 502 31.833657ms
+2026/09/01 15:15:22.476155 GET /proxy/cover/954 502 30.288837ms
+2026/09/01 15:15:22.478235 GET /proxy/cover/956 502 32.169671ms
+2026/09/01 15:15:22.497540 GET /proxy/cover/957 502 31.017046ms
+2026/09/01 15:15:22.497836 GET /proxy/cover/959 502 31.153027ms
+2026/09/01 15:15:22.498471 GET /proxy/cover/907 502 31.680553ms
+2026/09/01 15:15:27.283055 POST /api/graphql 200 6.597981403s
+2026/09/01 15:15:28.484072 [sandbox] [grpc-default-executor-21] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 15:15:28.559672 [sandbox] [grpc-default-executor-21] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 15:15:28.594621 [sandbox] [grpc-default-executor-17] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 15:15:28.645071 [sandbox] [grpc-default-executor-21] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 15:15:28.649414 [sandbox] [grpc-default-executor-21] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 15:15:28.699610 [sandbox] [grpc-default-executor-17] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 15:15:28.747790 GET /proxy/cover/885 502 33.977083ms
+2026/09/01 15:15:28.747964 GET /proxy/cover/887 502 32.930943ms
+2026/09/01 15:15:28.749131 GET /proxy/cover/886 502 34.962336ms
+2026/09/01 15:15:28.781759 GET /proxy/cover/888 502 31.726203ms
+2026/09/01 15:15:28.782206 GET /proxy/cover/890 502 31.991691ms
+2026/09/01 15:15:28.814078 GET /proxy/cover/889 502 31.139522ms
+2026/09/01 15:15:28.814831 GET /proxy/cover/891 502 31.716842ms
+2026/09/01 15:15:28.824349 [sandbox] [grpc-default-executor-17] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ d.intercept:-1; CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10
+2026/09/01 15:15:28.846749 GET /proxy/cover/892 502 31.53094ms
+2026/09/01 15:15:28.850357 [sandbox] [grpc-default-executor-17] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 15:15:28.851980 GET /proxy/cover/893 502 36.391674ms
+2026/09/01 15:15:28.857462 GET /proxy/cover/894 502 30.704809ms
+2026/09/01 15:15:28.884493 GET /proxy/cover/895 502 31.854928ms
+2026/09/01 15:15:28.885078 GET /proxy/cover/896 502 32.139398ms
+2026/09/01 15:15:28.923012 GET /proxy/cover/897 502 34.552036ms
+2026/09/01 15:15:28.935715 GET /proxy/cover/899 502 30.640457ms
+2026/09/01 15:15:28.954651 GET /proxy/cover/898 502 30.756644ms
+2026/09/01 15:15:28.967883 GET /proxy/cover/902 502 31.364952ms
+2026/09/01 15:15:28.985758 GET /proxy/cover/901 502 30.356557ms
+2026/09/01 15:15:28.991110 GET /proxy/cover/903 502 31.204025ms
+2026/09/01 15:15:28.998853 GET /proxy/cover/900 502 30.364154ms
+2026/09/01 15:15:29.016609 GET /proxy/cover/905 502 30.168557ms
+2026/09/01 15:15:29.021901 GET /proxy/cover/904 502 30.131558ms
+2026/09/01 15:15:29.029952 GET /proxy/cover/906 502 30.243241ms
+2026/09/01 15:15:29.052937 GET /proxy/cover/939 502 30.352041ms
+2026/09/01 15:15:29.060534 GET /proxy/cover/908 502 29.96995ms
+2026/09/01 15:15:29.084286 GET /proxy/cover/940 502 30.705822ms
+2026/09/01 15:15:29.092598 GET /proxy/cover/907 502 31.339001ms
+2026/09/01 15:15:29.115832 GET /proxy/cover/941 502 30.64522ms
+2026/09/01 15:15:29.122745 GET /proxy/cover/942 502 30.561337ms
+2026/09/01 15:15:29.147262 GET /proxy/cover/945 502 30.321455ms
+2026/09/01 15:15:29.154276 GET /proxy/cover/944 502 30.603939ms
+2026/09/01 15:15:29.178999 GET /proxy/cover/943 502 30.556798ms
+2026/09/01 15:15:29.186721 GET /proxy/cover/946 502 31.732297ms
+2026/09/01 15:15:29.210531 GET /proxy/cover/949 502 30.573483ms
+2026/09/01 15:15:29.218713 GET /proxy/cover/948 502 31.276063ms
+2026/09/01 15:15:29.243632 GET /proxy/cover/947 502 32.185874ms
+2026/09/01 15:15:29.247091 [sandbox] [grpc-default-executor-19] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 15:15:29.250221 GET /proxy/cover/950 502 30.59946ms
+2026/09/01 15:15:29.269258 GET /proxy/cover/951 502 41.050949ms
+2026/09/01 15:15:29.283686 GET /proxy/cover/952 502 34.895875ms
+2026/09/01 15:15:29.286579 GET /proxy/cover/953 502 35.544137ms
+2026/09/01 15:15:29.304911 GET /proxy/cover/955 502 34.522813ms
+2026/09/01 15:15:29.309632 GET /proxy/cover/954 502 31.589116ms
+2026/09/01 15:15:29.320669 GET /proxy/cover/956 502 33.035766ms
+2026/09/01 15:15:29.337461 GET /proxy/cover/957 502 31.575335ms
+2026/09/01 15:15:29.344554 GET /proxy/cover/959 502 33.894796ms
+2026/09/01 15:15:29.353109 GET /proxy/cover/958 502 31.523422ms
+2026/09/01 15:15:29.365556 GET /proxy/cover/961 502 32.828624ms
+2026/09/01 15:15:29.376988 GET /proxy/cover/960 502 31.471178ms
+2026/09/01 15:15:29.385947 GET /proxy/cover/962 502 32.191227ms
+2026/09/01 15:15:29.397881 GET /proxy/cover/885 502 31.099128ms
+2026/09/01 15:15:29.409879 GET /proxy/cover/886 502 31.976669ms
+2026/09/01 15:15:29.424728 GET /proxy/cover/887 502 38.104863ms
+2026/09/01 15:15:29.430652 GET /proxy/cover/888 502 31.630355ms
+2026/09/01 15:15:29.444796 GET /proxy/cover/890 502 33.672502ms
+2026/09/01 15:15:29.460086 GET /proxy/cover/889 502 34.253738ms
+2026/09/01 15:15:29.468260 GET /proxy/cover/891 502 37.11126ms
+2026/09/01 15:15:29.480612 GET /proxy/cover/892 502 34.712667ms
+2026/09/01 15:15:29.494744 GET /proxy/cover/893 502 33.725677ms
+2026/09/01 15:15:29.500700 GET /proxy/cover/894 502 31.776332ms
+2026/09/01 15:15:29.524860 GET /proxy/cover/895 502 43.388488ms
+2026/09/01 15:15:29.533048 GET /proxy/cover/896 502 37.477236ms
+2026/09/01 15:15:29.534258 GET /proxy/cover/897 502 32.824425ms
+2026/09/01 15:15:29.563840 GET /proxy/cover/899 502 38.113893ms
+2026/09/01 15:15:29.570670 GET /proxy/cover/902 502 35.960304ms
+2026/09/01 15:15:29.575696 GET /proxy/cover/898 502 41.717068ms
+2026/09/01 15:15:29.597959 GET /proxy/cover/901 502 33.192175ms
+2026/09/01 15:15:29.602814 GET /proxy/cover/903 502 31.547765ms
+2026/09/01 15:15:29.606935 GET /proxy/cover/900 502 30.82459ms
+2026/09/01 15:15:29.622665 GET /proxy/cover/905 502 40.445008ms
+2026/09/01 15:15:29.630656 GET /proxy/cover/904 502 31.764457ms
+2026/09/01 15:15:29.634239 GET /proxy/cover/906 502 30.431916ms
+2026/09/01 15:15:29.637628 GET /proxy/cover/939 502 29.858677ms
+2026/09/01 15:15:29.654382 GET /proxy/cover/908 502 30.735115ms
+2026/09/01 15:15:29.654600 GET /proxy/cover/940 502 30.863726ms
+2026/09/01 15:15:29.663133 GET /proxy/cover/941 502 31.513691ms
+2026/09/01 15:15:29.665986 GET /proxy/cover/942 502 30.983496ms
+2026/09/01 15:15:29.668221 GET /proxy/cover/945 502 30.022814ms
+2026/09/01 15:15:29.686186 GET /proxy/cover/944 502 30.919066ms
+2026/09/01 15:15:29.687700 GET /proxy/cover/943 502 32.18846ms
+2026/09/01 15:15:29.694349 GET /proxy/cover/946 502 30.222239ms
+2026/09/01 15:15:29.698305 GET /proxy/cover/907 502 31.758403ms
+2026/09/01 15:15:29.700441 GET /proxy/cover/949 502 31.570675ms
+2026/09/01 15:15:29.717762 GET /proxy/cover/948 502 30.678722ms
+2026/09/01 15:15:29.719102 GET /proxy/cover/947 502 30.841066ms
+2026/09/01 15:15:29.725892 GET /proxy/cover/950 502 30.670063ms
+2026/09/01 15:15:29.729834 GET /proxy/cover/951 502 30.843862ms
+2026/09/01 15:15:29.730691 GET /proxy/cover/952 502 29.797934ms
+2026/09/01 15:15:29.748868 GET /proxy/cover/953 502 30.088287ms
+2026/09/01 15:15:29.750168 GET /proxy/cover/885 502 30.390395ms
+2026/09/01 15:15:29.756994 GET /proxy/cover/886 502 30.268269ms
+2026/09/01 15:15:29.761218 GET /proxy/cover/888 502 30.093288ms
+2026/09/01 15:15:29.761916 GET /proxy/cover/887 502 31.429377ms
+2026/09/01 15:15:29.781014 GET /proxy/cover/890 502 30.947488ms
+2026/09/01 15:15:29.781923 GET /proxy/cover/889 502 30.982323ms
+2026/09/01 15:15:29.788459 GET /proxy/cover/891 502 30.540471ms
+2026/09/01 15:15:29.791763 GET /proxy/cover/892 502 29.852975ms
+2026/09/01 15:15:29.791914 GET /proxy/cover/893 502 29.534771ms
+2026/09/01 15:15:29.812622 GET /proxy/cover/895 502 30.09403ms
+2026/09/01 15:15:29.812878 GET /proxy/cover/894 502 31.183943ms
+2026/09/01 15:15:29.819653 GET /proxy/cover/896 502 30.425271ms
+2026/09/01 15:15:29.823072 GET /proxy/cover/897 502 30.068734ms
+2026/09/01 15:15:29.823984 GET /proxy/cover/899 502 30.735045ms
+2026/09/01 15:15:29.844783 GET /proxy/cover/902 502 30.806431ms
+2026/09/01 15:15:29.844844 GET /proxy/cover/898 502 31.083304ms
+2026/09/01 15:15:29.852172 GET /proxy/cover/955 502 31.425198ms
+2026/09/01 15:15:29.856389 GET /proxy/cover/956 502 32.018259ms
+2026/09/01 15:15:29.856521 GET /proxy/cover/954 502 32.947693ms
+2026/09/01 15:15:29.876740 GET /proxy/cover/957 502 31.069695ms
+2026/09/01 15:15:29.879243 GET /proxy/cover/959 502 33.357396ms
+2026/09/01 15:15:29.882930 GET /proxy/cover/958 502 30.106947ms
+2026/09/01 15:15:29.888146 GET /proxy/cover/960 502 31.251139ms
+2026/09/01 15:15:29.888361 GET /proxy/cover/961 502 31.560743ms
+2026/09/01 15:15:29.909564 GET /proxy/cover/962 502 31.932853ms
+2026/09/01 15:15:29.910382 GET /proxy/cover/901 502 30.827426ms
+2026/09/01 15:15:29.913640 GET /proxy/cover/903 502 30.413536ms
+2026/09/01 15:15:29.917924 GET /proxy/cover/900 502 29.443343ms
+2026/09/01 15:15:29.918882 GET /proxy/cover/905 502 30.211214ms
+2026/09/01 15:15:40.306169 [sandbox] [grpc-default-executor-18] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 15:15:43.425392 POST /api/graphql 200 15.001239615s
+2026/09/01 15:15:46.318152 [sandbox] [grpc-default-executor-19] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 15:15:46.408000 [sandbox] [grpc-default-executor-17] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 15:15:46.414314 [sandbox] [grpc-default-executor-19] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 15:15:46.506073 [sandbox] [grpc-default-executor-17] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 15:15:46.511122 [sandbox] [grpc-default-executor-19] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 15:15:46.511661 [sandbox] [grpc-default-executor-17] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 15:15:46.587993 [sandbox] [grpc-default-executor-19] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ d.intercept:-1; CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10
+2026/09/01 15:15:46.602569 GET /proxy/cover/885 502 31.264729ms
+2026/09/01 15:15:46.605731 GET /proxy/cover/886 502 32.298807ms
+2026/09/01 15:15:46.606359 [sandbox] [grpc-default-executor-19] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 15:15:46.623936 GET /proxy/cover/887 502 34.093664ms
+2026/09/01 15:15:46.650369 GET /proxy/cover/890 502 42.44027ms
+2026/09/01 15:15:46.650405 GET /proxy/cover/888 502 43.692247ms
+2026/09/01 15:15:46.683640 GET /proxy/cover/889 502 31.908229ms
+2026/09/01 15:15:46.704404 GET /proxy/cover/891 502 52.367729ms
+2026/09/01 15:15:46.718671 GET /proxy/cover/892 502 31.832664ms
+2026/09/01 15:15:46.754359 GET /proxy/cover/893 502 32.400278ms
+2026/09/01 15:15:46.757688 GET /proxy/cover/894 502 32.453814ms
+2026/09/01 15:15:46.787659 GET /proxy/cover/895 502 32.084564ms
+2026/09/01 15:15:46.813991 GET /proxy/cover/896 502 55.195963ms
+2026/09/01 15:15:46.814011 GET /proxy/cover/897 502 44.094695ms
+2026/09/01 15:15:46.844904 GET /proxy/cover/899 502 32.053349ms
+2026/09/01 15:15:46.846308 GET /proxy/cover/898 502 30.687808ms
+2026/09/01 15:15:46.848140 GET /proxy/cover/902 502 31.516138ms
+2026/09/01 15:15:46.881300 GET /proxy/cover/901 502 32.751215ms
+2026/09/01 15:15:46.881323 GET /proxy/cover/903 502 32.089253ms
+2026/09/01 15:15:46.898812 GET /proxy/cover/900 502 30.773261ms
+2026/09/01 15:15:46.919164 GET /proxy/cover/905 502 35.834866ms
+2026/09/01 15:15:46.932103 GET /proxy/cover/904 502 32.130596ms
+2026/09/01 15:15:46.951493 GET /proxy/cover/906 502 31.029038ms
+2026/09/01 15:15:46.964493 GET /proxy/cover/939 502 31.408296ms
+2026/09/01 15:15:46.984017 GET /proxy/cover/908 502 31.599397ms
+2026/09/01 15:15:46.996268 GET /proxy/cover/885 502 31.020553ms
+2026/09/01 15:15:47.015802 GET /proxy/cover/886 502 30.887743ms
+2026/09/01 15:15:47.028645 GET /proxy/cover/887 502 31.314548ms
+2026/09/01 15:15:47.052275 GET /proxy/cover/888 502 35.325633ms
+2026/09/01 15:15:47.059424 GET /proxy/cover/890 502 29.731646ms
+2026/09/01 15:15:47.083515 GET /proxy/cover/889 502 30.134741ms
+2026/09/01 15:15:47.086192 GET /proxy/cover/891 502 30.410651ms
+2026/09/01 15:15:47.116344 GET /proxy/cover/892 502 31.662723ms
+2026/09/01 15:15:47.119579 GET /proxy/cover/893 502 32.634347ms
+2026/09/01 15:15:47.150111 GET /proxy/cover/894 502 32.676062ms
+2026/09/01 15:15:47.150623 GET /proxy/cover/895 502 32.742579ms
+2026/09/01 15:15:47.152255 GET /proxy/cover/896 502 31.853511ms
+2026/09/01 15:15:47.153244 [sandbox] [grpc-default-executor-19] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 15:15:47.182003 GET /proxy/cover/897 502 30.360762ms
+2026/09/01 15:15:47.182866 GET /proxy/cover/885 502 30.075947ms
+2026/09/01 15:15:47.184402 GET /proxy/cover/886 502 29.925409ms
+2026/09/01 15:15:47.214202 GET /proxy/cover/887 502 31.538272ms
+2026/09/01 15:15:47.215138 GET /proxy/cover/899 502 30.332282ms
+2026/09/01 15:15:47.215895 GET /proxy/cover/888 502 32.622056ms
+2026/09/01 15:15:47.246483 GET /proxy/cover/898 502 31.516774ms
+2026/09/01 15:15:47.248256 GET /proxy/cover/901 502 31.876292ms
+2026/09/01 15:15:47.248326 GET /proxy/cover/902 502 32.603984ms
+2026/09/01 15:15:47.270856 GET /proxy/cover/903 502 30.553044ms
+2026/09/01 15:15:47.279326 GET /proxy/cover/900 502 30.293884ms
+2026/09/01 15:15:47.279964 GET /proxy/cover/905 502 30.727283ms
+2026/09/01 15:15:47.301982 GET /proxy/cover/904 502 30.32594ms
+2026/09/01 15:15:47.310236 GET /proxy/cover/906 502 30.12292ms
+2026/09/01 15:15:47.310992 GET /proxy/cover/939 502 30.457284ms
+2026/09/01 15:15:47.333328 GET /proxy/cover/908 502 30.465188ms
+2026/09/01 15:15:47.342367 GET /proxy/cover/890 502 31.271208ms
+2026/09/01 15:15:47.342563 GET /proxy/cover/889 502 31.01315ms
+2026/09/01 15:15:47.363064 GET /proxy/cover/891 502 30.691028ms
+2026/09/01 15:15:47.364055 GET /proxy/cover/885 502 30.06623ms
+2026/09/01 15:15:47.374403 GET /proxy/cover/886 502 30.643955ms
+2026/09/01 15:15:47.374615 GET /proxy/cover/887 502 30.517661ms
+2026/09/01 15:15:47.394750 GET /proxy/cover/892 502 30.087728ms
+2026/09/01 15:15:47.395257 GET /proxy/cover/888 502 31.208507ms
+2026/09/01 15:15:47.405265 GET /proxy/cover/893 502 29.912086ms
+2026/09/01 15:15:47.406699 GET /proxy/cover/894 502 30.442297ms
+2026/09/01 15:15:47.428571 GET /proxy/cover/895 502 32.565044ms
+2026/09/01 15:15:47.429265 GET /proxy/cover/896 502 32.786578ms
+2026/09/01 15:15:47.436014 GET /proxy/cover/897 502 29.966443ms
+2026/09/01 15:15:47.436938 GET /proxy/cover/899 502 29.83558ms
+2026/09/01 15:15:47.459385 GET /proxy/cover/898 502 30.163242ms
+2026/09/01 15:15:47.460666 GET /proxy/cover/902 502 30.897024ms
+2026/09/01 15:15:47.467594 GET /proxy/cover/901 502 30.940632ms
+2026/09/01 15:15:47.468305 GET /proxy/cover/903 502 30.82157ms
+2026/09/01 15:15:47.490612 GET /proxy/cover/905 502 29.438816ms
+2026/09/01 15:15:47.490822 GET /proxy/cover/900 502 30.575364ms
+2026/09/01 15:15:47.498572 GET /proxy/cover/904 502 30.267757ms
+2026/09/01 15:15:47.498811 GET /proxy/cover/906 502 30.087267ms
+2026/09/01 15:15:47.524028 GET /proxy/cover/939 502 32.395063ms
+2026/09/01 15:15:47.573421 GET /proxy/cover/886 502 32.461751ms
+2026/09/01 15:15:47.573478 GET /proxy/cover/885 502 33.732296ms
+2026/09/01 15:15:47.574031 GET /proxy/cover/887 502 33.03037ms
+2026/09/01 15:15:47.574661 GET /proxy/cover/890 502 33.548389ms
+2026/09/01 15:15:47.575021 GET /proxy/cover/888 502 34.000872ms
+2026/09/01 15:15:47.605983 GET /proxy/cover/891 502 30.906952ms
+2026/09/01 15:15:47.606227 GET /proxy/cover/889 502 31.228753ms
+2026/09/01 15:15:47.607896 GET /proxy/cover/892 502 32.370829ms
+2026/09/01 15:15:47.607919 GET /proxy/cover/893 502 31.948941ms
+2026/09/01 15:15:47.608711 GET /proxy/cover/894 502 32.542213ms
+2026/09/01 15:15:47.638094 GET /proxy/cover/895 502 31.119639ms
+2026/09/01 15:15:47.638411 GET /proxy/cover/896 502 31.198238ms
+2026/09/01 15:15:47.639266 GET /proxy/cover/899 502 30.560567ms
+2026/09/01 15:15:47.639533 GET /proxy/cover/898 502 30.327082ms
+2026/09/01 15:15:47.640248 GET /proxy/cover/897 502 31.557977ms
+2026/09/01 15:15:47.669778 GET /proxy/cover/902 502 30.808938ms
+2026/09/01 15:15:47.670976 GET /proxy/cover/900 502 31.160732ms
+2026/09/01 15:15:47.671257 GET /proxy/cover/901 502 32.159836ms
+2026/09/01 15:15:47.672111 GET /proxy/cover/905 502 31.601374ms
+2026/09/01 15:15:47.672383 GET /proxy/cover/903 502 32.795243ms
+2026/09/01 15:15:47.700487 GET /proxy/cover/908 502 30.302098ms
+2026/09/01 15:15:47.985482 [sandbox] [grpc-default-executor-20] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 15:15:55.120265 POST /api/graphql 200 8.861585392s
+2026/09/01 15:15:55.245634 [sandbox] [grpc-default-executor-19] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 15:15:55.408993 [sandbox] [grpc-default-executor-20] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 15:15:55.421303 [sandbox] [grpc-default-executor-19] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 15:15:55.490061 GET /proxy/cover/886 502 47.401026ms
+2026/09/01 15:15:55.490134 GET /proxy/cover/885 502 49.172018ms
+2026/09/01 15:15:55.525544 GET /proxy/cover/887 502 34.363723ms
+2026/09/01 15:15:55.527350 GET /proxy/cover/888 502 36.011155ms
+2026/09/01 15:15:55.548753 [sandbox] [grpc-default-executor-21] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 15:15:55.558192 GET /proxy/cover/890 502 31.455717ms
+2026/09/01 15:15:55.559158 GET /proxy/cover/889 502 30.880949ms
+2026/09/01 15:15:55.561610 [sandbox] [grpc-default-executor-21] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 15:15:55.564904 [sandbox] [grpc-default-executor-20] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 15:15:55.581110 GET /proxy/cover/891 502 30.88702ms
+2026/09/01 15:15:55.592061 GET /proxy/cover/892 502 31.774349ms
+2026/09/01 15:15:55.602069 GET /proxy/cover/893 502 38.784862ms
+2026/09/01 15:15:55.628766 GET /proxy/cover/894 502 35.919819ms
+2026/09/01 15:15:55.634753 GET /proxy/cover/895 502 31.354785ms
+2026/09/01 15:15:55.636641 GET /proxy/cover/896 502 32.232769ms
+2026/09/01 15:15:55.665841 GET /proxy/cover/897 502 30.248524ms
+2026/09/01 15:15:55.667097 GET /proxy/cover/899 502 29.615087ms
+2026/09/01 15:15:55.689658 [sandbox] [grpc-default-executor-19] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ d.intercept:-1; CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10
+2026/09/01 15:15:55.699449 GET /proxy/cover/902 502 31.627308ms
+2026/09/01 15:15:55.699661 GET /proxy/cover/898 502 32.477735ms
+2026/09/01 15:15:55.703046 [sandbox] [grpc-default-executor-19] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 15:15:55.722423 GET /proxy/cover/901 502 31.297729ms
+2026/09/01 15:15:55.732492 GET /proxy/cover/903 502 30.908045ms
+2026/09/01 15:15:55.735803 GET /proxy/cover/900 502 31.222541ms
+2026/09/01 15:15:55.774367 GET /proxy/cover/905 502 40.855784ms
+2026/09/01 15:15:55.776520 GET /proxy/cover/904 502 40.160642ms
+2026/09/01 15:15:55.807938 GET /proxy/cover/906 502 32.360886ms
+2026/09/01 15:15:55.810429 GET /proxy/cover/939 502 33.051701ms
+2026/09/01 15:15:55.839240 GET /proxy/cover/908 502 30.432517ms
+2026/09/01 15:15:55.842079 GET /proxy/cover/940 502 31.219075ms
+2026/09/01 15:15:55.871536 GET /proxy/cover/941 502 31.441544ms
+2026/09/01 15:15:55.872637 GET /proxy/cover/942 502 29.957479ms
+2026/09/01 15:15:55.873662 GET /proxy/cover/945 502 29.871533ms
+2026/09/01 15:15:55.904643 GET /proxy/cover/907 502 30.102856ms
+2026/09/01 15:15:55.904677 GET /proxy/cover/944 502 30.250999ms
+2026/09/01 15:15:55.930474 GET /proxy/cover/943 502 30.589824ms
+2026/09/01 15:15:55.937283 GET /proxy/cover/946 502 31.028501ms
+2026/09/01 15:15:55.938628 GET /proxy/cover/949 502 31.182492ms
+2026/09/01 15:15:55.942622 [sandbox] [grpc-default-executor-19] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 15:15:55.972136 GET /proxy/cover/948 502 32.824375ms
+2026/09/01 15:15:55.975666 GET /proxy/cover/947 502 31.094262ms
+2026/09/01 15:15:55.984454 GET /proxy/cover/950 502 31.870943ms
+2026/09/01 15:15:56.000507 GET /proxy/cover/951 502 31.419626ms
+2026/09/01 15:15:56.004254 GET /proxy/cover/952 502 30.743011ms
+2026/09/01 15:15:56.006685 GET /proxy/cover/953 502 30.138977ms
+2026/09/01 15:15:56.032813 GET /proxy/cover/955 502 31.092239ms
+2026/09/01 15:15:56.034775 GET /proxy/cover/954 502 29.763705ms
+2026/09/01 15:15:56.037394 GET /proxy/cover/956 502 30.024998ms
+2026/09/01 15:15:56.062905 GET /proxy/cover/957 502 29.304638ms
+2026/09/01 15:15:56.064281 GET /proxy/cover/959 502 28.948004ms
+2026/09/01 15:15:56.067678 GET /proxy/cover/958 502 29.531562ms
+2026/09/01 15:15:56.094806 GET /proxy/cover/961 502 31.124891ms
+2026/09/01 15:15:56.095891 GET /proxy/cover/960 502 31.190302ms
+2026/09/01 15:15:56.097958 GET /proxy/cover/962 502 29.632394ms
+2026/09/01 15:15:56.126544 GET /proxy/cover/885 502 30.969829ms
+2026/09/01 15:15:56.126790 GET /proxy/cover/886 502 30.412695ms
+2026/09/01 15:15:56.128061 GET /proxy/cover/887 502 29.564789ms
+2026/09/01 15:15:56.158084 GET /proxy/cover/888 502 30.543757ms
+2026/09/01 15:15:56.158084 GET /proxy/cover/890 502 30.331518ms
+2026/09/01 15:15:56.159857 GET /proxy/cover/889 502 30.493192ms
+2026/09/01 15:15:56.193940 GET /proxy/cover/891 502 34.73125ms
+2026/09/01 15:15:56.196495 GET /proxy/cover/892 502 36.96887ms
+2026/09/01 15:15:56.196522 GET /proxy/cover/893 502 35.355958ms
+2026/09/01 15:15:56.218638 GET /proxy/cover/894 502 44.884949ms
+2026/09/01 15:15:56.249369 GET /proxy/cover/895 502 51.696367ms
+2026/09/01 15:15:56.249674 GET /proxy/cover/897 502 29.864687ms
+2026/09/01 15:15:56.250103 GET /proxy/cover/896 502 52.079025ms
+2026/09/01 15:15:56.277142 GET /proxy/cover/899 502 30.078559ms
+2026/09/01 15:15:56.282183 GET /proxy/cover/898 502 30.628111ms
+2026/09/01 15:15:56.283544 GET /proxy/cover/902 502 31.67251ms
+2026/09/01 15:15:56.309405 GET /proxy/cover/901 502 31.4666ms
+2026/09/01 15:15:56.313653 GET /proxy/cover/903 502 30.403779ms
+2026/09/01 15:15:56.314306 GET /proxy/cover/900 502 30.001248ms
+2026/09/01 15:15:56.340370 GET /proxy/cover/905 502 29.881435ms
+2026/09/01 15:15:56.344773 GET /proxy/cover/904 502 30.266648ms
+2026/09/01 15:15:56.346410 GET /proxy/cover/906 502 31.589118ms
+2026/09/01 15:15:56.371779 GET /proxy/cover/939 502 30.568799ms
+2026/09/01 15:15:56.375493 GET /proxy/cover/908 502 29.864065ms
+2026/09/01 15:15:56.376730 GET /proxy/cover/940 502 29.371241ms
+2026/09/01 15:15:56.404514 GET /proxy/cover/941 502 31.628414ms
+2026/09/01 15:15:56.405859 GET /proxy/cover/942 502 29.81333ms
+2026/09/01 15:15:56.407295 GET /proxy/cover/945 502 30.17349ms
+2026/09/01 15:15:56.439840 GET /proxy/cover/944 502 34.392547ms
+2026/09/01 15:15:56.441294 GET /proxy/cover/907 502 34.747628ms
+2026/09/01 15:15:56.441555 GET /proxy/cover/885 502 33.718615ms
+2026/09/01 15:15:56.471889 GET /proxy/cover/886 502 30.870831ms
+2026/09/01 15:15:56.472740 GET /proxy/cover/887 502 30.844927ms
+2026/09/01 15:15:56.472978 GET /proxy/cover/888 502 30.78189ms
+2026/09/01 15:15:56.496846 GET /proxy/cover/890 502 31.263176ms
+2026/09/01 15:15:56.504075 GET /proxy/cover/943 502 30.245552ms
+2026/09/01 15:15:56.504276 GET /proxy/cover/889 502 31.517697ms
+2026/09/01 15:15:56.507393 GET /proxy/cover/946 502 33.375113ms
+2026/09/01 15:15:56.528397 GET /proxy/cover/949 502 30.502226ms
+2026/09/01 15:15:56.528762 GET /proxy/cover/948 502 30.512644ms
+2026/09/01 15:15:56.536027 GET /proxy/cover/947 502 30.88183ms
+2026/09/01 15:15:56.536606 GET /proxy/cover/950 502 31.213451ms
+2026/09/01 15:15:56.538043 GET /proxy/cover/951 502 29.773032ms
+2026/09/01 15:15:56.560525 GET /proxy/cover/953 502 30.624764ms
+2026/09/01 15:15:56.560836 GET /proxy/cover/952 502 31.207742ms
+2026/09/01 15:15:56.568035 GET /proxy/cover/955 502 30.56347ms
+2026/09/01 15:15:56.568856 GET /proxy/cover/954 502 31.045998ms
+2026/09/01 15:15:56.569913 GET /proxy/cover/956 502 31.120965ms
+2026/09/01 15:15:56.592954 GET /proxy/cover/957 502 31.225802ms
+2026/09/01 15:15:56.594193 GET /proxy/cover/959 502 32.249807ms
+2026/09/01 15:15:56.603110 GET /proxy/cover/958 502 33.915108ms
+2026/09/01 15:15:56.604473 GET /proxy/cover/961 502 34.942919ms
+2026/09/01 15:15:56.607177 GET /proxy/cover/960 502 36.284631ms
+2026/09/01 15:15:56.679166 GET /proxy/cover/962 502 84.820824ms
+2026/09/01 15:15:56.679297 GET /proxy/cover/891 502 84.47553ms
+2026/09/01 15:15:56.679329 GET /proxy/cover/894 502 71.533317ms
+2026/09/01 15:15:56.679383 GET /proxy/cover/893 502 74.450058ms
+2026/09/01 15:15:56.679430 GET /proxy/cover/892 502 75.568211ms
+2026/09/01 15:15:56.717507 GET /proxy/cover/885 502 36.536758ms
+2026/09/01 15:15:56.717698 GET /proxy/cover/895 502 36.238232ms
+2026/09/01 15:15:56.718394 GET /proxy/cover/896 502 36.838298ms
+2026/09/01 15:15:56.719100 GET /proxy/cover/897 502 37.410308ms
+2026/09/01 15:15:56.720458 GET /proxy/cover/899 502 38.786709ms
+2026/09/01 15:15:56.753703 GET /proxy/cover/898 502 34.977317ms
+2026/09/01 15:15:56.753939 GET /proxy/cover/901 502 34.738592ms
+2026/09/01 15:15:56.754029 GET /proxy/cover/902 502 34.957693ms
+2026/09/01 15:15:56.754184 GET /proxy/cover/903 502 34.633465ms
+2026/09/01 15:15:56.754490 GET /proxy/cover/900 502 33.554607ms
+2026/09/01 15:15:56.786196 GET /proxy/cover/905 502 31.23014ms
+2026/09/01 15:15:56.786918 GET /proxy/cover/904 502 31.582397ms
+2026/09/01 15:15:56.787413 GET /proxy/cover/906 502 31.990648ms
+2026/09/01 15:15:56.787552 GET /proxy/cover/939 502 31.96815ms
+2026/09/01 15:15:56.789026 GET /proxy/cover/908 502 33.29652ms
+2026/09/01 15:15:56.819408 GET /proxy/cover/940 502 32.256157ms
+2026/09/01 15:15:56.820614 GET /proxy/cover/941 502 33.050262ms
+2026/09/01 15:15:56.822129 GET /proxy/cover/945 502 33.997628ms
+2026/09/01 15:15:56.823160 GET /proxy/cover/942 502 35.210532ms
+2026/09/01 15:15:56.824717 GET /proxy/cover/944 502 34.87346ms
+2026/09/01 15:15:56.853685 GET /proxy/cover/907 502 33.289227ms
+2026/09/01 15:15:56.854645 GET /proxy/cover/886 502 33.508439ms
+2026/09/01 15:15:56.855273 GET /proxy/cover/887 502 32.691114ms
+2026/09/01 15:15:56.855830 GET /proxy/cover/888 502 32.29345ms
+2026/09/01 15:16:05.903661 [sandbox] [grpc-default-executor-18] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 15:16:06.842666 [sandbox] [grpc-default-executor-17] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 523 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 15:16:06.843089 POST /api/graphql 200 11.700161047s
+2026/09/01 15:16:49.124613 [sandbox] [grpc-default-executor-17] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 15:16:49.450425 [sandbox] [grpc-default-executor-17] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 15:16:49.451625 [sandbox] [grpc-default-executor-20] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 15:16:49.564163 POST /api/graphql 200 559.054777ms
+2026/09/01 15:16:49.663784 [sandbox] [grpc-default-executor-17] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 15:16:49.664332 [sandbox] [grpc-default-executor-20] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Network is unreachable
+2026/09/01 15:16:49.688148 GET /proxy/cover/885 502 96.290838ms
+2026/09/01 15:16:49.688589 GET /proxy/cover/886 502 95.459234ms
+2026/09/01 15:16:49.692943 [sandbox] [grpc-default-executor-20] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 15:16:49.695740 GET /proxy/cover/887 502 30.721814ms
+2026/09/01 15:16:49.696679 GET /proxy/cover/888 502 31.338854ms
+2026/09/01 15:16:49.724548 GET /proxy/cover/890 502 30.250986ms
+2026/09/01 15:16:49.745910 GET /proxy/cover/889 502 48.505443ms
+2026/09/01 15:16:49.756332 GET /proxy/cover/891 502 30.614448ms
+2026/09/01 15:16:49.778212 GET /proxy/cover/892 502 31.143427ms
+2026/09/01 15:16:49.885292 GET /proxy/cover/893 502 128.176716ms
+2026/09/01 15:16:49.891509 [sandbox] [grpc-default-executor-20] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ d.intercept:-1; CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10
+2026/09/01 15:16:49.914988 GET /proxy/cover/894 502 135.55898ms
+2026/09/01 15:16:49.916975 GET /proxy/cover/895 502 30.495598ms
+2026/09/01 15:16:49.918818 [sandbox] [grpc-default-executor-20] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 15:16:49.923144 GET /proxy/cover/897 502 30.102591ms
+2026/09/01 15:16:49.949096 GET /proxy/cover/899 502 31.363191ms
+2026/09/01 15:16:49.950659 GET /proxy/cover/898 502 30.6ms
+2026/09/01 15:16:49.982806 GET /proxy/cover/902 502 32.400311ms
+2026/09/01 15:16:49.983059 GET /proxy/cover/901 502 31.840441ms
+2026/09/01 15:16:50.014655 GET /proxy/cover/903 502 30.842554ms
+2026/09/01 15:16:50.015577 GET /proxy/cover/900 502 31.649211ms
+2026/09/01 15:16:50.046241 GET /proxy/cover/905 502 30.48892ms
+2026/09/01 15:16:50.048090 GET /proxy/cover/904 502 31.84873ms
+2026/09/01 15:16:50.078954 GET /proxy/cover/906 502 31.747946ms
+2026/09/01 15:16:50.079845 GET /proxy/cover/939 502 31.251643ms
+2026/09/01 15:16:50.112343 GET /proxy/cover/908 502 32.574132ms
+2026/09/01 15:16:50.199208 POST /api/graphql 200 632.242168ms
+2026/09/01 15:16:50.491686 [sandbox] [grpc-default-executor-20] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 15:17:00.537032 GET /proxy/cover/885 502 30.507674ms
+2026/09/01 15:17:00.537753 GET /proxy/cover/886 502 31.15582ms
+2026/09/01 15:17:00.538645 GET /proxy/cover/887 502 31.991332ms
+2026/09/01 15:17:00.539392 GET /proxy/cover/890 502 30.506852ms
+2026/09/01 15:17:00.539987 GET /proxy/cover/888 502 31.397897ms
+2026/09/01 15:17:00.567986 GET /proxy/cover/889 502 30.160182ms
+2026/09/01 15:17:00.569395 GET /proxy/cover/891 502 31.218215ms
+2026/09/01 15:17:00.569576 GET /proxy/cover/893 502 29.889102ms
+2026/09/01 15:17:00.570723 GET /proxy/cover/892 502 31.718278ms
+2026/09/01 15:17:00.571403 GET /proxy/cover/894 502 30.531337ms
+2026/09/01 15:17:00.600177 GET /proxy/cover/895 502 31.122168ms
+2026/09/01 15:17:00.601340 GET /proxy/cover/897 502 30.804471ms
+2026/09/01 15:17:00.601783 GET /proxy/cover/899 502 31.042401ms
+2026/09/01 15:17:00.602633 GET /proxy/cover/898 502 31.460502ms
+2026/09/01 15:17:00.603401 GET /proxy/cover/902 502 31.623763ms
+2026/09/01 15:17:00.637788 GET /proxy/cover/900 502 35.142558ms
+2026/09/01 15:17:00.637998 GET /proxy/cover/905 502 34.581874ms
+2026/09/01 15:17:00.638942 GET /proxy/cover/903 502 36.714911ms
+2026/09/01 15:17:00.638960 GET /proxy/cover/901 502 37.551205ms
+2026/09/01 15:17:00.640898 GET /proxy/cover/904 502 36.967397ms
+2026/09/01 15:17:00.671391 GET /proxy/cover/906 502 32.197723ms
+2026/09/01 15:17:00.672996 GET /proxy/cover/939 502 33.369686ms
+2026/09/01 15:17:00.673146 GET /proxy/cover/908 502 33.290831ms
+2026/09/01 15:17:04.005831 POST /api/graphql 200 15.000774921s
+2026/09/01 15:17:08.363384 [sandbox] [grpc-default-executor-19] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 15:20:24.355896 shutting down
+2026/09/01 15:20:43.191092 === Tsunagu dev (unknown) starting, pid 271410 ===
+2026/09/01 15:20:43.213442 sandbox: spawning /nix/store/1slz0vmmgsd7p6i4c0jaywkpw56wl2yg-openjdk-21.0.12+8/lib/openjdk/bin/java -cp /home/shozikan/Projects/Manga/Tsunagu/sandbox/build/libs/sandbox-0.1.0-all.jar tsunagu.MainKt (source: JAVA_HOME/PATH)
+2026/09/01 15:20:43.502292 [sandbox] [main] INFO eu.kanade.tachiyomi.network.TlsSetup - TLS: Conscrypt provider installed (v2.5.2)
+2026/09/01 15:20:44.062069 [sandbox] tsunagu sandbox listening on :50051
+2026/09/01 15:20:45.051775 sandbox: ready at localhost:50051
+2026/09/01 15:20:48.073764 tsunagu dev listening on [::]:6007
+2026/09/01 15:20:48.073948 metadata backfill: 1 unmatched media, working through them (~1m)
+2026/09/01 15:20:48.078138 content filter: recomputed 6 media
+2026/09/01 15:20:48.535214 tracker poll: reconciled 2 media
+2026/09/01 15:20:49.191251 metadata backfill: done -- matched 0/1
+2026/09/01 15:20:54.811336 POST /api/graphql 200 1.903797997s
+2026/09/01 15:20:56.622638 [sandbox] [grpc-default-executor-2] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:20:56.777400 [sandbox] [grpc-default-executor-3] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:20:56.778142 POST /api/graphql 200 569.931035ms
+2026/09/01 15:20:56.895206 [sandbox] [grpc-default-executor-2] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:20:56.972370 POST /api/graphql 200 764.299231ms
+2026/09/01 15:20:57.024845 [sandbox] [grpc-default-executor-3] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:19; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:20:57.139562 GET /proxy/cover/885 502 138.843598ms
+2026/09/01 15:20:57.139620 GET /proxy/cover/886 502 138.563474ms
+2026/09/01 15:20:57.139581 GET /proxy/cover/887 502 112.891435ms
+2026/09/01 15:20:57.140106 [sandbox] [grpc-default-executor-2] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:19; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:20:57.148068 [sandbox] [grpc-default-executor-2] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 15:20:57.171634 GET /proxy/cover/888 502 29.859582ms
+2026/09/01 15:20:57.179670 GET /proxy/cover/890 502 37.855568ms
+2026/09/01 15:20:57.179750 GET /proxy/cover/891 502 28.844903ms
+2026/09/01 15:20:57.179731 GET /proxy/cover/889 502 37.378007ms
+2026/09/01 15:20:57.208905 GET /proxy/cover/892 502 27.405645ms
+2026/09/01 15:20:57.221587 GET /proxy/cover/893 502 40.035882ms
+2026/09/01 15:20:57.252111 GET /proxy/cover/895 502 29.717672ms
+2026/09/01 15:20:57.252113 GET /proxy/cover/894 502 42.209154ms
+2026/09/01 15:20:57.288487 GET /proxy/cover/897 502 34.99791ms
+2026/09/01 15:20:57.288511 GET /proxy/cover/899 502 34.693373ms
+2026/09/01 15:20:57.324276 GET /proxy/cover/898 502 34.247938ms
+2026/09/01 15:20:57.324330 GET /proxy/cover/902 502 34.058915ms
+2026/09/01 15:20:57.370718 GET /proxy/cover/901 502 45.272384ms
+2026/09/01 15:20:57.370722 GET /proxy/cover/903 502 45.120877ms
+2026/09/01 15:20:57.392770 GET /proxy/cover/900 502 49.714946ms
+2026/09/01 15:20:57.393549 [sandbox] [grpc-default-executor-3] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ d.intercept:-1; CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10
+2026/09/01 15:20:57.407035 GET /proxy/cover/905 502 34.328971ms
+2026/09/01 15:20:57.427908 GET /proxy/cover/904 502 34.086524ms
+2026/09/01 15:20:57.427976 GET /proxy/cover/906 502 32.854411ms
+2026/09/01 15:20:57.433039 GET /proxy/cover/939 502 24.875515ms
+2026/09/01 15:20:57.436614 [sandbox] [grpc-default-executor-3] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 15:20:57.458806 GET /proxy/cover/908 502 28.525269ms
+2026/09/01 15:20:57.462998 GET /proxy/cover/941 502 23.201553ms
+2026/09/01 15:20:57.463094 GET /proxy/cover/940 502 29.315502ms
+2026/09/01 15:20:57.485525 GET /proxy/cover/942 502 25.497252ms
+2026/09/01 15:20:57.500577 GET /proxy/cover/945 502 36.776146ms
+2026/09/01 15:20:57.500587 GET /proxy/cover/944 502 36.634426ms
+2026/09/01 15:20:57.537131 POST /api/graphql 200 1.32893646s
+2026/09/01 15:20:57.539967 GET /proxy/cover/946 502 38.152863ms
+2026/09/01 15:20:57.539977 GET /proxy/cover/943 502 38.367151ms
+2026/09/01 15:20:57.576788 GET /proxy/cover/949 502 38.798792ms
+2026/09/01 15:20:57.576888 GET /proxy/cover/948 502 38.270911ms
+2026/09/01 15:20:57.576938 GET /proxy/cover/947 502 38.103286ms
+2026/09/01 15:20:57.576899 GET /proxy/cover/907 502 38.543381ms
+2026/09/01 15:20:57.594365 GET /proxy/cover/950 502 53.461772ms
+2026/09/01 15:20:57.594399 GET /proxy/cover/951 502 53.346328ms
+2026/09/01 15:20:57.609538 GET /proxy/cover/953 502 31.10097ms
+2026/09/01 15:20:57.609584 GET /proxy/cover/955 502 31.063955ms
+2026/09/01 15:20:57.609549 GET /proxy/cover/952 502 31.407091ms
+2026/09/01 15:20:57.609736 GET /proxy/cover/954 502 31.222876ms
+2026/09/01 15:20:57.637609 GET /proxy/cover/956 502 42.094882ms
+2026/09/01 15:20:57.637642 GET /proxy/cover/957 502 41.914915ms
+2026/09/01 15:20:57.654104 GET /proxy/cover/958 502 43.413087ms
+2026/09/01 15:20:57.654104 GET /proxy/cover/959 502 43.664991ms
+2026/09/01 15:20:57.654306 GET /proxy/cover/961 502 43.513263ms
+2026/09/01 15:20:57.654353 GET /proxy/cover/960 502 43.495071ms
+2026/09/01 15:20:57.671328 GET /proxy/cover/962 502 32.385525ms
+2026/09/01 15:20:59.287691 [sandbox] [grpc-default-executor-1] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:20:59.399163 [sandbox] [grpc-default-executor-4] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:20:59.457231 [sandbox] [grpc-default-executor-1] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:20:59.548269 GET /proxy/cover/886 502 37.580199ms
+2026/09/01 15:20:59.548279 GET /proxy/cover/885 502 38.960109ms
+2026/09/01 15:20:59.549293 [sandbox] [grpc-default-executor-4] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:19; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:20:59.573310 GET /proxy/cover/887 502 24.18691ms
+2026/09/01 15:20:59.578114 [sandbox] [grpc-default-executor-4] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 15:20:59.579962 GET /proxy/cover/888 502 30.652668ms
+2026/09/01 15:20:59.580013 GET /proxy/cover/890 502 29.2628ms
+2026/09/01 15:20:59.588997 [sandbox] [grpc-default-executor-3] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:19; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:20:59.599136 GET /proxy/cover/891 502 18.022963ms
+2026/09/01 15:20:59.600406 GET /proxy/cover/889 502 19.399809ms
+2026/09/01 15:20:59.604208 GET /proxy/cover/892 502 23.028399ms
+2026/09/01 15:20:59.619347 GET /proxy/cover/893 502 18.518125ms
+2026/09/01 15:20:59.622049 GET /proxy/cover/894 502 17.473796ms
+2026/09/01 15:20:59.637966 GET /proxy/cover/895 502 17.696969ms
+2026/09/01 15:20:59.640642 GET /proxy/cover/897 502 17.996026ms
+2026/09/01 15:20:59.657178 GET /proxy/cover/899 502 18.737462ms
+2026/09/01 15:20:59.659251 GET /proxy/cover/898 502 18.046424ms
+2026/09/01 15:20:59.675370 GET /proxy/cover/902 502 17.692161ms
+2026/09/01 15:20:59.675621 [sandbox] [grpc-default-executor-4] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ d.intercept:-1; CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10
+2026/09/01 15:20:59.679447 GET /proxy/cover/901 502 19.876477ms
+2026/09/01 15:20:59.683452 [sandbox] [grpc-default-executor-4] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 15:20:59.694334 GET /proxy/cover/900 502 17.072149ms
+2026/09/01 15:20:59.695055 GET /proxy/cover/903 502 18.05503ms
+2026/09/01 15:20:59.716872 GET /proxy/cover/905 502 20.924122ms
+2026/09/01 15:20:59.720626 GET /proxy/cover/904 502 17.380892ms
+2026/09/01 15:20:59.736802 GET /proxy/cover/906 502 19.327912ms
+2026/09/01 15:20:59.739211 GET /proxy/cover/939 502 18.205725ms
+2026/09/01 15:20:59.758270 GET /proxy/cover/908 502 21.040578ms
+2026/09/01 15:20:59.872288 GET /proxy/cover/940 502 19.744004ms
+2026/09/01 15:20:59.872319 GET /proxy/cover/941 502 19.271081ms
+2026/09/01 15:20:59.893245 GET /proxy/cover/942 502 20.07067ms
+2026/09/01 15:20:59.893302 GET /proxy/cover/945 502 19.969281ms
+2026/09/01 15:20:59.914665 GET /proxy/cover/944 502 20.692755ms
+2026/09/01 15:20:59.917562 GET /proxy/cover/943 502 23.500401ms
+2026/09/01 15:20:59.937135 GET /proxy/cover/946 502 21.661461ms
+2026/09/01 15:20:59.940318 GET /proxy/cover/949 502 22.036382ms
+2026/09/01 15:20:59.956248 GET /proxy/cover/948 502 20.813978ms
+2026/09/01 15:20:59.958096 GET /proxy/cover/947 502 20.004213ms
+2026/09/01 15:20:59.961090 GET /proxy/cover/907 502 20.273086ms
+2026/09/01 15:20:59.978199 GET /proxy/cover/950 502 19.570188ms
+2026/09/01 15:20:59.980321 GET /proxy/cover/951 502 18.657361ms
+2026/09/01 15:20:59.996782 GET /proxy/cover/952 502 17.404174ms
+2026/09/01 15:21:00.000292 GET /proxy/cover/953 502 19.233175ms
+2026/09/01 15:21:00.019907 GET /proxy/cover/955 502 22.210423ms
+2026/09/01 15:21:00.022263 GET /proxy/cover/954 502 21.402679ms
+2026/09/01 15:21:00.045772 GET /proxy/cover/957 502 23.133575ms
+2026/09/01 15:21:00.046309 GET /proxy/cover/956 502 25.390638ms
+2026/09/01 15:21:00.064122 GET /proxy/cover/959 502 17.40473ms
+2026/09/01 15:21:00.066173 GET /proxy/cover/958 502 19.104533ms
+2026/09/01 15:21:00.082719 GET /proxy/cover/961 502 17.954238ms
+2026/09/01 15:21:00.086845 GET /proxy/cover/960 502 20.180646ms
+2026/09/01 15:21:00.103931 GET /proxy/cover/962 502 20.194821ms
+2026/09/01 15:21:00.193133 [sandbox] [grpc-default-executor-4] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 15:21:00.600336 POST /api/graphql 200 1.009592263s
+2026/09/01 15:21:02.190070 POST /api/graphql 200 1.219746663s
+2026/09/01 15:21:02.226660 GET /proxy/cover/895 502 30.804159ms
+2026/09/01 15:21:02.711116 sync: caching cover for entry 1370 failed: rpc error: code = Internal desc = java.lang.IllegalStateException: extension eu.kanade.tachiyomi.animeextension.en.aniwaves is not an HttpSource
+2026/09/01 15:21:03.430360 POST /api/graphql 200 1.31068827s
+2026/09/01 15:21:04.636790 POST /api/graphql 200 5.523895712s
+2026/09/01 15:21:04.952889 GET /proxy/cover/1370 502 39.669327ms
+2026/09/01 15:21:09.000640 GET /proxy/cover/1370 502 27.953927ms
+2026/09/01 15:21:13.581578 [sandbox] [grpc-default-executor-3] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:21:13.673379 [sandbox] [grpc-default-executor-3] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:21:13.693556 [sandbox] [grpc-default-executor-1] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:21:13.729749 [sandbox] [grpc-default-executor-3] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:19; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:21:13.734403 [sandbox] [grpc-default-executor-3] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 15:21:13.787465 [sandbox] [grpc-default-executor-1] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:19; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:21:13.848287 GET /proxy/cover/885 502 17.060859ms
+2026/09/01 15:21:13.849284 GET /proxy/cover/886 502 16.667149ms
+2026/09/01 15:21:13.864884 [sandbox] [grpc-default-executor-4] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ d.intercept:-1; CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10
+2026/09/01 15:21:13.865850 GET /proxy/cover/887 502 16.934166ms
+2026/09/01 15:21:13.878805 GET /proxy/cover/888 502 29.105375ms
+2026/09/01 15:21:13.881850 [sandbox] [grpc-default-executor-4] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 15:21:13.883278 GET /proxy/cover/890 502 17.07893ms
+2026/09/01 15:21:13.891771 GET /proxy/cover/889 502 25.332139ms
+2026/09/01 15:21:13.900948 GET /proxy/cover/891 502 17.925673ms
+2026/09/01 15:21:13.914157 GET /proxy/cover/892 502 21.795016ms
+2026/09/01 15:21:13.918418 GET /proxy/cover/893 502 16.82763ms
+2026/09/01 15:21:13.933531 GET /proxy/cover/894 502 18.876166ms
+2026/09/01 15:21:13.946602 GET /proxy/cover/895 502 27.68024ms
+2026/09/01 15:21:13.951973 GET /proxy/cover/897 502 17.837748ms
+2026/09/01 15:21:13.964923 GET /proxy/cover/899 502 17.787901ms
+2026/09/01 15:21:13.978002 GET /proxy/cover/898 502 25.18975ms
+2026/09/01 15:21:13.983449 GET /proxy/cover/902 502 17.682287ms
+2026/09/01 15:21:13.996735 GET /proxy/cover/901 502 18.103985ms
+2026/09/01 15:21:14.004148 GET /proxy/cover/903 502 20.151227ms
+2026/09/01 15:21:14.014834 GET /proxy/cover/900 502 17.170372ms
+2026/09/01 15:21:14.022870 GET /proxy/cover/905 502 18.156785ms
+2026/09/01 15:21:14.033403 GET /proxy/cover/904 502 17.824213ms
+2026/09/01 15:21:14.046598 GET /proxy/cover/906 502 22.992327ms
+2026/09/01 15:21:14.051783 GET /proxy/cover/939 502 17.420065ms
+2026/09/01 15:21:14.065366 GET /proxy/cover/908 502 18.138974ms
+2026/09/01 15:21:14.195049 GET /proxy/cover/940 502 17.9022ms
+2026/09/01 15:21:14.196487 GET /proxy/cover/941 502 17.058633ms
+2026/09/01 15:21:14.212871 GET /proxy/cover/942 502 16.968616ms
+2026/09/01 15:21:14.214882 GET /proxy/cover/945 502 17.978894ms
+2026/09/01 15:21:14.230254 GET /proxy/cover/944 502 16.723607ms
+2026/09/01 15:21:14.232973 GET /proxy/cover/943 502 17.529958ms
+2026/09/01 15:21:14.250217 GET /proxy/cover/907 502 16.312327ms
+2026/09/01 15:21:14.829451 POST /api/graphql 200 650.847881ms
+2026/09/01 15:21:14.883394 [sandbox] [grpc-default-executor-3] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 15:21:14.936401 GET /proxy/cover/946 502 17.966953ms
+2026/09/01 15:21:14.936724 GET /proxy/cover/949 502 16.683166ms
+2026/09/01 15:21:14.937551 GET /proxy/cover/948 502 17.190754ms
+2026/09/01 15:21:14.938247 GET /proxy/cover/947 502 17.659996ms
+2026/09/01 15:21:14.955306 GET /proxy/cover/950 502 17.726151ms
+2026/09/01 15:21:14.956572 GET /proxy/cover/952 502 18.550434ms
+2026/09/01 15:21:14.956881 GET /proxy/cover/953 502 17.917065ms
+2026/09/01 15:21:14.958199 GET /proxy/cover/951 502 20.538563ms
+2026/09/01 15:21:14.975540 GET /proxy/cover/955 502 19.335688ms
+2026/09/01 15:21:14.976314 GET /proxy/cover/954 502 19.347539ms
+2026/09/01 15:21:14.976479 GET /proxy/cover/956 502 19.168866ms
+2026/09/01 15:21:14.978368 GET /proxy/cover/957 502 19.669692ms
+2026/09/01 15:21:15.002199 GET /proxy/cover/958 502 24.136269ms
+2026/09/01 15:21:15.002428 GET /proxy/cover/959 502 24.837505ms
+2026/09/01 15:21:15.003480 GET /proxy/cover/961 502 24.772091ms
+2026/09/01 15:21:15.020376 GET /proxy/cover/960 502 17.339313ms
+2026/09/01 15:21:15.021166 GET /proxy/cover/962 502 17.884277ms
+2026/09/01 15:21:15.497197 POST /api/graphql 200 520.585291ms
+2026/09/01 15:21:15.905875 [sandbox] [grpc-default-executor-0] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 15:21:17.524897 GET /proxy/cover/966 502 35.235415ms
+2026/09/01 15:21:17.527282 GET /proxy/cover/963 502 36.024283ms
+2026/09/01 15:21:18.283789 GET /proxy/cover/965 502 33.783876ms
+2026/09/01 15:21:18.284679 GET /proxy/cover/968 502 33.358302ms
+2026/09/01 15:21:18.285151 GET /proxy/cover/964 502 34.994181ms
+2026/09/01 15:21:18.285258 GET /proxy/cover/967 502 34.628832ms
+2026/09/01 15:21:18.285880 GET /proxy/cover/969 502 34.232801ms
+2026/09/01 15:21:18.302836 GET /proxy/cover/970 502 17.684433ms
+2026/09/01 15:21:18.303095 GET /proxy/cover/974 502 16.95053ms
+2026/09/01 15:21:18.304025 GET /proxy/cover/972 502 17.617675ms
+2026/09/01 15:21:18.304255 GET /proxy/cover/976 502 17.597981ms
+2026/09/01 15:21:18.305101 GET /proxy/cover/971 502 20.341345ms
+2026/09/01 15:21:18.320605 GET /proxy/cover/973 502 16.771157ms
+2026/09/01 15:21:18.321743 GET /proxy/cover/977 502 17.420883ms
+2026/09/01 15:21:18.321961 GET /proxy/cover/975 502 18.314253ms
+2026/09/01 15:21:18.322734 GET /proxy/cover/979 502 18.197039ms
+2026/09/01 15:21:18.322844 GET /proxy/cover/983 502 17.467695ms
+2026/09/01 15:21:18.339136 GET /proxy/cover/981 502 16.803133ms
+2026/09/01 15:21:18.339357 GET /proxy/cover/978 502 18.018486ms
+2026/09/01 15:21:18.340508 GET /proxy/cover/980 502 18.333216ms
+2026/09/01 15:21:18.429836 GET /proxy/cover/1350 502 64.9745ms
+2026/09/01 15:21:18.429925 GET /proxy/cover/984 502 65.085013ms
+2026/09/01 15:21:18.430006 GET /proxy/cover/982 502 65.536322ms
+2026/09/01 15:21:18.466743 [sandbox] [grpc-default-executor-2] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 15:21:18.947151 GET /proxy/cover/985 502 582.227103ms
+2026/09/01 15:21:26.071914 POST /api/graphql 200 12.601375479s
+2026/09/01 15:21:32.922533 [sandbox] [grpc-default-executor-5] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 15:22:37.624077 [sandbox] [grpc-default-executor-6] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:22:45.386617 [sandbox] [grpc-default-executor-6] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:22:45.617449 [sandbox] [grpc-default-executor-6] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:19; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:22:45.864819 [sandbox] [grpc-default-executor-6] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:22:46.132861 [sandbox] [grpc-default-executor-6] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:19; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:39:28.213227 sandbox: idle for 15m0s, reaping process
+2026/09/01 15:41:57.551113 sandbox: spawning /nix/store/1slz0vmmgsd7p6i4c0jaywkpw56wl2yg-openjdk-21.0.12+8/lib/openjdk/bin/java -cp /home/shozikan/Projects/Manga/Tsunagu/sandbox/build/libs/sandbox-0.1.0-all.jar tsunagu.MainKt (source: JAVA_HOME/PATH)
+2026/09/01 15:41:57.823280 [sandbox] [main] INFO eu.kanade.tachiyomi.network.TlsSetup - TLS: Conscrypt provider installed (v2.5.2)
+2026/09/01 15:41:57.910336 POST /api/graphql 200 1.863079287s
+2026/09/01 15:41:58.266311 [sandbox] tsunagu sandbox listening on :50051
+2026/09/01 15:41:58.429812 sandbox: ready at localhost:50051
+2026/09/01 15:41:58.645487 POST /api/graphql 200 1.095183292s
+2026/09/01 15:41:58.645594 POST /api/graphql 200 1.094614034s
+2026/09/01 15:41:58.645594 POST /api/graphql 200 1.095375906s
+2026/09/01 15:41:58.645754 POST /api/graphql 200 1.09452471s
+2026/09/01 15:41:59.079968 [sandbox] [grpc-default-executor-2] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:41:59.080035 [sandbox] [grpc-default-executor-5] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:41:59.177132 [sandbox] [grpc-default-executor-3] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:41:59.201633 [sandbox] [grpc-default-executor-6] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:41:59.202733 POST /api/graphql 200 555.806621ms
+2026/09/01 15:41:59.321504 [sandbox] [grpc-default-executor-5] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:41:59.545203 [sandbox] [grpc-default-executor-6] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:19; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:41:59.679745 [sandbox] [grpc-default-executor-5] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:19; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:41:59.988637 POST /api/graphql 200 1.341767485s
+2026/09/01 15:42:00.114614 GET /proxy/cover/888 502 89.117557ms
+2026/09/01 15:42:00.115237 GET /proxy/cover/887 502 89.709135ms
+2026/09/01 15:42:00.115334 GET /proxy/cover/885 502 90.008336ms
+2026/09/01 15:42:00.115830 GET /proxy/cover/886 502 90.437305ms
+2026/09/01 15:42:00.134410 GET /proxy/cover/890 502 18.788577ms
+2026/09/01 15:42:00.135695 GET /proxy/cover/891 502 19.325696ms
+2026/09/01 15:42:00.135860 GET /proxy/cover/892 502 19.340814ms
+2026/09/01 15:42:00.136594 GET /proxy/cover/889 502 20.256249ms
+2026/09/01 15:42:00.152718 GET /proxy/cover/893 502 17.303734ms
+2026/09/01 15:42:00.153600 GET /proxy/cover/894 502 17.48645ms
+2026/09/01 15:42:00.153673 GET /proxy/cover/895 502 17.292354ms
+2026/09/01 15:42:00.154485 GET /proxy/cover/897 502 17.492933ms
+2026/09/01 15:42:00.170948 GET /proxy/cover/899 502 17.608025ms
+2026/09/01 15:42:00.171493 GET /proxy/cover/898 502 17.381658ms
+2026/09/01 15:42:00.171507 GET /proxy/cover/902 502 17.250677ms
+2026/09/01 15:42:00.172870 GET /proxy/cover/901 502 18.075114ms
+2026/09/01 15:42:00.189369 GET /proxy/cover/903 502 17.825154ms
+2026/09/01 15:42:00.190243 GET /proxy/cover/900 502 18.264343ms
+2026/09/01 15:42:00.191104 GET /proxy/cover/905 502 18.981523ms
+2026/09/01 15:42:00.191632 GET /proxy/cover/904 502 18.457128ms
+2026/09/01 15:42:00.209300 GET /proxy/cover/906 502 19.243384ms
+2026/09/01 15:42:00.211646 GET /proxy/cover/939 502 20.990229ms
+2026/09/01 15:42:00.211982 GET /proxy/cover/908 502 20.370007ms
+2026/09/01 15:42:00.594648 POST /api/graphql 200 601.749761ms
+2026/09/01 15:42:00.652558 GET /proxy/cover/941 502 18.566449ms
+2026/09/01 15:42:00.652775 GET /proxy/cover/940 502 19.994357ms
+2026/09/01 15:42:00.655210 GET /proxy/cover/942 502 20.893061ms
+2026/09/01 15:42:00.655468 GET /proxy/cover/945 502 20.814365ms
+2026/09/01 15:42:00.671436 GET /proxy/cover/944 502 17.701897ms
+2026/09/01 15:42:00.672604 GET /proxy/cover/943 502 18.731392ms
+2026/09/01 15:42:00.672936 GET /proxy/cover/946 502 17.217857ms
+2026/09/01 15:42:00.673991 GET /proxy/cover/907 502 17.982023ms
+2026/09/01 15:42:00.691394 GET /proxy/cover/949 502 19.236292ms
+2026/09/01 15:42:00.691756 GET /proxy/cover/948 502 18.315517ms
+2026/09/01 15:42:00.692782 GET /proxy/cover/947 502 19.004484ms
+2026/09/01 15:42:00.693647 GET /proxy/cover/950 502 18.670931ms
+2026/09/01 15:42:00.709701 GET /proxy/cover/951 502 17.376068ms
+2026/09/01 15:42:00.709775 GET /proxy/cover/953 502 16.504353ms
+2026/09/01 15:42:00.710680 GET /proxy/cover/952 502 18.151355ms
+2026/09/01 15:42:00.711415 GET /proxy/cover/955 502 16.956666ms
+2026/09/01 15:42:00.735000 GET /proxy/cover/956 502 24.301533ms
+2026/09/01 15:42:00.735595 GET /proxy/cover/957 502 24.483087ms
+2026/09/01 15:42:00.735918 GET /proxy/cover/954 502 25.38666ms
+2026/09/01 15:42:00.739988 GET /proxy/cover/959 502 28.17409ms
+2026/09/01 15:42:00.757295 GET /proxy/cover/958 502 20.919369ms
+2026/09/01 15:42:00.760557 GET /proxy/cover/961 502 23.902538ms
+2026/09/01 15:42:00.760699 GET /proxy/cover/960 502 23.860021ms
+2026/09/01 15:42:00.764064 GET /proxy/cover/962 502 23.637441ms
+2026/09/01 15:42:01.200237 POST /api/graphql 200 602.732648ms
+2026/09/01 15:42:01.273529 GET /proxy/cover/966 502 25.070757ms
+2026/09/01 15:42:01.273611 GET /proxy/cover/965 502 24.103056ms
+2026/09/01 15:42:01.274401 GET /proxy/cover/964 502 24.781836ms
+2026/09/01 15:42:01.275585 GET /proxy/cover/963 502 26.056802ms
+2026/09/01 15:42:01.276635 GET /proxy/cover/967 502 26.475903ms
+2026/09/01 15:42:01.292816 GET /proxy/cover/968 502 18.182892ms
+2026/09/01 15:42:01.292902 GET /proxy/cover/969 502 18.026263ms
+2026/09/01 15:42:01.294211 GET /proxy/cover/971 502 19.147577ms
+2026/09/01 15:42:01.294794 GET /proxy/cover/970 502 18.733384ms
+2026/09/01 15:42:01.295378 GET /proxy/cover/974 502 18.301199ms
+2026/09/01 15:42:01.312204 GET /proxy/cover/975 502 17.316737ms
+2026/09/01 15:42:01.312526 GET /proxy/cover/972 502 18.998643ms
+2026/09/01 15:42:01.313693 GET /proxy/cover/976 502 19.959811ms
+2026/09/01 15:42:01.314403 GET /proxy/cover/973 502 19.22558ms
+2026/09/01 15:42:01.314446 GET /proxy/cover/977 502 18.682631ms
+2026/09/01 15:42:01.330743 GET /proxy/cover/979 502 17.704141ms
+2026/09/01 15:42:01.331460 GET /proxy/cover/983 502 18.24201ms
+2026/09/01 15:42:01.332343 GET /proxy/cover/978 502 18.179836ms
+2026/09/01 15:42:01.332677 GET /proxy/cover/981 502 17.637879ms
+2026/09/01 15:42:01.333573 GET /proxy/cover/980 502 18.601532ms
+2026/09/01 15:42:01.349252 GET /proxy/cover/982 502 17.861ms
+2026/09/01 15:42:01.349968 GET /proxy/cover/1350 502 17.161973ms
+2026/09/01 15:42:01.349989 GET /proxy/cover/984 502 18.112492ms
+2026/09/01 15:42:01.350675 GET /proxy/cover/985 502 17.614716ms
+2026/09/01 15:42:13.648440 POST /api/graphql 200 15.001641173s
+2026/09/01 15:42:18.693271 [sandbox] [grpc-default-executor-4] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 15:42:18.693336 [sandbox] [grpc-default-executor-0] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 15:42:24.900330 POST /api/graphql 200 11.020720031s
+2026/09/01 15:42:24.975791 [sandbox] [grpc-default-executor-0] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:42:26.635500 GET /proxy/cover/886 502 21.164833ms
+2026/09/01 15:42:26.636690 GET /proxy/cover/888 502 21.013614ms
+2026/09/01 15:42:26.636695 GET /proxy/cover/890 502 20.740022ms
+2026/09/01 15:42:26.637243 GET /proxy/cover/885 502 22.940378ms
+2026/09/01 15:42:26.638458 GET /proxy/cover/887 502 24.123704ms
+2026/09/01 15:42:26.640890 GET /proxy/cover/889 502 24.704082ms
+2026/09/01 15:42:26.658168 GET /proxy/cover/892 502 20.823385ms
+2026/09/01 15:42:26.660412 GET /proxy/cover/891 502 24.156484ms
+2026/09/01 15:42:26.672494 GET /proxy/cover/894 502 34.750567ms
+2026/09/01 15:42:26.673042 GET /proxy/cover/893 502 35.448711ms
+2026/09/01 15:42:26.675966 GET /proxy/cover/895 502 37.165989ms
+2026/09/01 15:42:26.677242 GET /proxy/cover/897 502 35.869826ms
+2026/09/01 15:42:26.679950 GET /proxy/cover/899 502 21.149154ms
+2026/09/01 15:42:26.690853 GET /proxy/cover/898 502 29.840547ms
+2026/09/01 15:42:26.695768 GET /proxy/cover/901 502 22.044019ms
+2026/09/01 15:42:26.698369 GET /proxy/cover/902 502 25.000005ms
+2026/09/01 15:42:26.710932 GET /proxy/cover/900 502 33.076598ms
+2026/09/01 15:42:26.711622 GET /proxy/cover/905 502 31.295803ms
+2026/09/01 15:42:26.715002 GET /proxy/cover/903 502 38.638918ms
+2026/09/01 15:42:26.715546 GET /proxy/cover/904 502 24.006078ms
+2026/09/01 15:42:26.724050 GET /proxy/cover/906 502 27.741277ms
+2026/09/01 15:42:26.729061 GET /proxy/cover/939 502 30.3202ms
+2026/09/01 15:42:26.739885 GET /proxy/cover/908 502 27.8845ms
+2026/09/01 15:42:28.889755 [sandbox] [grpc-default-executor-0] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:42:29.834335 [sandbox] [grpc-default-executor-0] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:19; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:42:30.545939 [sandbox] [grpc-default-executor-0] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:19; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:42:33.539086 [sandbox] [grpc-default-executor-7] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 15:42:33.828790 [sandbox] [grpc-default-executor-7] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:19; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:42:34.532633 [sandbox] [grpc-default-executor-7] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:42:35.107779 [sandbox] [grpc-default-executor-7] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:42:35.506132 [sandbox] [grpc-default-executor-7] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:42:36.198800 [sandbox] [grpc-default-executor-7] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:42:38.987817 [sandbox] [grpc-default-executor-7] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:42:40.991851 [sandbox] [grpc-default-executor-7] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:42:46.539341 POST /api/graphql 200 3.459028563s
+2026/09/01 15:42:47.683370 POST /api/graphql 200 1.141918635s
+2026/09/01 15:42:49.819268 [sandbox] [grpc-default-executor-7] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 523 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 15:42:51.982610 POST /api/graphql 200 4.298104111s
+2026/09/01 15:42:52.377744 GET /proxy/cover/885 502 17.93279ms
+2026/09/01 15:42:52.378814 GET /proxy/cover/886 502 18.207986ms
+2026/09/01 15:42:52.379110 GET /proxy/cover/887 502 17.2858ms
+2026/09/01 15:42:52.380316 GET /proxy/cover/888 502 18.273265ms
+2026/09/01 15:42:52.381000 GET /proxy/cover/889 502 18.645179ms
+2026/09/01 15:42:52.381134 GET /proxy/cover/890 502 18.915526ms
+2026/09/01 15:42:52.397275 GET /proxy/cover/891 502 18.423672ms
+2026/09/01 15:42:52.411022 GET /proxy/cover/893 502 31.199222ms
+2026/09/01 15:42:52.411174 GET /proxy/cover/894 502 30.362696ms
+2026/09/01 15:42:52.411304 GET /proxy/cover/892 502 31.661041ms
+2026/09/01 15:42:52.424281 GET /proxy/cover/897 502 42.369673ms
+2026/09/01 15:42:52.424363 GET /proxy/cover/895 502 42.62361ms
+2026/09/01 15:42:52.437446 GET /proxy/cover/899 502 39.454526ms
+2026/09/01 15:42:52.438201 GET /proxy/cover/901 502 26.008062ms
+2026/09/01 15:42:52.438267 GET /proxy/cover/902 502 26.143771ms
+2026/09/01 15:42:52.450556 GET /proxy/cover/898 502 38.610454ms
+2026/09/01 15:42:52.451310 GET /proxy/cover/903 502 26.596543ms
+2026/09/01 15:42:52.464094 GET /proxy/cover/900 502 39.251693ms
+2026/09/01 15:42:52.465295 GET /proxy/cover/905 502 26.943842ms
+2026/09/01 15:42:52.477912 GET /proxy/cover/904 502 39.096858ms
+2026/09/01 15:42:52.478649 GET /proxy/cover/906 502 39.787297ms
+2026/09/01 15:42:52.478661 GET /proxy/cover/939 502 27.587314ms
+2026/09/01 15:42:52.491231 GET /proxy/cover/908 502 39.428027ms
+2026/09/01 15:42:55.498420 [sandbox] [grpc-default-executor-7] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:42:56.365342 [sandbox] [grpc-default-executor-7] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:42:57.771514 GET /proxy/cover/885 502 17.903212ms
+2026/09/01 15:42:57.772107 GET /proxy/cover/886 502 18.340806ms
+2026/09/01 15:42:57.772585 GET /proxy/cover/887 502 18.801734ms
+2026/09/01 15:42:57.773349 GET /proxy/cover/888 502 17.601738ms
+2026/09/01 15:42:57.774006 GET /proxy/cover/890 502 17.843102ms
+2026/09/01 15:42:57.774930 GET /proxy/cover/889 502 18.570068ms
+2026/09/01 15:42:57.790749 GET /proxy/cover/893 502 17.652832ms
+2026/09/01 15:42:57.791038 GET /proxy/cover/891 502 18.62053ms
+2026/09/01 15:42:57.792166 GET /proxy/cover/894 502 18.308207ms
+2026/09/01 15:42:57.792892 GET /proxy/cover/895 502 18.390948ms
+2026/09/01 15:42:57.793485 GET /proxy/cover/897 502 18.124438ms
+2026/09/01 15:42:57.793513 GET /proxy/cover/892 502 20.658786ms
+2026/09/01 15:42:57.808821 GET /proxy/cover/899 502 17.272583ms
+2026/09/01 15:42:57.810170 GET /proxy/cover/898 502 18.442162ms
+2026/09/01 15:42:57.810493 GET /proxy/cover/902 502 17.769126ms
+2026/09/01 15:42:57.811309 GET /proxy/cover/901 502 17.992236ms
+2026/09/01 15:42:57.812020 GET /proxy/cover/900 502 17.796867ms
+2026/09/01 15:42:57.812890 GET /proxy/cover/903 502 18.82189ms
+2026/09/01 15:42:57.827698 GET /proxy/cover/906 502 16.766653ms
+2026/09/01 15:42:57.828436 GET /proxy/cover/905 502 18.823463ms
+2026/09/01 15:42:57.829396 GET /proxy/cover/904 502 18.719692ms
+2026/09/01 15:42:57.830532 GET /proxy/cover/908 502 17.865462ms
+2026/09/01 15:42:57.830619 GET /proxy/cover/939 502 18.97946ms
+2026/09/01 15:42:59.326797 GET /proxy/cover/897 502 18.970032ms
+2026/09/01 15:42:59.387441 [sandbox] [grpc-default-executor-4] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 523 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; AnimeCatalogueSource.getSearchAnime$suspendImpl:26
+2026/09/01 15:42:59.878579 sync: caching cover for entry 1371 failed: rpc error: code = Internal desc = java.lang.IllegalStateException: extension eu.kanade.tachiyomi.animeextension.en.aniwaves is not an HttpSource
+2026/09/01 15:43:00.621399 POST /api/graphql 200 1.350433629s
+2026/09/01 15:43:04.931802 [sandbox] E/AniWaves: Byse extraction failed for BYFMS: Connection reset
+2026/09/01 15:43:06.256885 [sandbox] [grpc-default-executor-0] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; AnimeCatalogueSource.getSearchAnime$suspendImpl:26
+2026/09/01 15:43:06.583485 [sandbox] [grpc-default-executor-7] INFO tsunagu.grpc.ExtensionServiceImpl - getVideoStream 82683&eps=1&epurl=/watch/koko-wa-ore-ni-makasete-saki-ni-ike-to-itte-kara-10-nen-ga-tattara-densetsu-ni-natteita-82683/episode/1: 5 source(s), subs=39 audio=0 timestamps=0
+2026/09/01 15:43:11.413296 POST /api/graphql 200 2.510278805s
+2026/09/01 15:43:11.413326 POST /api/graphql 200 2.510078367s
+2026/09/01 15:49:22.184973 shutting down
+2026/09/01 15:49:24.475176 === Tsunagu dev (unknown) starting, pid 366518 ===
+2026/09/01 15:49:24.489702 sandbox: spawning /nix/store/1slz0vmmgsd7p6i4c0jaywkpw56wl2yg-openjdk-21.0.12+8/lib/openjdk/bin/java -cp /home/shozikan/Projects/Manga/Tsunagu/sandbox/build/libs/sandbox-0.1.0-all.jar tsunagu.MainKt (source: JAVA_HOME/PATH)
+2026/09/01 15:49:24.775261 [sandbox] [main] INFO eu.kanade.tachiyomi.network.TlsSetup - TLS: Conscrypt provider installed (v2.5.2)
+2026/09/01 15:49:25.247400 [sandbox] tsunagu sandbox listening on :50051
+2026/09/01 15:49:25.377489 sandbox: ready at localhost:50051
+2026/09/01 15:49:28.245207 tsunagu dev listening on [::]:6007
+2026/09/01 15:49:28.246995 metadata backfill: 1 unmatched media, working through them (~1m)
+2026/09/01 15:49:28.250042 content filter: recomputed 6 media
+2026/09/01 15:49:28.655705 tracker poll: reconciled 2 media
+2026/09/01 15:49:29.298575 metadata backfill: done -- matched 0/1
+2026/09/01 15:49:37.953173 POST /api/graphql 200 1.870630149s
+2026/09/01 15:49:38.436027 [sandbox] E/AniWaves: Byse extraction failed for BYFMS: Connection reset
+2026/09/01 15:49:39.539773 [sandbox] [grpc-default-executor-0] INFO tsunagu.grpc.ExtensionServiceImpl - getVideoStream 82683&eps=1&epurl=/watch/koko-wa-ore-ni-makasete-saki-ni-ike-to-itte-kara-10-nen-ga-tattara-densetsu-ni-natteita-82683/episode/1: 5 source(s), subs=39 audio=0 timestamps=0
+2026/09/01 15:49:41.873186 [sandbox] [grpc-default-executor-2] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:49:42.010298 [sandbox] [grpc-default-executor-2] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:49:42.057479 [sandbox] [grpc-default-executor-3] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:49:42.110343 [sandbox] [grpc-default-executor-2] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:19; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:49:42.174780 [sandbox] [grpc-default-executor-3] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: SocketException: Connection reset @ CloudflareInterceptor.intercept:36; UserAgentInterceptor.intercept:19; UncaughtExceptionInterceptor.intercept:10; OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:39
+2026/09/01 15:49:42.416255 POST /api/graphql 200 661.710979ms
+2026/09/01 15:49:42.956451 POST /api/graphql 200 536.278127ms
+2026/09/01 15:49:43.499093 POST /api/graphql 200 539.307025ms
+2026/09/01 15:49:51.346807 sync: caching cover for entry 1372 failed: rpc error: code = Internal desc = java.lang.IllegalStateException: extension eu.kanade.tachiyomi.animeextension.en.aniwaves is not an HttpSource
+2026/09/01 15:49:51.874583 POST /api/graphql 200 1.043205261s
+2026/09/01 15:49:54.389366 POST /api/graphql 200 12.634880245s
+2026/09/01 15:50:01.647431 [sandbox] [grpc-default-executor-0] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 16:03:14.340168 shutting down

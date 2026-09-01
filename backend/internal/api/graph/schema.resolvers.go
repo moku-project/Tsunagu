@@ -558,6 +558,43 @@ func (r *mutationResolver) UpdateServerSetting(ctx context.Context, key string, 
 	}, nil
 }
 
+// AddContentFilterRule is the resolver for the addContentFilterRule field.
+func (r *mutationResolver) AddContentFilterRule(ctx context.Context, category string, field model.FilterField, keyword string, minWeight *int32, blockLevel model.ContentBlockLevel) (*model.ContentFilterRule, error) {
+	mw := 0
+	if minWeight != nil {
+		mw = int(*minWeight)
+	}
+	bl := 1
+	if blockLevel == model.ContentBlockLevelStrict {
+		bl = 2
+	}
+	rule, err := r.Cf.AddRule(ctx, category, strings.ToLower(field.String()), keyword, mw, bl)
+	if err != nil {
+		return nil, err
+	}
+	return toContentFilterRule(rule), nil
+}
+
+// RemoveContentFilterRule is the resolver for the removeContentFilterRule field.
+func (r *mutationResolver) RemoveContentFilterRule(ctx context.Context, id string) (bool, error) {
+	rid, err := parseID(id)
+	if err != nil {
+		return false, err
+	}
+	return true, r.Cf.RemoveRule(ctx, rid)
+}
+
+// ResetContentFilterRules is the resolver for the resetContentFilterRules field.
+func (r *mutationResolver) ResetContentFilterRules(ctx context.Context) (bool, error) {
+	return true, r.Cf.ResetRules(ctx)
+}
+
+// RecomputeContentFilter is the resolver for the recomputeContentFilter field.
+func (r *mutationResolver) RecomputeContentFilter(ctx context.Context) (bool, error) {
+	go func() { _ = r.Cf.RecomputeAll(context.Background()) }()
+	return true, nil
+}
+
 // InstallCloudflareSolver is the resolver for the installCloudflareSolver field.
 func (r *mutationResolver) InstallCloudflareSolver(ctx context.Context) (*model.CloudflareSolver, error) {
 	if err := r.Fs.Install(ctx); err != nil {
@@ -1290,12 +1327,56 @@ func (r *queryResolver) CloudflareSolver(ctx context.Context) (*model.Cloudflare
 	return toCloudflareSolver(r.Fs.Status(ctx)), nil
 }
 
-// SetCloudflareSolver is the resolver for the setCloudflareSolver field.
+// ServerSettings is the resolver for the serverSettings field.
 func (r *queryResolver) ServerSettings(ctx context.Context) ([]*model.ServerSetting, error) {
 	rows := r.Cfg.List(ctx)
 	out := make([]*model.ServerSetting, 0, len(rows))
 	for _, s := range rows {
 		out = append(out, toServerSetting(s))
+	}
+	return out, nil
+}
+
+// SetCloudflareSolver is the resolver for the setCloudflareSolver field.
+func (r *queryResolver) ContentFilterRules(ctx context.Context) ([]*model.ContentFilterRule, error) {
+	rules := r.Cf.Rules()
+	out := make([]*model.ContentFilterRule, 0, len(rules))
+	for _, x := range rules {
+		out = append(out, toContentFilterRule(x))
+	}
+	return out, nil
+}
+
+// LibraryTags is the resolver for the libraryTags field.
+func (r *queryResolver) LibraryTags(ctx context.Context, minCount *int32) ([]*model.TagFacet, error) {
+	mc := int64(1)
+	if minCount != nil {
+		mc = int64(*minCount)
+	}
+	rows, err := r.Q.LibraryTagFacets(ctx, mc)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*model.TagFacet, 0, len(rows))
+	for _, x := range rows {
+		out = append(out, &model.TagFacet{Name: x.Name, Count: int32(x.Count), MaxWeight: int32(x.MaxWeight)})
+	}
+	return out, nil
+}
+
+// LibraryGenres is the resolver for the libraryGenres field.
+func (r *queryResolver) LibraryGenres(ctx context.Context, minCount *int32) ([]*model.TagFacet, error) {
+	mc := int64(1)
+	if minCount != nil {
+		mc = int64(*minCount)
+	}
+	rows, err := r.Q.LibraryGenreFacets(ctx, mc)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*model.TagFacet, 0, len(rows))
+	for _, x := range rows {
+		out = append(out, &model.TagFacet{Name: x.Name, Count: int32(x.Count), MaxWeight: int32(x.MaxWeight)})
 	}
 	return out, nil
 }
@@ -1346,6 +1427,7 @@ func (r *queryResolver) Library(ctx context.Context, filter *model.LibraryFilter
 	q := syncpkg.LibraryQuery{Limit: 100}
 	inLib := true
 	q.InLibrary = &inLib
+	q.ContentFilterRank = int(r.Cf.Level())
 	if filter != nil {
 		if filter.ContentType != nil {
 			q.ContentType = contentTypeToString(filter.ContentType)

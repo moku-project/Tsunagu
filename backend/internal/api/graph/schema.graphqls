@@ -71,6 +71,25 @@ type UpdateSettingResult {
   restartRequired: Boolean!
 }
 
+enum FilterField { GENRE TAG TITLE DESCRIPTION }
+enum ContentBlockLevel { MODERATE STRICT }
+
+type ContentFilterRule {
+  id: ID!
+  category: String!
+  field: FilterField!
+  keyword: String!
+  minWeight: Int!
+  blockLevel: ContentBlockLevel!
+  isDefault: Boolean!
+}
+
+type TagFacet {
+  name: String!
+  count: Int!
+  maxWeight: Int!
+}
+
 type CloudflareSolver {
   mode: SolverMode!
   state: SolverState!
@@ -367,6 +386,9 @@ type Query {
   installedExtensions: [Extension!]!
   cloudflareSolver: CloudflareSolver!
   serverSettings: [ServerSetting!]!
+  contentFilterRules: [ContentFilterRule!]!
+  libraryTags(minCount: Int = 1): [TagFacet!]!
+  libraryGenres(minCount: Int = 1): [TagFacet!]!
   extensions(
     repositoryId: ID
     query: String
@@ -436,6 +458,11 @@ type Mutation {
   syncRepositories: [Repository!]!
 
   updateServerSetting(key: String!, value: String!): UpdateSettingResult!
+
+  addContentFilterRule(category: String!, field: FilterField!, keyword: String!, minWeight: Int = 0, blockLevel: ContentBlockLevel!): ContentFilterRule!
+  removeContentFilterRule(id: ID!): Boolean!
+  resetContentFilterRules: Boolean!
+  recomputeContentFilter: Boolean!
   installCloudflareSolver: CloudflareSolver!
   uninstallCloudflareSolver: Boolean!
   installExtension(packageName: String!): Extension!

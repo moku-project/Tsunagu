@@ -130,6 +130,7 @@ func (sc *SupervisedClient) spawnLocked() error {
 	}
 	cmd := exec.Command(resolved.JavaBin,
 		"-Dpolyglot.engine.WarnInterpreterOnly=false",
+		"-Djava.net.preferIPv4Stack=true",
 		fmt.Sprintf("-Xmx%dm", heap),
 		"-XX:+UseSerialGC",
 		"-XX:TieredStopAtLevel=1",

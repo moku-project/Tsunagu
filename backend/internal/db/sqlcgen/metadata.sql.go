@@ -10,6 +10,29 @@ import (
 	"strings"
 )
 
+const backfillMissingCoversFromMetadata = `-- name: BackfillMissingCoversFromMetadata :execrows
+UPDATE media SET cover_path = (
+    SELECT ml.cover_url FROM metadata_links ml
+    WHERE ml.media_id = media.id AND ml.cover_url IS NOT NULL AND ml.cover_url != ''
+    ORDER BY ml.confidence DESC LIMIT 1
+)
+WHERE (cover_path IS NULL OR cover_path = '')
+  AND (cover_local_path IS NULL OR cover_local_path = '')
+  AND (cover_override IS NULL OR cover_override = '')
+  AND EXISTS (
+    SELECT 1 FROM metadata_links ml
+    WHERE ml.media_id = media.id AND ml.cover_url IS NOT NULL AND ml.cover_url != ''
+  )
+`
+
+func (q *Queries) BackfillMissingCoversFromMetadata(ctx context.Context) (int64, error) {
+	result, err := q.db.ExecContext(ctx, backfillMissingCoversFromMetadata)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
 const deleteMetadataLink = `-- name: DeleteMetadataLink :exec
 DELETE FROM metadata_links WHERE media_id = ? AND provider = ?
 `
@@ -40,7 +63,7 @@ UPDATE media SET
         THEN NULLIF(CAST(?4 AS TEXT), '') ELSE cover_path END,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = ?5
-RETURNING id, extension_id, extension_name, external_id, content_type, title, cover_path, cover_local_path, description, status, author, artist, extension_removed_at, added_at, last_viewed_at, details_fetched_at, updated_at, chapters_synced_at, cover_override
+RETURNING id, extension_id, extension_name, external_id, content_type, title, cover_path, cover_local_path, description, status, author, artist, extension_removed_at, added_at, last_viewed_at, details_fetched_at, updated_at, chapters_synced_at, cover_override, content_block_rank
 `
 
 type GapFillMediaMetadataParams struct {
@@ -80,8 +103,22 @@ func (q *Queries) GapFillMediaMetadata(ctx context.Context, arg GapFillMediaMeta
 		&i.UpdatedAt,
 		&i.ChaptersSyncedAt,
 		&i.CoverOverride,
+		&i.ContentBlockRank,
 	)
 	return i, err
+}
+
+const getMediaMetadataCover = `-- name: GetMediaMetadataCover :one
+SELECT cover_url FROM metadata_links
+WHERE media_id = ? AND cover_url IS NOT NULL AND cover_url != ''
+ORDER BY confidence DESC LIMIT 1
+`
+
+func (q *Queries) GetMediaMetadataCover(ctx context.Context, mediaID int64) (string, error) {
+	row := q.db.QueryRowContext(ctx, getMediaMetadataCover, mediaID)
+	var cover_url string
+	err := row.Scan(&cover_url)
+	return cover_url, err
 }
 
 const getMetadataLink = `-- name: GetMetadataLink :one

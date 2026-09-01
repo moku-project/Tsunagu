@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"tsunagu/backend/internal/config"
+	"tsunagu/backend/internal/contentfilter"
 	"tsunagu/backend/internal/db/sqlcgen"
 	"tsunagu/backend/internal/download"
 	"tsunagu/backend/internal/flaresolverr"
@@ -29,6 +30,7 @@ type Resolver struct {
 	Q         *sqlcgen.Queries
 	Fs        *flaresolverr.Manager
 	Cfg       *config.Store
+	Cf        *contentfilter.Manager
 	MediaDir  string
 	Name      string
 	Version   string

@@ -83,6 +83,16 @@ type ComplexityRoot struct {
 		Version             func(childComplexity int) int
 	}
 
+	ContentFilterRule struct {
+		BlockLevel func(childComplexity int) int
+		Category   func(childComplexity int) int
+		Field      func(childComplexity int) int
+		ID         func(childComplexity int) int
+		IsDefault  func(childComplexity int) int
+		Keyword    func(childComplexity int) int
+		MinWeight  func(childComplexity int) int
+	}
+
 	Download struct {
 		BytesPerSec     func(childComplexity int) int
 		Chapter         func(childComplexity int) int
@@ -230,6 +240,7 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
+		AddContentFilterRule      func(childComplexity int, category string, field model.FilterField, keyword string, minWeight *int32, blockLevel model.ContentBlockLevel) int
 		AddMediaToFolder          func(childComplexity int, mediaID string, folderID string) int
 		AddRepository             func(childComplexity int, indexURL string, name *string) int
 		ApplyMetadataMatch        func(childComplexity int, mediaID string, providerID string, provider *string) int
@@ -249,15 +260,18 @@ type ComplexityRoot struct {
 		MarkChaptersRead          func(childComplexity int, mediaID string, chapterIds []string, read bool) int
 		MigrateMedia              func(childComplexity int, fromMediaID string, toExtensionID string, toExternalID string) int
 		PullTracker               func(childComplexity int, mediaID string) int
+		RecomputeContentFilter    func(childComplexity int) int
 		RefreshFolder             func(childComplexity int, folderID string) int
 		RefreshMetadata           func(childComplexity int, mediaID string, syncChapters *bool) int
 		RefreshMetadataMatch      func(childComplexity int, mediaID string) int
+		RemoveContentFilterRule   func(childComplexity int, id string) int
 		RemoveMediaFromFolder     func(childComplexity int, mediaID string, folderID string) int
 		RenameFolder              func(childComplexity int, folderID string, name string) int
 		RenameRepository          func(childComplexity int, repositoryID string, name string) int
 		ReorderDownload           func(childComplexity int, mediaID string, chapterID string, position int32) int
 		ReorderFolder             func(childComplexity int, folderID string, sortOrder int32) int
 		RescanLocalMedia          func(childComplexity int) int
+		ResetContentFilterRules   func(childComplexity int) int
 		ResyncTrack               func(childComplexity int, linkID string) int
 		RetryDownload             func(childComplexity int, mediaID string, chapterID string) int
 		SetInLibrary              func(childComplexity int, mediaID string, inLibrary bool) int
@@ -287,6 +301,7 @@ type ComplexityRoot struct {
 		Chapter             func(childComplexity int, id string) int
 		ChapterUpdates      func(childComplexity int, since *time.Time, limit *int32) int
 		CloudflareSolver    func(childComplexity int) int
+		ContentFilterRules  func(childComplexity int) int
 		DownloadQueue       func(childComplexity int) int
 		DownloadStatus      func(childComplexity int, mediaID string, chapterID string) int
 		DownloaderStatus    func(childComplexity int) int
@@ -297,6 +312,8 @@ type ComplexityRoot struct {
 		InstalledExtensions func(childComplexity int) int
 		LatestUpdates       func(childComplexity int, extensionID string, page *int32) int
 		Library             func(childComplexity int, filter *model.LibraryFilter, sort *model.LibrarySortInput, limit *int32, offset *int32) int
+		LibraryGenres       func(childComplexity int, minCount *int32) int
+		LibraryTags         func(childComplexity int, minCount *int32) int
 		LibraryUpdateStatus func(childComplexity int) int
 		Media               func(childComplexity int, id string) int
 		MediaInFolder       func(childComplexity int, folderID string) int
@@ -390,6 +407,12 @@ type ComplexityRoot struct {
 	SubtitleTrack struct {
 		Lang func(childComplexity int) int
 		URL  func(childComplexity int) int
+	}
+
+	TagFacet struct {
+		Count     func(childComplexity int) int
+		MaxWeight func(childComplexity int) int
+		Name      func(childComplexity int) int
 	}
 
 	TextFilter struct {
@@ -518,6 +541,10 @@ type MutationResolver interface {
 	SyncRepository(ctx context.Context, repositoryID string) (*model.Repository, error)
 	SyncRepositories(ctx context.Context) ([]*model.Repository, error)
 	UpdateServerSetting(ctx context.Context, key string, value string) (*model.UpdateSettingResult, error)
+	AddContentFilterRule(ctx context.Context, category string, field model.FilterField, keyword string, minWeight *int32, blockLevel model.ContentBlockLevel) (*model.ContentFilterRule, error)
+	RemoveContentFilterRule(ctx context.Context, id string) (bool, error)
+	ResetContentFilterRules(ctx context.Context) (bool, error)
+	RecomputeContentFilter(ctx context.Context) (bool, error)
 	InstallCloudflareSolver(ctx context.Context) (*model.CloudflareSolver, error)
 	UninstallCloudflareSolver(ctx context.Context) (bool, error)
 	InstallExtension(ctx context.Context, packageName string) (*model.Extension, error)
@@ -565,6 +592,9 @@ type QueryResolver interface {
 	InstalledExtensions(ctx context.Context) ([]*model.Extension, error)
 	CloudflareSolver(ctx context.Context) (*model.CloudflareSolver, error)
 	ServerSettings(ctx context.Context) ([]*model.ServerSetting, error)
+	ContentFilterRules(ctx context.Context) ([]*model.ContentFilterRule, error)
+	LibraryTags(ctx context.Context, minCount *int32) ([]*model.TagFacet, error)
+	LibraryGenres(ctx context.Context, minCount *int32) ([]*model.TagFacet, error)
 	Extensions(ctx context.Context, repositoryID *string, query *string, contentType *model.ContentType, lang *string, installed *bool, limit *int32, offset *int32) (*model.ExtensionPage, error)
 	Library(ctx context.Context, filter *model.LibraryFilter, sort *model.LibrarySortInput, limit *int32, offset *int32) (*model.MediaPage, error)
 	Media(ctx context.Context, id string) (*model.Media, error)
@@ -792,6 +822,49 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CloudflareSolver.Version(childComplexity), true
+
+	case "ContentFilterRule.blockLevel":
+		if e.ComplexityRoot.ContentFilterRule.BlockLevel == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ContentFilterRule.BlockLevel(childComplexity), true
+	case "ContentFilterRule.category":
+		if e.ComplexityRoot.ContentFilterRule.Category == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ContentFilterRule.Category(childComplexity), true
+	case "ContentFilterRule.field":
+		if e.ComplexityRoot.ContentFilterRule.Field == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ContentFilterRule.Field(childComplexity), true
+	case "ContentFilterRule.id":
+		if e.ComplexityRoot.ContentFilterRule.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ContentFilterRule.ID(childComplexity), true
+	case "ContentFilterRule.isDefault":
+		if e.ComplexityRoot.ContentFilterRule.IsDefault == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ContentFilterRule.IsDefault(childComplexity), true
+	case "ContentFilterRule.keyword":
+		if e.ComplexityRoot.ContentFilterRule.Keyword == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ContentFilterRule.Keyword(childComplexity), true
+	case "ContentFilterRule.minWeight":
+		if e.ComplexityRoot.ContentFilterRule.MinWeight == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ContentFilterRule.MinWeight(childComplexity), true
 
 	case "Download.bytesPerSec":
 		if e.ComplexityRoot.Download.BytesPerSec == nil {
@@ -1465,6 +1538,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.MetadataMatch.URL(childComplexity), true
 
+	case "Mutation.addContentFilterRule":
+		if e.ComplexityRoot.Mutation.AddContentFilterRule == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_addContentFilterRule_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.AddContentFilterRule(childComplexity, args["category"].(string), args["field"].(model.FilterField), args["keyword"].(string), args["minWeight"].(*int32), args["blockLevel"].(model.ContentBlockLevel)), true
 	case "Mutation.addMediaToFolder":
 		if e.ComplexityRoot.Mutation.AddMediaToFolder == nil {
 			break
@@ -1664,6 +1748,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.PullTracker(childComplexity, args["mediaId"].(string)), true
+	case "Mutation.recomputeContentFilter":
+		if e.ComplexityRoot.Mutation.RecomputeContentFilter == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Mutation.RecomputeContentFilter(childComplexity), true
 	case "Mutation.refreshFolder":
 		if e.ComplexityRoot.Mutation.RefreshFolder == nil {
 			break
@@ -1697,6 +1787,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.RefreshMetadataMatch(childComplexity, args["mediaId"].(string)), true
+	case "Mutation.removeContentFilterRule":
+		if e.ComplexityRoot.Mutation.RemoveContentFilterRule == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_removeContentFilterRule_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.RemoveContentFilterRule(childComplexity, args["id"].(string)), true
 	case "Mutation.removeMediaFromFolder":
 		if e.ComplexityRoot.Mutation.RemoveMediaFromFolder == nil {
 			break
@@ -1758,6 +1859,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.RescanLocalMedia(childComplexity), true
+	case "Mutation.resetContentFilterRules":
+		if e.ComplexityRoot.Mutation.ResetContentFilterRules == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Mutation.ResetContentFilterRules(childComplexity), true
 	case "Mutation.resyncTrack":
 		if e.ComplexityRoot.Mutation.ResyncTrack == nil {
 			break
@@ -2015,6 +2122,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.CloudflareSolver(childComplexity), true
+	case "Query.contentFilterRules":
+		if e.ComplexityRoot.Query.ContentFilterRules == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.ContentFilterRules(childComplexity), true
 	case "Query.downloadQueue":
 		if e.ComplexityRoot.Query.DownloadQueue == nil {
 			break
@@ -2106,6 +2219,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.Library(childComplexity, args["filter"].(*model.LibraryFilter), args["sort"].(*model.LibrarySortInput), args["limit"].(*int32), args["offset"].(*int32)), true
+	case "Query.libraryGenres":
+		if e.ComplexityRoot.Query.LibraryGenres == nil {
+			break
+		}
+
+		args, err := ec.field_Query_libraryGenres_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.LibraryGenres(childComplexity, args["minCount"].(*int32)), true
+	case "Query.libraryTags":
+		if e.ComplexityRoot.Query.LibraryTags == nil {
+			break
+		}
+
+		args, err := ec.field_Query_libraryTags_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.LibraryTags(childComplexity, args["minCount"].(*int32)), true
 	case "Query.libraryUpdateStatus":
 		if e.ComplexityRoot.Query.LibraryUpdateStatus == nil {
 			break
@@ -2527,6 +2662,25 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.SubtitleTrack.URL(childComplexity), true
+
+	case "TagFacet.count":
+		if e.ComplexityRoot.TagFacet.Count == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TagFacet.Count(childComplexity), true
+	case "TagFacet.maxWeight":
+		if e.ComplexityRoot.TagFacet.MaxWeight == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TagFacet.MaxWeight(childComplexity), true
+	case "TagFacet.name":
+		if e.ComplexityRoot.TagFacet.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TagFacet.Name(childComplexity), true
 
 	case "TextFilter.name":
 		if e.ComplexityRoot.TextFilter.Name == nil {
@@ -3038,6 +3192,26 @@ func (ec *executionContext) childFields_CloudflareSolver(ctx context.Context, fi
 	return nil, fmt.Errorf("no field named %q was found under type CloudflareSolver", field.Name)
 }
 
+func (ec *executionContext) childFields_ContentFilterRule(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_ContentFilterRule_id(ctx, field)
+	case "category":
+		return ec.fieldContext_ContentFilterRule_category(ctx, field)
+	case "field":
+		return ec.fieldContext_ContentFilterRule_field(ctx, field)
+	case "keyword":
+		return ec.fieldContext_ContentFilterRule_keyword(ctx, field)
+	case "minWeight":
+		return ec.fieldContext_ContentFilterRule_minWeight(ctx, field)
+	case "blockLevel":
+		return ec.fieldContext_ContentFilterRule_blockLevel(ctx, field)
+	case "isDefault":
+		return ec.fieldContext_ContentFilterRule_isDefault(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ContentFilterRule", field.Name)
+}
+
 func (ec *executionContext) childFields_Download(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "id":
@@ -3432,6 +3606,18 @@ func (ec *executionContext) childFields_SubtitleTrack(ctx context.Context, field
 	return nil, fmt.Errorf("no field named %q was found under type SubtitleTrack", field.Name)
 }
 
+func (ec *executionContext) childFields_TagFacet(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "name":
+		return ec.fieldContext_TagFacet_name(ctx, field)
+	case "count":
+		return ec.fieldContext_TagFacet_count(ctx, field)
+	case "maxWeight":
+		return ec.fieldContext_TagFacet_maxWeight(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type TagFacet", field.Name)
+}
+
 func (ec *executionContext) childFields_TrackLink(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "id":
@@ -3680,6 +3866,52 @@ func (ec *executionContext) childFields___Type(ctx context.Context, field graphq
 		return ec.fieldContext___Type_isOneOf(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type __Type", field.Name)
+}
+
+func (ec *executionContext) field_Mutation_addContentFilterRule_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "category",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["category"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "field",
+		func(ctx context.Context, v any) (model.FilterField, error) {
+			return ec.unmarshalNFilterField2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐFilterField(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["field"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "keyword",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["keyword"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "minWeight",
+		func(ctx context.Context, v any) (*int32, error) {
+			return ec.unmarshalOInt2ᚖint32(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["minWeight"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "blockLevel",
+		func(ctx context.Context, v any) (model.ContentBlockLevel, error) {
+			return ec.unmarshalNContentBlockLevel2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐContentBlockLevel(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["blockLevel"] = arg4
+	return args, nil
 }
 
 func (ec *executionContext) field_Mutation_addMediaToFolder_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
@@ -4087,6 +4319,20 @@ func (ec *executionContext) field_Mutation_refreshMetadata_args(ctx context.Cont
 		return nil, err
 	}
 	args["syncChapters"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_removeContentFilterRule_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -4761,6 +5007,34 @@ func (ec *executionContext) field_Query_latestUpdates_args(ctx context.Context, 
 		return nil, err
 	}
 	args["page"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_libraryGenres_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "minCount",
+		func(ctx context.Context, v any) (*int32, error) {
+			return ec.unmarshalOInt2ᚖint32(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["minCount"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_libraryTags_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "minCount",
+		func(ctx context.Context, v any) (*int32, error) {
+			return ec.unmarshalOInt2ᚖint32(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["minCount"] = arg0
 	return args, nil
 }
 
@@ -5832,6 +6106,167 @@ func (ec *executionContext) _CloudflareSolver_supportedOnPlatform(ctx context.Co
 }
 func (ec *executionContext) fieldContext_CloudflareSolver_supportedOnPlatform(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("CloudflareSolver", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _ContentFilterRule_id(ctx context.Context, field graphql.CollectedField, obj *model.ContentFilterRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ContentFilterRule_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ContentFilterRule_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ContentFilterRule", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _ContentFilterRule_category(ctx context.Context, field graphql.CollectedField, obj *model.ContentFilterRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ContentFilterRule_category(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Category, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ContentFilterRule_category(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ContentFilterRule", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ContentFilterRule_field(ctx context.Context, field graphql.CollectedField, obj *model.ContentFilterRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ContentFilterRule_field(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Field, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v model.FilterField) graphql.Marshaler {
+			return ec.marshalNFilterField2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐFilterField(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ContentFilterRule_field(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ContentFilterRule", field, false, false, errors.New("field of type FilterField does not have child fields"))
+}
+
+func (ec *executionContext) _ContentFilterRule_keyword(ctx context.Context, field graphql.CollectedField, obj *model.ContentFilterRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ContentFilterRule_keyword(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Keyword, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ContentFilterRule_keyword(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ContentFilterRule", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ContentFilterRule_minWeight(ctx context.Context, field graphql.CollectedField, obj *model.ContentFilterRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ContentFilterRule_minWeight(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MinWeight, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ContentFilterRule_minWeight(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ContentFilterRule", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _ContentFilterRule_blockLevel(ctx context.Context, field graphql.CollectedField, obj *model.ContentFilterRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ContentFilterRule_blockLevel(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BlockLevel, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v model.ContentBlockLevel) graphql.Marshaler {
+			return ec.marshalNContentBlockLevel2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐContentBlockLevel(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ContentFilterRule_blockLevel(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ContentFilterRule", field, false, false, errors.New("field of type ContentBlockLevel does not have child fields"))
+}
+
+func (ec *executionContext) _ContentFilterRule_isDefault(ctx context.Context, field graphql.CollectedField, obj *model.ContentFilterRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ContentFilterRule_isDefault(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.IsDefault, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ContentFilterRule_isDefault(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ContentFilterRule", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
 func (ec *executionContext) _Download_id(ctx context.Context, field graphql.CollectedField, obj *model.Download) (ret graphql.Marshaler) {
@@ -9023,6 +9458,140 @@ func (ec *executionContext) fieldContext_Mutation_updateServerSetting(ctx contex
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_addContentFilterRule(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_addContentFilterRule(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().AddContentFilterRule(ctx, fc.Args["category"].(string), fc.Args["field"].(model.FilterField), fc.Args["keyword"].(string), fc.Args["minWeight"].(*int32), fc.Args["blockLevel"].(model.ContentBlockLevel))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.ContentFilterRule) graphql.Marshaler {
+			return ec.marshalNContentFilterRule2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐContentFilterRule(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_addContentFilterRule(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ContentFilterRule(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_addContentFilterRule_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_removeContentFilterRule(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_removeContentFilterRule(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().RemoveContentFilterRule(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_removeContentFilterRule(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_removeContentFilterRule_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_resetContentFilterRules(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_resetContentFilterRules(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Mutation().ResetContentFilterRules(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_resetContentFilterRules(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Mutation", field, true, true, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _Mutation_recomputeContentFilter(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_recomputeContentFilter(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Mutation().RecomputeContentFilter(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_recomputeContentFilter(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Mutation", field, true, true, errors.New("field of type Boolean does not have child fields"))
+}
+
 func (ec *executionContext) _Mutation_installCloudflareSolver(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -10819,6 +11388,126 @@ func (ec *executionContext) fieldContext_Query_serverSettings(_ context.Context,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return ec.childFields_ServerSetting(ctx, field)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_contentFilterRules(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_contentFilterRules(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Query().ContentFilterRules(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.ContentFilterRule) graphql.Marshaler {
+			return ec.marshalNContentFilterRule2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐContentFilterRuleᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_contentFilterRules(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ContentFilterRule(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_libraryTags(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_libraryTags(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().LibraryTags(ctx, fc.Args["minCount"].(*int32))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.TagFacet) graphql.Marshaler {
+			return ec.marshalNTagFacet2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐTagFacetᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_libraryTags(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_TagFacet(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_libraryTags_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_libraryGenres(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_libraryGenres(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().LibraryGenres(ctx, fc.Args["minCount"].(*int32))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.TagFacet) graphql.Marshaler {
+			return ec.marshalNTagFacet2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐTagFacetᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_libraryGenres(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_TagFacet(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_libraryGenres_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -12823,6 +13512,75 @@ func (ec *executionContext) _SubtitleTrack_url(ctx context.Context, field graphq
 }
 func (ec *executionContext) fieldContext_SubtitleTrack_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("SubtitleTrack", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _TagFacet_name(ctx context.Context, field graphql.CollectedField, obj *model.TagFacet) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TagFacet_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TagFacet_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TagFacet", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _TagFacet_count(ctx context.Context, field graphql.CollectedField, obj *model.TagFacet) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TagFacet_count(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Count, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TagFacet_count(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TagFacet", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _TagFacet_maxWeight(ctx context.Context, field graphql.CollectedField, obj *model.TagFacet) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TagFacet_maxWeight(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MaxWeight, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TagFacet_maxWeight(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TagFacet", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
 func (ec *executionContext) _TextFilter_name(ctx context.Context, field graphql.CollectedField, obj *model.TextFilter) (ret graphql.Marshaler) {
@@ -16161,6 +16919,74 @@ func (ec *executionContext) _CloudflareSolver(ctx context.Context, sel ast.Selec
 	return out
 }
 
+var contentFilterRuleImplementors = []string{"ContentFilterRule"}
+
+func (ec *executionContext) _ContentFilterRule(ctx context.Context, sel ast.SelectionSet, obj *model.ContentFilterRule) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, contentFilterRuleImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ContentFilterRule")
+		case "id":
+			out.Values[i] = ec._ContentFilterRule_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "category":
+			out.Values[i] = ec._ContentFilterRule_category(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "field":
+			out.Values[i] = ec._ContentFilterRule_field(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "keyword":
+			out.Values[i] = ec._ContentFilterRule_keyword(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "minWeight":
+			out.Values[i] = ec._ContentFilterRule_minWeight(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "blockLevel":
+			out.Values[i] = ec._ContentFilterRule_blockLevel(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "isDefault":
+			out.Values[i] = ec._ContentFilterRule_isDefault(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var downloadImplementors = []string{"Download"}
 
 func (ec *executionContext) _Download(ctx context.Context, sel ast.SelectionSet, obj *model.Download) graphql.Marshaler {
@@ -17730,6 +18556,34 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "addContentFilterRule":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_addContentFilterRule(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "removeContentFilterRule":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_removeContentFilterRule(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "resetContentFilterRules":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_resetContentFilterRules(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "recomputeContentFilter":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_recomputeContentFilter(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "installCloudflareSolver":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_installCloudflareSolver(ctx, field)
@@ -18209,6 +19063,72 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_serverSettings(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "contentFilterRules":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_contentFilterRules(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "libraryTags":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_libraryTags(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "libraryGenres":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_libraryGenres(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -19306,6 +20226,54 @@ func (ec *executionContext) _SubtitleTrack(ctx context.Context, sel ast.Selectio
 	return out
 }
 
+var tagFacetImplementors = []string{"TagFacet"}
+
+func (ec *executionContext) _TagFacet(ctx context.Context, sel ast.SelectionSet, obj *model.TagFacet) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, tagFacetImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TagFacet")
+		case "name":
+			out.Values[i] = ec._TagFacet_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "count":
+			out.Values[i] = ec._TagFacet_count(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "maxWeight":
+			out.Values[i] = ec._TagFacet_maxWeight(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var textFilterImplementors = []string{"TextFilter", "FilterNode"}
 
 func (ec *executionContext) _TextFilter(ctx context.Context, sel ast.SelectionSet, obj *model.TextFilter) graphql.Marshaler {
@@ -20351,6 +21319,46 @@ func (ec *executionContext) marshalNCloudflareSolver2ᚖtsunaguᚋbackendᚋinte
 	return ec._CloudflareSolver(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNContentBlockLevel2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐContentBlockLevel(ctx context.Context, v any) (model.ContentBlockLevel, error) {
+	var res model.ContentBlockLevel
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNContentBlockLevel2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐContentBlockLevel(ctx context.Context, sel ast.SelectionSet, v model.ContentBlockLevel) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) marshalNContentFilterRule2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐContentFilterRule(ctx context.Context, sel ast.SelectionSet, v model.ContentFilterRule) graphql.Marshaler {
+	return ec._ContentFilterRule(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNContentFilterRule2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐContentFilterRuleᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ContentFilterRule) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNContentFilterRule2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐContentFilterRule(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNContentFilterRule2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐContentFilterRule(ctx context.Context, sel ast.SelectionSet, v *model.ContentFilterRule) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ContentFilterRule(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNContentType2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐContentType(ctx context.Context, v any) (model.ContentType, error) {
 	var res model.ContentType
 	err := res.UnmarshalGQL(v)
@@ -20457,6 +21465,16 @@ func (ec *executionContext) marshalNExtensionPage2ᚖtsunaguᚋbackendᚋinterna
 		return graphql.Null
 	}
 	return ec._ExtensionPage(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNFilterField2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐFilterField(ctx context.Context, v any) (model.FilterField, error) {
+	var res model.FilterField
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNFilterField2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐFilterField(ctx context.Context, sel ast.SelectionSet, v model.FilterField) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) unmarshalNFilterInput2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐFilterInputᚄ(ctx context.Context, v any) ([]*model.FilterInput, error) {
@@ -21000,6 +22018,32 @@ func (ec *executionContext) marshalNSubtitleTrack2ᚖtsunaguᚋbackendᚋinterna
 		return graphql.Null
 	}
 	return ec._SubtitleTrack(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNTagFacet2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐTagFacetᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.TagFacet) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNTagFacet2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐTagFacet(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNTagFacet2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐTagFacet(ctx context.Context, sel ast.SelectionSet, v *model.TagFacet) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._TagFacet(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v any) (time.Time, error) {

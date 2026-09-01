@@ -35,14 +35,20 @@ type Syncer struct {
 	updateMu   sync.Mutex
 	updateProg LibraryUpdateProgress
 
-	enricher Enricher
+	enricher  Enricher
+	recompute Recomputer
 }
 
 type Enricher interface {
 	AutoEnrich(ctx context.Context, mediaID int64) error
 }
 
-func (s *Syncer) SetEnricher(e Enricher) { s.enricher = e }
+type Recomputer interface {
+	RecomputeMedia(ctx context.Context, mediaID int64) error
+}
+
+func (s *Syncer) SetEnricher(e Enricher)     { s.enricher = e }
+func (s *Syncer) SetRecomputer(r Recomputer) { s.recompute = r }
 
 func New(db *sql.DB, q *sqlcgen.Queries, cacheDir, mediaDir string) *Syncer {
 	return &Syncer{db: db, q: q, cacheDir: cacheDir, mediaDir: mediaDir, locks: make(map[string]*sync.Mutex)}
@@ -925,6 +931,10 @@ func (s *Syncer) upsertEntryFromDetails(ctx context.Context, c *sandbox.Client, 
 	}
 
 	s.maybeEnrich(ctx, entry.ID)
+	if s.recompute != nil {
+		id := entry.ID
+		go func() { _ = s.recompute.RecomputeMedia(context.Background(), id) }()
+	}
 	if refreshed, err := s.q.GetMedia(ctx, entry.ID); err == nil {
 		entry = refreshed
 	}
@@ -1031,6 +1041,9 @@ type LibraryQuery struct {
 	Ascending      bool
 	Limit          int
 	Offset         int
+
+	// ContentFilterRank: 0 = unrestricted (no filtering), 1 = moderate, 2 = strict.
+	ContentFilterRank int
 }
 
 func (s *Syncer) QueryLibrary(ctx context.Context, q LibraryQuery) ([]sqlcgen.Medium, int, error) {
@@ -1061,6 +1074,10 @@ func (s *Syncer) QueryLibrary(ctx context.Context, q LibraryQuery) ([]sqlcgen.Me
 		for _, id := range q.TagIDs {
 			args = append(args, id)
 		}
+	}
+	if q.ContentFilterRank > 0 {
+		where = append(where, "(m.content_block_rank IS NULL OR m.content_block_rank > ?)")
+		args = append(args, q.ContentFilterRank)
 	}
 	if q.UnreadOnly {
 		where = append(where, `EXISTS (

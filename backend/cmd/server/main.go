@@ -24,6 +24,7 @@ import (
 	"tsunagu/backend/internal/api/graph"
 	"tsunagu/backend/internal/api/rest"
 	"tsunagu/backend/internal/config"
+	"tsunagu/backend/internal/contentfilter"
 	"tsunagu/backend/internal/db"
 	"tsunagu/backend/internal/db/sqlcgen"
 	"tsunagu/backend/internal/download"
@@ -121,10 +122,21 @@ func main() {
 	}
 	store.OnChange("cloudflare_solver_mode", applyCloudflare)
 	store.OnChange("cloudflare_solver_url", applyCloudflare)
+
+	cfMgr, err := contentfilter.New(q)
+	if err != nil {
+		log.Fatalf("content filter: %v", err)
+	}
+	store.OnChange("content_filter_level", func(context.Context) {
+		cfMgr.SetLevel(contentfilter.ParseLevel(store.Config().ContentFilterLevel))
+	})
+	globalCf = cfMgr
+
 	if err := store.Sync(context.Background()); err != nil {
 		log.Fatalf("syncing config: %v", err)
 	}
 	applyCloudflare(context.Background())
+	cfMgr.SetLevel(contentfilter.ParseLevel(store.Config().ContentFilterLevel))
 	globalStore = store
 
 	cfg := store.Config()
@@ -160,6 +172,8 @@ func main() {
 	})
 	metadataMgr := metadata.NewManager(conn, q)
 	syncer.SetEnricher(metadataMgr)
+	metadataMgr.SetRecomputer(cfMgr)
+	syncer.SetRecomputer(cfMgr)
 
 	supervised := sandbox.NewSupervised(sandbox.SupervisedConfig{
 		JarPath:       cfg.SandboxJarPath,
@@ -192,6 +206,7 @@ func main() {
 	if cfg.MetadataBackfill {
 		go metadataMgr.EnrichLibrary(context.Background())
 	}
+	go cfMgr.RecomputeAll(context.Background())
 
 	if h := cfg.TrackerPollHours; h > 0 {
 		go func() {
@@ -369,7 +384,7 @@ func corsMiddleware(next http.Handler) http.Handler {
 }
 
 func registerGraphQL(mux *http.ServeMux, sc *sandbox.SupervisedClient, sy *sync.Syncer, dm *download.Manager, tk *tracker.Manager, md *metadata.Manager, sr *streamresolve.Resolver, q *sqlcgen.Queries) {
-	resolver := &graph.Resolver{Sy: sy, Sc: sc, Dm: dm, Ls: localsource.New(q, globalMediaDir), Tk: tk, Md: md, Sr: sr, Q: q, Fs: globalFsMgr, Cfg: globalStore, MediaDir: globalMediaDir, Name: serverName, Version: serverVersion, BuildTime: serverBuildTime}
+	resolver := &graph.Resolver{Sy: sy, Sc: sc, Dm: dm, Ls: localsource.New(q, globalMediaDir), Tk: tk, Md: md, Sr: sr, Q: q, Fs: globalFsMgr, Cfg: globalStore, Cf: globalCf, MediaDir: globalMediaDir, Name: serverName, Version: serverVersion, BuildTime: serverBuildTime}
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: resolver}))
 	srv.Use(extension.FixedComplexityLimit(8000))
 	mux.Handle("/api/graphql", withLoaders(q, srv))
@@ -393,3 +408,4 @@ func registerRoutes(mux *http.ServeMux) {
 var globalMediaDir string
 var globalFsMgr *flaresolverr.Manager
 var globalStore *config.Store
+var globalCf *contentfilter.Manager

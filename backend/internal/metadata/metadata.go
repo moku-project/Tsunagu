@@ -31,6 +31,7 @@ type Candidate struct {
 	Authors      []string
 	Genres       []string
 	Tags         []string
+	TagWeights   []int
 	StartYear    int
 	IsAdult      bool
 }

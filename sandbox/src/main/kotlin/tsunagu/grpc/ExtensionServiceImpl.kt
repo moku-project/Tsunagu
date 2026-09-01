@@ -505,11 +505,17 @@ class ExtensionServiceImpl(
             .setSupportsLatest(extensionSupportsLatest(ext.source))
             .build()
 
+    private fun splitGenres(genre: String?): List<String> =
+        genre.orEmpty().split(Regex("[,;/|]"))
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+
     private fun toEntrySummary(manga: SManga): Sandbox.EntrySummary =
         Sandbox.EntrySummary.newBuilder()
             .setSourceEntryId(manga.url)
             .setTitle(manga.title)
             .setCoverUrl(manga.thumbnail_url ?: "")
+            .addAllGenres(splitGenres(manga.genre))
             .build()
 
     private fun toEntrySummaryAnime(anime: SAnime): Sandbox.EntrySummary =
@@ -517,6 +523,7 @@ class ExtensionServiceImpl(
             .setSourceEntryId(anime.url)
             .setTitle(anime.title)
             .setCoverUrl(anime.thumbnail_url ?: "")
+            .addAllGenres(splitGenres(anime.genre))
             .build()
 
     private fun mangaStatusToString(status: Int): String =
