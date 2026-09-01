@@ -1,14 +1,79 @@
-http_addr = ":6007"
+# Tsunagu configuration -- regenerated on every save.
+# Active (uncommented) lines are authoritative: on boot they overwrite
+# whatever the app last set. Commented lines show the default; the app
+# controls those. Edit and restart to override.
+
+# ---- not editable in the app: change here, then restart ----
+
+# Root directory for the DB, caches, extensions and downloads. Set via --data-dir.  [FULL_RESTART]
+data_dir = ""
+
+# SQLite database file.  [FULL_RESTART]
 db_path = "data/tsunagu.db"
+
+# Address the HTTP API binds to.  [FULL_RESTART]
+http_addr = ":6007"
+
+# Require this bearer token on API requests when set.  [FULL_RESTART]
+api_token = ""
+
+# Path to sandbox.jar. A bundled launcher may override this at runtime.  [FULL_RESTART]
+sandbox_jar_path = "sandbox.jar"
+
+
+# ---- editable here or in the app ----
+
+# Externally reachable base URL (OAuth callbacks, image links).  [FULL_RESTART]
+# public_url = "http://localhost:6007"
+
+# Where covers, downloads and other media are stored. Move existing files yourself before changing.  [FULL_RESTART]
+# media_dir = "media"
+
+# Where downloaded extension jars are cached.  [FULL_RESTART]
 jar_cache_dir = "./jar-cache"
 
-sandbox_addr = "localhost:50051"
-sandbox_port = 50051
-sandbox_extensions_dir = "sandbox/extensions"
-sandbox_storage_dir = "data/plugin-storage"
-
+# Load light-novel extensions in the sandbox.  [SANDBOX_RESTART]
 novel_enabled = true
 
-idle_reap_enabled = true
+# Auto-match library items against AniList on startup.  [FULL_RESTART]
+# metadata_backfill = true
 
+# Stop the sandbox after this many idle minutes (0 = never).  [FULL_RESTART]
 idle_timeout_minutes = 15
+
+# How often background tracker sync runs, in hours (0 = never).  [FULL_RESTART]
+# tracker_poll_hours = 6
+
+# AniList OAuth client id.  [FULL_RESTART]
+# anilist_client_id = "49724"
+
+# MyAnimeList OAuth client id.  [FULL_RESTART]
+# mal_client_id = "611c821aee93c5e51411bfa86ca32597"
+
+# MyAnimeList OAuth client secret (PKCE flow leaves this empty).  [FULL_RESTART]
+# mal_client_secret = ""
+
+# Loopback address the extension sandbox listens on.  [FULL_RESTART]
+sandbox_addr = "localhost:50051"
+
+# Loopback port the extension sandbox listens on.  [FULL_RESTART]
+sandbox_port = 50051
+
+# Directory holding installed extension jars. Move existing files yourself before changing.  [FULL_RESTART]
+sandbox_extensions_dir = "sandbox/extensions"
+
+# Per-extension key/value storage directory. Move existing files yourself before changing.  [FULL_RESTART]
+sandbox_storage_dir = "data/plugin-storage"
+
+# JVM heap for the sandbox in MB (0 = JVM default).  [SANDBOX_RESTART]
+# sandbox_heap_mb = 0
+
+# Expose net/http/pprof on this address when set, e.g. localhost:6060.  [FULL_RESTART]
+# pprof_addr = ""
+
+# Cloudflare bypass: disabled / external / managed.
+# cloudflare_solver_mode = "disabled"
+
+# FlareSolverr URL for external mode, e.g. http://127.0.0.1:8191.
+# cloudflare_solver_url = "http://127.0.0.1:8191"
+

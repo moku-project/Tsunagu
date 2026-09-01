@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"html"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -43,6 +44,29 @@ var (
 	serverBuildTime = "unknown"
 )
 
+// setupFileLog tees log output to <data-dir>/tsunagu.log (or ./tsunagu.log)
+// so startup failures are captured even when stdout/stderr go nowhere.
+func setupFileLog(dataDir string) {
+	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
+	dir := dataDir
+	if dir == "" {
+		dir = "."
+	}
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return
+	}
+	path := filepath.Join(dir, "tsunagu.log")
+	if st, err := os.Stat(path); err == nil && st.Size() > 4<<20 {
+		_ = os.Rename(path, path+".old")
+	}
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644)
+	if err != nil {
+		return
+	}
+	log.SetOutput(io.MultiWriter(os.Stderr, f))
+	log.Printf("=== %s %s (%s) starting, pid %d ===", serverName, serverVersion, serverBuildTime, os.Getpid())
+}
+
 func main() {
 	dataDir := flag.String("data-dir", "", "root directory for the DB, caches, extensions and downloads")
 	configPath := flag.String("config", "", "path to tsunagu.toml (defaults to <data-dir>/tsunagu.toml)")
@@ -56,6 +80,8 @@ func main() {
 		runConfigCLI(flag.Args()[1:], config.Options{ConfigPath: *configPath, DataDir: *dataDir})
 		return
 	}
+
+	setupFileLog(*dataDir)
 
 	bootCfg, tomlPath, activeKeys, err := config.Load(config.Options{ConfigPath: *configPath, DataDir: *dataDir})
 	if err != nil {
