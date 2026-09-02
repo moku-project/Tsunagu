@@ -411,6 +411,7 @@ type ComplexityRoot struct {
 
 	TagFacet struct {
 		Count     func(childComplexity int) int
+		ID        func(childComplexity int) int
 		MaxWeight func(childComplexity int) int
 		Name      func(childComplexity int) int
 	}
@@ -2669,6 +2670,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.TagFacet.Count(childComplexity), true
+	case "TagFacet.id":
+		if e.ComplexityRoot.TagFacet.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.TagFacet.ID(childComplexity), true
 	case "TagFacet.maxWeight":
 		if e.ComplexityRoot.TagFacet.MaxWeight == nil {
 			break
@@ -3608,6 +3615,8 @@ func (ec *executionContext) childFields_SubtitleTrack(ctx context.Context, field
 
 func (ec *executionContext) childFields_TagFacet(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
+	case "id":
+		return ec.fieldContext_TagFacet_id(ctx, field)
 	case "name":
 		return ec.fieldContext_TagFacet_name(ctx, field)
 	case "count":
@@ -13514,6 +13523,29 @@ func (ec *executionContext) fieldContext_SubtitleTrack_url(_ context.Context, fi
 	return graphql.NewScalarFieldContext("SubtitleTrack", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _TagFacet_id(ctx context.Context, field graphql.CollectedField, obj *model.TagFacet) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_TagFacet_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_TagFacet_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("TagFacet", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
 func (ec *executionContext) _TagFacet_name(ctx context.Context, field graphql.CollectedField, obj *model.TagFacet) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -16035,7 +16067,7 @@ func (ec *executionContext) unmarshalInputLibraryFilter(ctx context.Context, obj
 		asMap["inLibrary"] = true
 	}
 
-	fieldsInOrder := [...]string{"contentType", "inLibrary", "unreadOnly", "downloadedOnly", "tagIds", "folderId", "query"}
+	fieldsInOrder := [...]string{"contentType", "inLibrary", "unreadOnly", "downloadedOnly", "tagIds", "genreIds", "folderId", "query"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -16077,6 +16109,13 @@ func (ec *executionContext) unmarshalInputLibraryFilter(ctx context.Context, obj
 				return it, err
 			}
 			it.TagIds = data
+		case "genreIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("genreIds"))
+			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.GenreIds = data
 		case "folderId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("folderId"))
 			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
@@ -20238,6 +20277,11 @@ func (ec *executionContext) _TagFacet(ctx context.Context, sel ast.SelectionSet,
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("TagFacet")
+		case "id":
+			out.Values[i] = ec._TagFacet_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "name":
 			out.Values[i] = ec._TagFacet_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

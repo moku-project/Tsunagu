@@ -2103,3 +2103,593 @@ Caused by: java.net.SocketException: Connection reset
 2026/09/01 15:49:54.389366 POST /api/graphql 200 12.634880245s
 2026/09/01 15:50:01.647431 [sandbox] [grpc-default-executor-0] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
 2026/09/01 16:03:14.340168 shutting down
+2026/09/01 23:00:10.431112 === Tsunagu dev (unknown) starting, pid 559189 ===
+2026/09/01 23:00:10.470683 sandbox: spawning /nix/store/1slz0vmmgsd7p6i4c0jaywkpw56wl2yg-openjdk-21.0.12+8/lib/openjdk/bin/java -cp /home/shozikan/Projects/Manga/Tsunagu/sandbox/build/libs/sandbox-0.1.0-all.jar tsunagu.MainKt (source: JAVA_HOME/PATH)
+2026/09/01 23:00:10.844081 [sandbox] [main] INFO eu.kanade.tachiyomi.network.TlsSetup - TLS: Conscrypt provider installed (v2.5.2)
+2026/09/01 23:00:11.457889 [sandbox] tsunagu sandbox listening on :50051
+2026/09/01 23:00:12.399996 sandbox: ready at localhost:50051
+2026/09/01 23:00:15.556008 tsunagu dev listening on [::]:6007
+2026/09/01 23:00:15.558700 metadata backfill: 1 unmatched media, working through them (~1m)
+2026/09/01 23:00:15.561737 content filter: recomputed 6 media
+2026/09/01 23:00:15.927104 tracker poll: reconciled 2 media
+2026/09/01 23:00:16.605979 metadata backfill: done -- matched 0/1
+2026/09/01 23:00:24.127760 POST /api/graphql 200 942.945931ms
+2026/09/01 23:01:44.006804 POST /api/graphql 200 1.233371262s
+2026/09/01 23:01:45.086706 POST /api/graphql 200 823.477096ms
+2026/09/01 23:01:45.451380 GET /proxy/cover/781 502 249.949407ms
+2026/09/01 23:01:45.462866 GET /proxy/cover/757 502 294.479738ms
+2026/09/01 23:01:45.746524 POST /api/graphql 200 1.483288639s
+2026/09/01 23:01:45.938300 [sandbox] [grpc-default-executor-4] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:01:45.939164 POST /api/graphql 200 832.889331ms
+2026/09/01 23:01:46.091143 POST /api/graphql 200 1.827883609s
+2026/09/01 23:01:46.318028 POST /api/graphql 200 568.34374ms
+2026/09/01 23:01:46.487397 POST /api/graphql 200 544.942775ms
+2026/09/01 23:01:46.881354 POST /api/graphql 200 559.757939ms
+2026/09/01 23:01:47.318160 POST /api/graphql 200 824.621747ms
+2026/09/01 23:01:49.336155 GET /proxy/cover/757 502 162.944075ms
+2026/09/01 23:01:50.083830 sync: caching cover for entry 757 failed: rpc error: code = Internal desc = java.lang.IllegalStateException: extension eu.kanade.tachiyomi.animeextension.en.animegg is not an HttpSource
+2026/09/01 23:01:50.463403 POST /api/graphql 200 1.387014171s
+2026/09/01 23:01:51.901375 POST /api/graphql 200 7.63819638s
+2026/09/01 23:01:52.564376 POST /api/graphql 200 651.919301ms
+2026/09/01 23:01:52.613971 POST /api/graphql 200 701.522455ms
+2026/09/01 23:01:53.351950 [sandbox] [grpc-default-executor-5] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:01:53.352835 POST /api/graphql 200 761.420504ms
+2026/09/01 23:01:53.513699 POST /api/graphql 200 540.568389ms
+2026/09/01 23:01:53.539581 [sandbox] [grpc-default-executor-2] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:01:54.070112 POST /api/graphql 200 527.069836ms
+2026/09/01 23:01:54.119187 [sandbox] [grpc-default-executor-5] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 23:01:54.297387 [sandbox] [grpc-default-executor-2] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 23:01:54.305938 POST /api/graphql 200 762.986682ms
+2026/09/01 23:01:54.695772 POST /api/graphql 200 571.800733ms
+2026/09/01 23:01:55.119803 GET /proxy/cover/781 502 170.692811ms
+2026/09/01 23:01:56.981407 POST /api/graphql 200 537.50314ms
+2026/09/01 23:01:58.596412 POST /api/graphql 200 790.837074ms
+2026/09/01 23:02:00.172777 [sandbox] [grpc-default-executor-1] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:02:00.173660 POST /api/graphql 200 798.075215ms
+2026/09/01 23:02:00.382474 [sandbox] [grpc-default-executor-1] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:02:00.570772 [sandbox] [grpc-default-executor-1] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:02:00.715682 [sandbox] [grpc-default-executor-5] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 523 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:02:00.716457 POST /api/graphql 200 4.606229927s
+2026/09/01 23:02:01.187568 POST /api/graphql 200 613.169026ms
+2026/09/01 23:02:01.260876 POST /api/graphql 200 541.706299ms
+2026/09/01 23:02:02.038955 POST /api/graphql 200 775.225251ms
+2026/09/01 23:02:02.143101 POST /api/graphql 200 721.532532ms
+2026/09/01 23:02:02.148063 [sandbox] [grpc-default-executor-1] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:02:02.153094 [sandbox] [grpc-default-executor-1] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:02:02.159136 [sandbox] [grpc-default-executor-1] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:02:02.972658 POST /api/graphql 200 704.00107ms
+2026/09/01 23:02:03.549537 POST /api/graphql 200 939.213079ms
+2026/09/01 23:02:03.712941 [sandbox] [grpc-default-executor-5] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 23:02:03.718108 [sandbox] [grpc-default-executor-5] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 23:02:03.722777 [sandbox] [grpc-default-executor-5] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 23:02:03.851205 [sandbox] [grpc-default-executor-3] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:02:04.193652 [sandbox] [grpc-default-executor-1] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 23:02:04.198132 [sandbox] [grpc-default-executor-1] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 23:02:04.202292 [sandbox] [grpc-default-executor-1] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 23:02:06.913990 POST /api/graphql 200 15.001669475s
+2026/09/01 23:02:11.111561 POST /api/graphql 200 15.001465969s
+2026/09/01 23:02:11.114733 POST /api/graphql 200 15.004543593s
+2026/09/01 23:02:11.357054 [sandbox] [grpc-default-executor-4] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:02:15.455372 [sandbox] [grpc-default-executor-6] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:02:15.455457 [sandbox] [grpc-default-executor-2] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:02:33.044305 GET /proxy/cover/781 502 167.020657ms
+2026/09/01 23:02:35.853351 POST /api/graphql 200 2.185517037s
+2026/09/01 23:02:49.419323 [sandbox] [grpc-default-executor-6] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; AnimeCatalogueSource.getSearchAnime$suspendImpl:26
+2026/09/01 23:05:22.988856 shutting down
+2026/09/01 23:09:09.509332 === Tsunagu dev (unknown) starting, pid 593660 ===
+2026/09/01 23:09:09.526081 sandbox: spawning /nix/store/1slz0vmmgsd7p6i4c0jaywkpw56wl2yg-openjdk-21.0.12+8/lib/openjdk/bin/java -cp /home/shozikan/Projects/Manga/Tsunagu/sandbox/build/libs/sandbox-0.1.0-all.jar tsunagu.MainKt (source: JAVA_HOME/PATH)
+2026/09/01 23:09:09.785322 [sandbox] [main] INFO eu.kanade.tachiyomi.network.TlsSetup - TLS: Conscrypt provider installed (v2.5.2)
+2026/09/01 23:09:10.331258 [sandbox] tsunagu sandbox listening on :50051
+2026/09/01 23:09:10.492788 sandbox: ready at localhost:50051
+2026/09/01 23:09:12.823091 tsunagu dev listening on [::]:6007
+2026/09/01 23:09:12.825550 metadata backfill: 1 unmatched media, working through them (~1m)
+2026/09/01 23:09:12.827276 content filter: recomputed 6 media
+2026/09/01 23:09:13.188460 tracker poll: reconciled 2 media
+2026/09/01 23:09:13.860327 metadata backfill: done -- matched 0/1
+2026/09/01 23:09:21.411034 POST /api/graphql 200 963.769987ms
+2026/09/01 23:09:29.267125 POST /api/graphql 200 992.652708ms
+2026/09/01 23:09:29.333500 POST /api/graphql 200 1.058980544s
+2026/09/01 23:09:29.999980 POST /api/graphql 200 1.725443782s
+2026/09/01 23:09:30.209368 POST /api/graphql 200 567.600296ms
+2026/09/01 23:09:30.860237 [sandbox] [grpc-default-executor-3] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:09:30.861916 POST /api/graphql 200 860.331499ms
+2026/09/01 23:09:31.433743 POST /api/graphql 200 568.348886ms
+2026/09/01 23:09:31.872929 POST /api/graphql 200 883.351868ms
+2026/09/01 23:09:32.107208 POST /api/graphql 200 671.742249ms
+2026/09/01 23:09:32.824084 POST /api/graphql 200 563.877712ms
+2026/09/01 23:09:32.831518 [sandbox] [grpc-default-executor-1] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:09:32.962469 POST /api/graphql 200 833.502319ms
+2026/09/01 23:09:33.645376 POST /api/graphql 200 515.832489ms
+2026/09/01 23:09:33.710112 POST /api/graphql 200 876.336989ms
+2026/09/01 23:09:33.885729 [sandbox] [grpc-default-executor-1] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 23:09:34.855269 POST /api/graphql 200 626.27753ms
+2026/09/01 23:09:35.114723 [sandbox] [grpc-default-executor-3] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 23:09:35.899770 [sandbox] [grpc-default-executor-1] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:09:36.090236 [sandbox] [grpc-default-executor-1] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:09:36.992754 POST /api/graphql 200 900.606628ms
+2026/09/01 23:09:38.297957 POST /api/graphql 200 1.303904701s
+2026/09/01 23:09:39.841165 POST /api/graphql 200 1.541542615s
+2026/09/01 23:09:40.034913 [sandbox] [grpc-default-executor-1] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:09:40.757253 POST /api/graphql 200 720.006979ms
+2026/09/01 23:09:40.943601 [sandbox] [grpc-default-executor-1] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; AnimeCatalogueSource.getSearchAnime$suspendImpl:26
+2026/09/01 23:09:42.607099 POST /api/graphql 200 940.784698ms
+2026/09/01 23:09:43.178189 [sandbox] [grpc-default-executor-1] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: IOException: Open in WebView to bypass site protection <- IOException: Open in WebView to bypass site protection @ x.a:-1; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10
+2026/09/01 23:09:43.179090 POST /api/graphql 200 549.472842ms
+2026/09/01 23:09:43.183814 [sandbox] E/BatCave: Failed to fetch filter data
+java.io.IOException: Open in WebView to bypass site protection
+	at keiyoushi.a.b.a(Unknown Source)
+	at keiyoushi.a.b.a(Unknown Source)
+	at eu.kanade.tachiyomi.a.a.a.a.a(Unknown Source)
+	at eu.kanade.tachiyomi.a.a.a.a.a(Unknown Source)
+	at keiyoushi.source.f.invokeSuspend(Unknown Source)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.internal.LimitedDispatcher$Worker.run(LimitedDispatcher.kt:124)
+	at kotlinx.coroutines.scheduling.TaskImpl.run(Tasks.kt:89)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler.runSafely(CoroutineScheduler.kt:586)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.executeTask(CoroutineScheduler.kt:798)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:717)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:704)
+Caused by: java.io.IOException: Open in WebView to bypass site protection
+	at eu.kanade.tachiyomi.a.a.a.x.a(Unknown Source)
+	at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:332)
+	at eu.kanade.tachiyomi.network.interceptor.UserAgentInterceptor.intercept(UserAgentInterceptor.kt:21)
+	at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:332)
+	at eu.kanade.tachiyomi.network.interceptor.UncaughtExceptionInterceptor.intercept(UncaughtExceptionInterceptor.kt:10)
+	at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:332)
+	at okhttp3.internal.connection.RealCall.getResponseWithInterceptorChain$okhttp(RealCall.kt:234)
+	at okhttp3.internal.connection.RealCall$AsyncCall.run(RealCall.kt:582)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+
+2026/09/01 23:09:43.276319 POST /api/graphql 200 15.001883406s
+2026/09/01 23:09:43.800200 POST /api/graphql 200 521.966762ms
+2026/09/01 23:09:44.030881 POST /api/graphql 200 15.000978973s
+2026/09/01 23:09:44.030882 POST /api/graphql 200 15.001199675s
+2026/09/01 23:09:44.270143 POST /api/graphql 200 15.001500592s
+2026/09/01 23:09:44.444654 POST /api/graphql 200 690.049942ms
+2026/09/01 23:09:44.625591 [sandbox] [grpc-default-executor-9] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:09:44.749766 [sandbox] [grpc-default-executor-7] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:09:44.754041 [sandbox] [grpc-default-executor-7] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:09:45.319859 POST /api/graphql 200 691.719382ms
+2026/09/01 23:09:45.350340 POST /api/graphql 200 622.174316ms
+2026/09/01 23:09:45.747581 [sandbox] [grpc-default-executor-9] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 23:09:45.853198 [sandbox] [grpc-default-executor-9] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 23:09:45.923255 [sandbox] [grpc-default-executor-9] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 23:09:46.868761 [sandbox] [grpc-default-executor-9] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 23:09:46.976967 [sandbox] [grpc-default-executor-9] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 23:09:47.085242 [sandbox] [grpc-default-executor-9] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 23:09:47.289602 POST /api/graphql 200 1.896219207s
+2026/09/01 23:09:48.233754 [sandbox] [grpc-default-executor-0] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:09:48.746951 [sandbox] [grpc-default-executor-5] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:09:48.747178 [sandbox] [grpc-default-executor-4] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:09:48.747556 [sandbox] [grpc-default-executor-2] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:09:50.063888 POST /api/graphql 200 5.306968234s
+2026/09/01 23:09:50.882181 POST /api/graphql 200 6.123638358s
+2026/09/01 23:09:50.961160 POST /api/graphql 200 15.00154418s
+2026/09/01 23:09:55.401163 [sandbox] [grpc-default-executor-3] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; AnimeCatalogueSource.getSearchAnime$suspendImpl:26
+2026/09/01 23:09:56.696071 POST /api/graphql 200 11.836599482s
+2026/09/01 23:09:57.217588 POST /api/graphql 200 607.686546ms
+2026/09/01 23:10:03.306928 POST /api/graphql 200 2.34879994s
+2026/09/01 23:10:07.131516 POST /api/graphql 200 1.315642371s
+2026/09/01 23:12:07.733524 shutting down
+2026/09/01 23:25:39.515264 === Tsunagu dev (unknown) starting, pid 651910 ===
+2026/09/01 23:25:39.543991 sandbox: spawning /nix/store/1slz0vmmgsd7p6i4c0jaywkpw56wl2yg-openjdk-21.0.12+8/lib/openjdk/bin/java -cp /home/shozikan/Projects/Manga/Tsunagu/sandbox/build/libs/sandbox-0.1.0-all.jar tsunagu.MainKt (source: JAVA_HOME/PATH)
+2026/09/01 23:25:39.842680 [sandbox] [main] INFO eu.kanade.tachiyomi.network.TlsSetup - TLS: Conscrypt provider installed (v2.5.2)
+2026/09/01 23:25:40.431917 [sandbox] tsunagu sandbox listening on :50051
+2026/09/01 23:25:41.425991 sandbox: ready at localhost:50051
+2026/09/01 23:25:43.591943 tsunagu dev listening on [::]:6007
+2026/09/01 23:25:43.595240 metadata backfill: 1 unmatched media, working through them (~1m)
+2026/09/01 23:25:43.597066 content filter: recomputed 6 media
+2026/09/01 23:25:43.981312 tracker poll: reconciled 2 media
+2026/09/01 23:25:44.649564 metadata backfill: done -- matched 0/1
+2026/09/01 23:25:52.476879 POST /api/graphql 200 1.069322821s
+2026/09/01 23:25:59.892999 POST /api/graphql 200 677.278173ms
+2026/09/01 23:26:00.119273 POST /api/graphql 200 903.516973ms
+2026/09/01 23:26:00.459468 POST /api/graphql 200 562.121667ms
+2026/09/01 23:26:00.890238 POST /api/graphql 200 1.674425229s
+2026/09/01 23:26:01.107594 [sandbox] [grpc-default-executor-2] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:26:01.453108 POST /api/graphql 200 561.342802ms
+2026/09/01 23:26:02.104272 POST /api/graphql 200 648.305565ms
+2026/09/01 23:26:02.701528 POST /api/graphql 200 595.596119ms
+2026/09/01 23:26:02.988322 POST /api/graphql 200 914.030561ms
+2026/09/01 23:26:02.995385 [sandbox] [grpc-default-executor-2] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:26:03.779130 [sandbox] [grpc-default-executor-3] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 503 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$1.invokeSuspend:191
+2026/09/01 23:26:04.193822 [sandbox] [grpc-default-executor-3] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 23:26:04.584849 [sandbox] [grpc-default-executor-3] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 23:26:05.537702 POST /api/graphql 200 968.031361ms
+2026/09/01 23:26:06.229324 POST /api/graphql 200 690.037327ms
+2026/09/01 23:26:07.049095 POST /api/graphql 200 818.458171ms
+2026/09/01 23:26:07.794247 POST /api/graphql 200 2.449867965s
+2026/09/01 23:26:07.794298 POST /api/graphql 200 743.90015ms
+2026/09/01 23:26:08.087655 [sandbox] [grpc-default-executor-7] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:26:08.784211 [sandbox] [grpc-default-executor-7] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:26:08.784892 POST /api/graphql 200 673.904252ms
+2026/09/01 23:26:08.972929 [sandbox] [grpc-default-executor-7] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:26:09.587300 POST /api/graphql 200 611.199959ms
+2026/09/01 23:26:10.774956 POST /api/graphql 200 745.084494ms
+2026/09/01 23:26:11.211974 [sandbox] [grpc-default-executor-7] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:26:11.217723 [sandbox] [grpc-default-executor-7] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:26:11.221628 [sandbox] [grpc-default-executor-7] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:26:12.282862 [sandbox] [grpc-default-executor-7] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 503 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$1.invokeSuspend:191
+2026/09/01 23:26:12.408698 [sandbox] [grpc-default-executor-7] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 503 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$1.invokeSuspend:191
+2026/09/01 23:26:12.460251 [sandbox] [grpc-default-executor-7] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 503 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$1.invokeSuspend:191
+2026/09/01 23:26:12.477369 [sandbox] [grpc-default-executor-7] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 23:26:12.483052 [sandbox] [grpc-default-executor-7] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 23:26:12.488071 [sandbox] [grpc-default-executor-7] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 23:26:13.363876 [sandbox] [grpc-default-executor-7] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 23:26:13.368007 [sandbox] [grpc-default-executor-7] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 23:26:13.371554 [sandbox] [grpc-default-executor-7] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 23:26:14.217762 POST /api/graphql 200 15.00213601s
+2026/09/01 23:26:15.077928 POST /api/graphql 200 15.000866855s
+2026/09/01 23:26:15.079130 POST /api/graphql 200 15.00193471s
+2026/09/01 23:26:15.122542 POST /api/graphql 200 15.001673973s
+2026/09/01 23:26:19.147885 [sandbox] [grpc-default-executor-0] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:26:19.659472 [sandbox] [grpc-default-executor-5] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:26:19.659561 [sandbox] [grpc-default-executor-1] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:26:19.659578 [sandbox] [grpc-default-executor-4] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:26:24.783528 [sandbox] [grpc-default-executor-3] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; AnimeCatalogueSource.getSearchAnime$suspendImpl:26
+2026/09/01 23:35:19.453936 POST /api/graphql 200 725.134264ms
+2026/09/01 23:35:19.454079 POST /api/graphql 200 725.055136ms
+2026/09/01 23:35:19.454133 POST /api/graphql 200 725.230454ms
+2026/09/01 23:35:19.454148 POST /api/graphql 200 725.038746ms
+2026/09/01 23:35:38.293754 [sandbox] [grpc-default-executor-9] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; AnimeCatalogueSource.getSearchAnime$suspendImpl:26
+2026/09/01 23:37:28.467594 POST /api/graphql 200 566.496798ms
+2026/09/01 23:37:29.028533 POST /api/graphql 200 557.029264ms
+2026/09/01 23:37:29.597543 POST /api/graphql 200 566.037148ms
+2026/09/01 23:37:30.207580 POST /api/graphql 200 607.104098ms
+2026/09/01 23:37:31.298125 POST /api/graphql 200 799.986199ms
+2026/09/01 23:37:32.427703 [sandbox] [grpc-default-executor-18] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:37:33.160248 [sandbox] [grpc-default-executor-18] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:37:33.160963 POST /api/graphql 200 729.009954ms
+2026/09/01 23:37:33.351806 [sandbox] [grpc-default-executor-18] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:37:34.023624 POST /api/graphql 200 667.984675ms
+2026/09/01 23:37:35.282253 POST /api/graphql 200 802.936152ms
+2026/09/01 23:37:35.713252 [sandbox] [grpc-default-executor-18] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:37:35.718632 [sandbox] [grpc-default-executor-18] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:37:35.723397 [sandbox] [grpc-default-executor-18] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:37:36.244041 POST /api/graphql 200 518.338968ms
+2026/09/01 23:37:36.954181 POST /api/graphql 200 9.053278215s
+2026/09/01 23:37:36.954377 POST /api/graphql 200 9.053381698s
+2026/09/01 23:37:36.954449 POST /api/graphql 200 9.053409851s
+2026/09/01 23:37:39.331795 POST /api/graphql 200 726.611562ms
+2026/09/01 23:37:39.920973 POST /api/graphql 200 585.928854ms
+2026/09/01 23:37:40.622923 [sandbox] [grpc-default-executor-21] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:37:40.818876 [sandbox] [grpc-default-executor-21] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:37:41.025478 [sandbox] [grpc-default-executor-21] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:37:41.537152 [sandbox] [grpc-default-executor-20] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 523 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:37:41.537850 POST /api/graphql 200 4.560186353s
+2026/09/01 23:37:41.627894 POST /api/graphql 200 599.089119ms
+2026/09/01 23:37:42.068399 POST /api/graphql 200 527.742853ms
+2026/09/01 23:37:42.601937 POST /api/graphql 200 750.409949ms
+2026/09/01 23:37:42.776845 POST /api/graphql 200 705.423065ms
+2026/09/01 23:37:42.781618 [sandbox] [grpc-default-executor-20] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:37:42.786491 [sandbox] [grpc-default-executor-20] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:37:42.789803 [sandbox] [grpc-default-executor-20] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:37:43.590558 POST /api/graphql 200 758.198855ms
+2026/09/01 23:37:43.949066 POST /api/graphql 200 825.069648ms
+2026/09/01 23:37:44.023784 [sandbox] [grpc-default-executor-20] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 23:37:44.026804 [sandbox] [grpc-default-executor-20] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 23:37:44.031596 [sandbox] [grpc-default-executor-20] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 23:37:44.604496 [sandbox] [grpc-default-executor-21] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 23:37:44.609074 [sandbox] [grpc-default-executor-21] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 23:37:44.613756 [sandbox] [grpc-default-executor-21] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 23:37:47.317999 [sandbox] [grpc-default-executor-16] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:37:47.318592 [sandbox] [grpc-default-executor-15] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:37:47.318678 [sandbox] [grpc-default-executor-17] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:37:51.978662 POST /api/graphql 200 15.000960909s
+2026/09/01 23:37:51.980897 POST /api/graphql 200 15.00312362s
+2026/09/01 23:37:56.533031 [sandbox] [grpc-default-executor-22] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:37:56.533523 [sandbox] [grpc-default-executor-19] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:39:41.657083 POST /api/graphql 200 811.24044ms
+2026/09/01 23:39:43.271504 [sandbox] [grpc-default-executor-24] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:39:43.272189 POST /api/graphql 200 827.560699ms
+2026/09/01 23:39:43.481278 [sandbox] [grpc-default-executor-24] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:39:43.691768 [sandbox] [grpc-default-executor-24] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:39:44.318554 POST /api/graphql 200 623.77521ms
+2026/09/01 23:39:45.662288 [sandbox] [grpc-default-executor-24] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:39:45.665580 [sandbox] [grpc-default-executor-24] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:39:45.668112 [sandbox] [grpc-default-executor-24] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:39:47.247606 POST /api/graphql 200 503.807694ms
+2026/09/01 23:39:47.439638 [sandbox] [grpc-default-executor-24] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 23:39:47.443257 [sandbox] [grpc-default-executor-24] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 23:39:47.446500 [sandbox] [grpc-default-executor-24] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 23:39:48.198939 POST /api/graphql 200 750.681104ms
+2026/09/01 23:39:48.699605 [sandbox] [grpc-default-executor-24] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 23:39:48.703528 [sandbox] [grpc-default-executor-24] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 23:39:48.707507 [sandbox] [grpc-default-executor-24] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 23:39:54.277451 POST /api/graphql 200 15.000868565s
+2026/09/01 23:39:54.277583 POST /api/graphql 200 15.000858316s
+2026/09/01 23:39:54.279519 POST /api/graphql 200 15.002857358s
+2026/09/01 23:39:58.900311 [sandbox] [grpc-default-executor-25] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:39:58.900416 [sandbox] [grpc-default-executor-23] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:39:58.900453 [sandbox] [grpc-default-executor-26] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:40:04.596350 POST /api/graphql 200 639.200984ms
+2026/09/01 23:40:05.693984 [sandbox] [grpc-default-executor-25] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:40:05.887215 [sandbox] [grpc-default-executor-25] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:40:06.083092 [sandbox] [grpc-default-executor-25] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:40:06.779575 POST /api/graphql 200 693.310379ms
+2026/09/01 23:40:07.973249 POST /api/graphql 200 721.067337ms
+2026/09/01 23:40:08.455245 [sandbox] [grpc-default-executor-25] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:40:08.459370 [sandbox] [grpc-default-executor-25] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:40:08.463341 [sandbox] [grpc-default-executor-25] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:40:09.841020 [sandbox] [grpc-default-executor-25] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 23:40:09.843947 [sandbox] [grpc-default-executor-25] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 23:40:09.845928 [sandbox] [grpc-default-executor-25] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 23:40:10.638042 [sandbox] [grpc-default-executor-25] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 23:40:10.647801 [sandbox] [grpc-default-executor-25] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 23:40:10.651547 [sandbox] [grpc-default-executor-25] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 23:40:11.068176 POST /api/graphql 200 8.985584172s
+2026/09/01 23:40:11.068526 POST /api/graphql 200 8.985800576s
+2026/09/01 23:40:11.068548 POST /api/graphql 200 8.985864406s
+2026/09/01 23:40:15.165167 POST /api/graphql 200 767.666497ms
+2026/09/01 23:40:16.207598 [sandbox] [grpc-default-executor-29] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:40:16.938090 [sandbox] [grpc-default-executor-29] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:40:16.938647 POST /api/graphql 200 727.288334ms
+2026/09/01 23:40:17.128721 [sandbox] [grpc-default-executor-29] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:40:17.742249 POST /api/graphql 200 610.738029ms
+2026/09/01 23:40:18.992354 POST /api/graphql 200 805.483986ms
+2026/09/01 23:40:19.419068 [sandbox] [grpc-default-executor-29] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:40:19.421304 [sandbox] [grpc-default-executor-29] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:40:19.424181 [sandbox] [grpc-default-executor-29] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:40:20.360526 POST /api/graphql 200 642.732773ms
+2026/09/01 23:40:21.427878 [sandbox] [grpc-default-executor-26] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+[grpc-default-executor-27] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:40:21.427959 [sandbox] [grpc-default-executor-23] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:40:21.502183 POST /api/graphql 200 643.35154ms
+2026/09/01 23:40:21.693288 [sandbox] [grpc-default-executor-29] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 23:40:21.697580 [sandbox] [grpc-default-executor-29] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 23:40:21.701559 [sandbox] [grpc-default-executor-29] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 23:40:21.858666 POST /api/graphql 200 8.978061597s
+2026/09/01 23:40:21.858745 POST /api/graphql 200 8.9779346s
+2026/09/01 23:40:21.858710 POST /api/graphql 200 8.977990716s
+2026/09/01 23:40:25.385030 POST /api/graphql 200 518.422518ms
+2026/09/01 23:40:26.966875 [sandbox] [grpc-default-executor-27] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:40:26.967341 POST /api/graphql 200 801.5102ms
+2026/09/01 23:40:27.176486 [sandbox] [grpc-default-executor-27] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:40:27.373606 [sandbox] [grpc-default-executor-27] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:40:27.978136 POST /api/graphql 200 601.152577ms
+2026/09/01 23:40:29.224148 POST /api/graphql 200 796.977511ms
+2026/09/01 23:40:29.706950 [sandbox] [grpc-default-executor-27] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:40:29.710814 [sandbox] [grpc-default-executor-27] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:40:29.714006 [sandbox] [grpc-default-executor-27] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:40:31.169442 [sandbox] [grpc-default-executor-27] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 23:40:31.173696 [sandbox] [grpc-default-executor-27] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 23:40:31.177689 [sandbox] [grpc-default-executor-27] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 23:40:32.030427 [sandbox] [grpc-default-executor-27] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 23:40:32.034873 [sandbox] [grpc-default-executor-27] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 23:40:32.038823 [sandbox] [grpc-default-executor-27] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 23:40:32.692884 [sandbox] [grpc-default-executor-24] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+[grpc-default-executor-28] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:40:32.693002 [sandbox] [grpc-default-executor-25] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:40:38.367225 POST /api/graphql 200 15.001073699s
+2026/09/01 23:40:38.367234 POST /api/graphql 200 15.001168316s
+2026/09/01 23:40:38.368359 POST /api/graphql 200 15.00214505s
+2026/09/01 23:40:42.933096 [sandbox] [grpc-default-executor-23] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:40:42.933181 [sandbox] [grpc-default-executor-29] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:40:42.933212 [sandbox] [grpc-default-executor-26] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:44:17.584224 shutting down
+2026/09/01 23:44:21.352102 === Tsunagu dev (unknown) starting, pid 715220 ===
+2026/09/01 23:44:21.393090 sandbox: spawning /nix/store/1slz0vmmgsd7p6i4c0jaywkpw56wl2yg-openjdk-21.0.12+8/lib/openjdk/bin/java -cp /home/shozikan/Projects/Manga/Tsunagu/sandbox/build/libs/sandbox-0.1.0-all.jar tsunagu.MainKt (source: JAVA_HOME/PATH)
+2026/09/01 23:44:21.720633 [sandbox] [main] INFO eu.kanade.tachiyomi.network.TlsSetup - TLS: Conscrypt provider installed (v2.5.2)
+2026/09/01 23:44:22.357861 [sandbox] tsunagu sandbox listening on :50051
+2026/09/01 23:44:23.722244 sandbox: ready at localhost:50051
+2026/09/01 23:44:25.676072 tsunagu dev listening on [::]:6007
+2026/09/01 23:44:25.678585 metadata backfill: 1 unmatched media, working through them (~1m)
+2026/09/01 23:44:25.681351 content filter: recomputed 6 media
+2026/09/01 23:44:26.113489 tracker poll: reconciled 2 media
+2026/09/01 23:44:26.741000 metadata backfill: done -- matched 0/1
+2026/09/01 23:44:28.608974 POST /api/graphql 200 1.092121674s
+2026/09/01 23:46:33.332298 POST /api/graphql 200 591.066051ms
+2026/09/01 23:46:33.373485 POST /api/graphql 200 632.210067ms
+2026/09/01 23:46:33.779045 [sandbox] [grpc-default-executor-2] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:46:34.422852 POST /api/graphql 200 1.681535247s
+2026/09/01 23:46:34.653803 POST /api/graphql 200 558.931211ms
+2026/09/01 23:46:35.097017 POST /api/graphql 200 672.845386ms
+2026/09/01 23:46:35.099146 POST /api/graphql 422 623.234µs
+2026/09/01 23:46:35.100260 POST /api/graphql 422 302.705µs
+2026/09/01 23:46:35.101523 POST /api/graphql 422 498.862µs
+2026/09/01 23:46:35.102439 POST /api/graphql 422 294.89µs
+2026/09/01 23:46:35.732614 [sandbox] [grpc-default-executor-2] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:46:35.889341 POST /api/graphql 200 786.295365ms
+2026/09/01 23:46:36.604850 POST /api/graphql 200 713.958027ms
+2026/09/01 23:46:37.311177 POST /api/graphql 200 704.574841ms
+2026/09/01 23:46:38.879937 POST /api/graphql 200 1.566914816s
+2026/09/01 23:46:40.111355 POST /api/graphql 200 611.081792ms
+2026/09/01 23:46:40.541224 POST /api/graphql 422 491.889µs
+2026/09/01 23:46:40.544211 POST /api/graphql 422 431.375µs
+2026/09/01 23:46:40.552296 POST /api/graphql 422 1.37583ms
+2026/09/01 23:46:42.811002 [sandbox] [grpc-default-executor-4] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; AnimeCatalogueSource.getSearchAnime$suspendImpl:26
+2026/09/01 23:46:42.811800 POST /api/graphql 200 885.433823ms
+2026/09/01 23:46:43.432687 POST /api/graphql 200 598.423342ms
+2026/09/01 23:46:43.943176 POST /api/graphql 200 509.213979ms
+2026/09/01 23:46:43.951800 [sandbox] [grpc-default-executor-4] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 23:46:44.822930 POST /api/graphql 422 483.443µs
+2026/09/01 23:46:44.824679 POST /api/graphql 422 686.131µs
+2026/09/01 23:46:44.826598 POST /api/graphql 422 448.378µs
+2026/09/01 23:46:44.833624 [sandbox] [grpc-default-executor-4] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 23:46:45.581115 POST /api/graphql 200 744.356235ms
+2026/09/01 23:46:46.339949 [sandbox] [grpc-default-executor-4] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: IOException: Open in WebView to bypass site protection <- IOException: Open in WebView to bypass site protection @ x.a:-1; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10
+2026/09/01 23:46:46.340960 POST /api/graphql 200 508.101043ms
+2026/09/01 23:46:46.342783 [sandbox] E/BatCave: Failed to fetch filter data
+java.io.IOException: Open in WebView to bypass site protection
+	at keiyoushi.a.b.a(Unknown Source)
+	at keiyoushi.a.b.a(Unknown Source)
+	at eu.kanade.tachiyomi.a.a.a.a.a(Unknown Source)
+	at eu.kanade.tachiyomi.a.a.a.a.a(Unknown Source)
+	at keiyoushi.source.f.invokeSuspend(Unknown Source)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.internal.LimitedDispatcher$Worker.run(LimitedDispatcher.kt:124)
+	at kotlinx.coroutines.scheduling.TaskImpl.run(Tasks.kt:89)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler.runSafely(CoroutineScheduler.kt:586)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.executeTask(CoroutineScheduler.kt:798)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:717)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:704)
+Caused by: java.io.IOException: Open in WebView to bypass site protection
+	at eu.kanade.tachiyomi.a.a.a.x.a(Unknown Source)
+	at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:332)
+	at eu.kanade.tachiyomi.network.interceptor.UserAgentInterceptor.intercept(UserAgentInterceptor.kt:21)
+	at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:332)
+	at eu.kanade.tachiyomi.network.interceptor.UncaughtExceptionInterceptor.intercept(UncaughtExceptionInterceptor.kt:10)
+	at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:332)
+	at okhttp3.internal.connection.RealCall.getResponseWithInterceptorChain$okhttp(RealCall.kt:234)
+	at okhttp3.internal.connection.RealCall$AsyncCall.run(RealCall.kt:582)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+
+2026/09/01 23:46:47.339067 POST /api/graphql 200 725.86542ms
+2026/09/01 23:46:47.742956 POST /api/graphql 200 15.001823512s
+2026/09/01 23:46:47.851447 POST /api/graphql 422 431.596µs
+2026/09/01 23:46:48.101849 POST /api/graphql 422 406.429µs
+2026/09/01 23:46:48.408213 POST /api/graphql 422 378.737µs
+2026/09/01 23:46:48.618615 POST /api/graphql 200 15.001380948s
+2026/09/01 23:46:48.618642 POST /api/graphql 200 15.001152381s
+2026/09/01 23:46:48.645977 POST /api/graphql 200 15.001506974s
+2026/09/01 23:46:48.963958 [sandbox] [grpc-default-executor-7] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:46:48.967778 [sandbox] [grpc-default-executor-4] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:46:49.184059 POST /api/graphql 200 563.769291ms
+2026/09/01 23:46:49.244710 [sandbox] [grpc-default-executor-10] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:46:49.565010 POST /api/graphql 200 597.693104ms
+2026/09/01 23:46:49.567352 POST /api/graphql 200 596.688928ms
+2026/09/01 23:46:49.571070 [sandbox] [grpc-default-executor-4] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:46:49.577666 [sandbox] [grpc-default-executor-4] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:46:49.581718 [sandbox] [grpc-default-executor-4] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:46:49.993688 POST /api/graphql 200 745.381044ms
+2026/09/01 23:46:50.153160 POST /api/graphql 200 725.746862ms
+2026/09/01 23:46:50.267134 [sandbox] [grpc-default-executor-9] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 23:46:50.273501 [sandbox] [grpc-default-executor-10] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 23:46:50.273596 [sandbox] [grpc-default-executor-9] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 23:46:50.501791 POST /api/graphql 200 506.051408ms
+2026/09/01 23:46:50.508820 [sandbox] [grpc-default-executor-7] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 23:46:50.514832 [sandbox] [grpc-default-executor-7] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 23:46:50.520427 [sandbox] [grpc-default-executor-7] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 23:46:50.736673 POST /api/graphql 200 15.000917626s
+2026/09/01 23:46:51.938823 [sandbox] [grpc-default-executor-4] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; AnimeCatalogueSource.getSearchAnime$suspendImpl:26
+2026/09/01 23:46:52.333051 [sandbox] [grpc-default-executor-1] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:46:52.404678 POST /api/graphql 200 699.045623ms
+2026/09/01 23:46:52.582815 POST /api/graphql 200 527.441312ms
+2026/09/01 23:46:52.592592 POST /api/graphql 200 887.16424ms
+2026/09/01 23:46:52.687334 [sandbox] E/BatCave: Failed to fetch filter data
+java.io.IOException: Open in WebView to bypass site protection
+	at keiyoushi.a.b.a(Unknown Source)
+	at keiyoushi.a.b.a(Unknown Source)
+	at eu.kanade.tachiyomi.a.a.a.a.a(Unknown Source)
+	at eu.kanade.tachiyomi.a.a.a.a.a(Unknown Source)
+	at keiyoushi.source.f.invokeSuspend(Unknown Source)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.internal.LimitedDispatcher$Worker.run(LimitedDispatcher.kt:124)
+	at kotlinx.coroutines.scheduling.TaskImpl.run(Tasks.kt:89)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler.runSafely(CoroutineScheduler.kt:586)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.executeTask(CoroutineScheduler.kt:798)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:717)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:704)
+Caused by: java.io.IOException: Open in WebView to bypass site protection
+	at eu.kanade.tachiyomi.a.a.a.x.a(Unknown Source)
+	at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:332)
+	at eu.kanade.tachiyomi.network.interceptor.UserAgentInterceptor.intercept(UserAgentInterceptor.kt:21)
+	at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:332)
+	at eu.kanade.tachiyomi.network.interceptor.UncaughtExceptionInterceptor.intercept(UncaughtExceptionInterceptor.kt:10)
+	at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:332)
+	at okhttp3.internal.connection.RealCall.getResponseWithInterceptorChain$okhttp(RealCall.kt:234)
+	at okhttp3.internal.connection.RealCall$AsyncCall.run(RealCall.kt:582)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+
+2026/09/01 23:46:52.850163 [sandbox] [grpc-default-executor-4] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: IOException: Open in WebView to bypass site protection <- IOException: Open in WebView to bypass site protection @ x.a:-1; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10
+2026/09/01 23:46:53.357186 [sandbox] [grpc-default-executor-5] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:46:53.357995 [sandbox] [grpc-default-executor-3] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:46:53.358058 [sandbox] [grpc-default-executor-6] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:46:53.388991 POST /api/graphql 200 794.365983ms
+2026/09/01 23:46:53.605332 POST /api/graphql 200 1.010672788s
+2026/09/01 23:46:53.800945 [sandbox] [grpc-default-executor-1] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; AnimeCatalogueSource.getSearchAnime$suspendImpl:26
+2026/09/01 23:46:53.801666 POST /api/graphql 200 809.478791ms
+2026/09/01 23:46:54.098096 POST /api/graphql 200 706.099119ms
+2026/09/01 23:46:54.109721 POST /api/graphql 200 500.671392ms
+2026/09/01 23:46:54.472087 [sandbox] E/BatCave: Failed to fetch filter data
+java.io.IOException: Open in WebView to bypass site protection
+	at keiyoushi.a.b.a(Unknown Source)
+	at keiyoushi.a.b.a(Unknown Source)
+	at eu.kanade.tachiyomi.a.a.a.a.a(Unknown Source)
+	at eu.kanade.tachiyomi.a.a.a.a.a(Unknown Source)
+	at keiyoushi.source.f.invokeSuspend(Unknown Source)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.internal.LimitedDispatcher$Worker.run(LimitedDispatcher.kt:124)
+	at kotlinx.coroutines.scheduling.TaskImpl.run(Tasks.kt:89)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler.runSafely(CoroutineScheduler.kt:586)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.executeTask(CoroutineScheduler.kt:798)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:717)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:704)
+Caused by: java.io.IOException: Open in WebView to bypass site protection
+	at eu.kanade.tachiyomi.a.a.a.x.a(Unknown Source)
+	at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:332)
+	at eu.kanade.tachiyomi.network.interceptor.UserAgentInterceptor.intercept(UserAgentInterceptor.kt:21)
+	at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:332)
+	at eu.kanade.tachiyomi.network.interceptor.UncaughtExceptionInterceptor.intercept(UncaughtExceptionInterceptor.kt:10)
+	at okhttp3.internal.http.RealInterceptorChain.proceed(RealInterceptorChain.kt:332)
+	at okhttp3.internal.connection.RealCall.getResponseWithInterceptorChain$okhttp(RealCall.kt:234)
+	at okhttp3.internal.connection.RealCall$AsyncCall.run(RealCall.kt:582)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+
+2026/09/01 23:46:54.539188 [sandbox] [grpc-default-executor-11] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed: IOException: Open in WebView to bypass site protection <- IOException: Open in WebView to bypass site protection @ x.a:-1; UserAgentInterceptor.intercept:21; UncaughtExceptionInterceptor.intercept:10
+2026/09/01 23:46:54.669861 POST /api/graphql 200 865.459853ms
+2026/09/01 23:46:55.168145 POST /api/graphql 200 553.323446ms
+2026/09/01 23:46:55.407628 [sandbox] [grpc-default-executor-2] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; AnimeCatalogueSource.getSearchAnime$suspendImpl:26
+2026/09/01 23:46:55.658666 POST /api/graphql 200 707.505167ms
+2026/09/01 23:46:55.686414 POST /api/graphql 200 515.812223ms
+2026/09/01 23:46:57.683888 POST /api/graphql 200 1.994865711s
+2026/09/01 23:46:59.692556 POST /api/graphql 200 7.098035408s
+2026/09/01 23:47:01.451882 POST /api/graphql 200 755.711814ms
+2026/09/01 23:47:01.773597 [sandbox] [grpc-default-executor-1] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:47:01.774186 POST /api/graphql 200 789.214422ms
+2026/09/01 23:47:01.833224 [sandbox] [grpc-default-executor-2] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:47:01.960925 POST /api/graphql 200 594.251227ms
+2026/09/01 23:47:02.214536 [sandbox] [grpc-default-executor-2] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 23:47:02.492605 [sandbox] [grpc-default-executor-12] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 23:47:02.573012 POST /api/graphql 200 795.945525ms
+2026/09/01 23:47:11.279481 [sandbox] [grpc-default-executor-10] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; AnimeCatalogueSource.getSearchAnime$suspendImpl:26
+2026/09/01 23:47:12.302468 [sandbox] [grpc-default-executor-8] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; AnimeCatalogueSource.getSearchAnime$suspendImpl:26
+2026/09/01 23:47:15.697069 POST /api/graphql 200 15.001239715s
+2026/09/01 23:47:19.314930 shutting down
+2026/09/01 23:58:24.153308 === Tsunagu dev (unknown) starting, pid 763225 ===
+2026/09/01 23:58:24.166441 sandbox: spawning /nix/store/1slz0vmmgsd7p6i4c0jaywkpw56wl2yg-openjdk-21.0.12+8/lib/openjdk/bin/java -cp /home/shozikan/Projects/Manga/Tsunagu/sandbox/build/libs/sandbox-0.1.0-all.jar tsunagu.MainKt (source: JAVA_HOME/PATH)
+2026/09/01 23:58:24.483871 [sandbox] [main] INFO eu.kanade.tachiyomi.network.TlsSetup - TLS: Conscrypt provider installed (v2.5.2)
+2026/09/01 23:58:24.961584 [sandbox] tsunagu sandbox listening on :50051
+2026/09/01 23:58:25.175475 sandbox: ready at localhost:50051
+2026/09/01 23:58:27.435102 tsunagu dev listening on [::]:6007
+2026/09/01 23:58:27.437426 metadata backfill: 1 unmatched media, working through them (~1m)
+2026/09/01 23:58:27.439914 content filter: recomputed 6 media
+2026/09/01 23:58:27.823582 tracker poll: reconciled 2 media
+2026/09/01 23:58:28.489242 metadata backfill: done -- matched 0/1
+2026/09/01 23:58:33.077064 POST /api/graphql 200 1.029088465s
+2026/09/01 23:58:39.191137 POST /api/graphql 200 945.770033ms
+2026/09/01 23:58:39.276422 POST /api/graphql 200 1.031001112s
+2026/09/01 23:58:39.579883 GET /proxy/cover/781 502 187.166417ms
+2026/09/01 23:58:39.754722 POST /api/graphql 200 559.324989ms
+2026/09/01 23:58:39.953762 POST /api/graphql 200 1.708278667s
+2026/09/01 23:58:40.164165 [sandbox] [grpc-default-executor-0] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:58:40.165771 POST /api/graphql 200 836.021306ms
+2026/09/01 23:58:40.318502 POST /api/graphql 200 560.123741ms
+2026/09/01 23:58:40.845127 POST /api/graphql 200 674.288319ms
+2026/09/01 23:58:40.868913 [sandbox] [grpc-default-executor-0] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/01 23:58:41.240210 POST /api/graphql 200 851.112043ms
+2026/09/01 23:58:41.424032 POST /api/graphql 200 551.070787ms
+2026/09/01 23:58:41.450822 POST /api/graphql 200 590.057571ms
+2026/09/01 23:58:41.451055 [sandbox] [grpc-default-executor-3] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/01 23:58:41.742819 [sandbox] [grpc-default-executor-0] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/01 23:58:42.854610 sync: caching cover for entry 1943 failed: rpc error: code = Internal desc = java.lang.IllegalStateException: extension eu.kanade.tachiyomi.animeextension.en.aniwaves is not an HttpSource
+2026/09/01 23:58:43.811958 POST /api/graphql 200 1.682536572s
+2026/09/01 23:58:51.937150 GET /proxy/cover/839 502 199.392542ms
+2026/09/01 23:58:52.780868 GET /proxy/cover/847 502 161.335164ms
+2026/09/01 23:58:53.246615 POST /api/graphql 200 15.001321729s
+2026/09/01 23:58:57.840635 [sandbox] [grpc-default-executor-1] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 522 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/01 23:59:14.123694 POST /api/graphql 200 1.004278797s
+2026/09/02 00:00:03.193041 POST /api/graphql 200 1.451438125s
+2026/09/02 00:02:16.395576 POST /api/graphql 200 1.583186336s

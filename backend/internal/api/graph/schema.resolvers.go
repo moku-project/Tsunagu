@@ -1359,7 +1359,7 @@ func (r *queryResolver) LibraryTags(ctx context.Context, minCount *int32) ([]*mo
 	}
 	out := make([]*model.TagFacet, 0, len(rows))
 	for _, x := range rows {
-		out = append(out, &model.TagFacet{Name: x.Name, Count: int32(x.Count), MaxWeight: int32(x.MaxWeight)})
+		out = append(out, &model.TagFacet{ID: strconv.FormatInt(x.ID, 10), Name: x.Name, Count: int32(x.Count), MaxWeight: int32(x.MaxWeight)})
 	}
 	return out, nil
 }
@@ -1376,7 +1376,7 @@ func (r *queryResolver) LibraryGenres(ctx context.Context, minCount *int32) ([]*
 	}
 	out := make([]*model.TagFacet, 0, len(rows))
 	for _, x := range rows {
-		out = append(out, &model.TagFacet{Name: x.Name, Count: int32(x.Count), MaxWeight: int32(x.MaxWeight)})
+		out = append(out, &model.TagFacet{ID: strconv.FormatInt(x.ID, 10), Name: x.Name, Count: int32(x.Count), MaxWeight: int32(x.MaxWeight)})
 	}
 	return out, nil
 }
@@ -1423,7 +1423,7 @@ func (r *queryResolver) Extensions(ctx context.Context, repositoryID *string, qu
 }
 
 // Library is the resolver for the library field.
-func (r *queryResolver) Library(ctx context.Context, filter *model.LibraryFilter, sortInput *model.LibrarySortInput, limit *int32, offset *int32) (*model.MediaPage, error) {
+func (r *queryResolver) Library(ctx context.Context, filter *model.LibraryFilter, sort *model.LibrarySortInput, limit *int32, offset *int32) (*model.MediaPage, error) {
 	q := syncpkg.LibraryQuery{Limit: 100}
 	inLib := true
 	q.InLibrary = &inLib
@@ -1458,10 +1458,17 @@ func (r *queryResolver) Library(ctx context.Context, filter *model.LibraryFilter
 			}
 			q.TagIDs = append(q.TagIDs, tid)
 		}
+		for _, g := range filter.GenreIds {
+			gid, err := parseID(g)
+			if err != nil {
+				return nil, err
+			}
+			q.GenreIDs = append(q.GenreIDs, gid)
+		}
 	}
-	if sortInput != nil {
-		q.Ascending = sortInput.Ascending
-		switch sortInput.By {
+	if sort != nil {
+		q.Ascending = sort.Ascending
+		switch sort.By {
 		case model.LibrarySortTitle:
 			q.SortBy = "title"
 		case model.LibrarySortLastReadAt:
@@ -1976,18 +1983,3 @@ type (
 	mutationResolver      struct{ *Resolver }
 	queryResolver         struct{ *Resolver }
 )
-
-func (r *mutationResolver) refreshMediaFull(ctx context.Context, c *sandbox.Client, id int64, syncChapters bool) (sqlcgen.Medium, error) {
-	entry, err := r.Sy.RefreshMetadata(ctx, c, id, syncChapters)
-	if err != nil {
-		return sqlcgen.Medium{}, err
-	}
-	if enriched, mErr := r.Md.Refresh(ctx, id); mErr == nil {
-		entry = enriched
-	}
-	r.Tk.SyncMediaProgress(ctx, id)
-	if m, mErr := r.Q.GetMedia(ctx, id); mErr == nil {
-		entry = m
-	}
-	return entry, nil
-}

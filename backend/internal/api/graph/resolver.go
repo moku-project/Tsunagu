@@ -66,3 +66,18 @@ func (r *Resolver) persistSupportsLatest(ctx context.Context, ext sqlcgen.Extens
 	}
 	return updated
 }
+
+func (r *mutationResolver) refreshMediaFull(ctx context.Context, c *sandbox.Client, id int64, syncChapters bool) (sqlcgen.Medium, error) {
+	entry, err := r.Sy.RefreshMetadata(ctx, c, id, syncChapters)
+	if err != nil {
+		return sqlcgen.Medium{}, err
+	}
+	if enriched, mErr := r.Md.Refresh(ctx, id); mErr == nil {
+		entry = enriched
+	}
+	r.Tk.SyncMediaProgress(ctx, id)
+	if m, mErr := r.Q.GetMedia(ctx, id); mErr == nil {
+		entry = m
+	}
+	return entry, nil
+}

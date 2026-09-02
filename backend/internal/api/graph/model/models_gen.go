@@ -169,6 +169,7 @@ type LibraryFilter struct {
 	UnreadOnly     *bool        `json:"unreadOnly,omitempty"`
 	DownloadedOnly *bool        `json:"downloadedOnly,omitempty"`
 	TagIds         []string     `json:"tagIds,omitempty"`
+	GenreIds       []string     `json:"genreIds,omitempty"`
 	FolderID       *string      `json:"folderId,omitempty"`
 	Query          *string      `json:"query,omitempty"`
 }
@@ -354,6 +355,7 @@ type SubtitleTrack struct {
 }
 
 type TagFacet struct {
+	ID        string `json:"id"`
 	Name      string `json:"name"`
 	Count     int32  `json:"count"`
 	MaxWeight int32  `json:"maxWeight"`

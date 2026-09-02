@@ -32,7 +32,8 @@ WHERE m.added_at IS NOT NULL
   AND (SELECT COUNT(*) FROM media_tags mt WHERE mt.media_id = m.id) < ?;
 
 -- name: LibraryTagFacets :many
-SELECT t.name AS name,
+SELECT t.id AS id,
+       t.name AS name,
        CAST(COUNT(*) AS INTEGER) AS count,
        CAST(COALESCE(MAX(mt.weight), 0) AS INTEGER) AS max_weight
 FROM media_tags mt
@@ -44,7 +45,8 @@ HAVING COUNT(*) >= sqlc.arg('min_count')
 ORDER BY count DESC, name;
 
 -- name: LibraryGenreFacets :many
-SELECT g.name AS name,
+SELECT g.id AS id,
+       g.name AS name,
        CAST(COUNT(*) AS INTEGER) AS count,
        CAST(0 AS INTEGER) AS max_weight
 FROM media_genres mg

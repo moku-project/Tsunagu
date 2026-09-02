@@ -50,10 +50,15 @@ object FilterSerde {
     }
 
     fun List<Sandbox.FilterNode>.applyTo(filterList: FilterList) {
-        val existing = filterList.list
-        for ((i, node) in this.withIndex()) {
-            if (i >= existing.size) break
-            applyNodeTo(node, existing[i])
+        applyNodes(this, filterList.list)
+    }
+
+    private fun applyNodes(nodes: List<Sandbox.FilterNode>, existing: List<Filter<*>>) {
+        val byName = existing.groupBy { it.name }
+        for ((i, node) in nodes.withIndex()) {
+            val named = byName[node.name]?.singleOrNull()?.takeIf { node.name.isNotEmpty() }
+            val target = named ?: existing.getOrNull(i) ?: continue
+            applyNodeTo(node, target)
         }
     }
 
@@ -73,14 +78,8 @@ object FilterSerde {
                 (filter as Filter<Filter.Sort.Selection?>).state =
                     if (s.hasState) Filter.Sort.Selection(s.index, s.ascending) else null
             }
-            node.hasGroup() && filter is Filter.Group<*> -> {
-                val children = (filter.state as List<Filter<*>>)
-                val childNodes = node.group.childrenList
-                for ((i, childNode) in childNodes.withIndex()) {
-                    if (i >= children.size) break
-                    applyNodeTo(childNode, children[i])
-                }
-            }
+            node.hasGroup() && filter is Filter.Group<*> ->
+                applyNodes(node.group.childrenList, filter.state as List<Filter<*>>)
 
         }
     }

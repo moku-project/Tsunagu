@@ -1035,6 +1035,7 @@ type LibraryQuery struct {
 	UnreadOnly     bool
 	DownloadedOnly bool
 	TagIDs         []int64
+	GenreIDs       []int64
 	FolderID       *int64
 	Search         string
 	SortBy         string
@@ -1070,10 +1071,21 @@ func (s *Syncer) QueryLibrary(ctx context.Context, q LibraryQuery) ([]sqlcgen.Me
 	}
 	if len(q.TagIDs) > 0 {
 		ph := strings.TrimSuffix(strings.Repeat("?,", len(q.TagIDs)), ",")
-		where = append(where, "m.id IN (SELECT media_id FROM media_tags WHERE tag_id IN ("+ph+"))")
+		where = append(where, "m.id IN (SELECT media_id FROM media_tags WHERE tag_id IN ("+ph+
+			") GROUP BY media_id HAVING COUNT(DISTINCT tag_id) = ?)")
 		for _, id := range q.TagIDs {
 			args = append(args, id)
 		}
+		args = append(args, len(q.TagIDs))
+	}
+	if len(q.GenreIDs) > 0 {
+		ph := strings.TrimSuffix(strings.Repeat("?,", len(q.GenreIDs)), ",")
+		where = append(where, "m.id IN (SELECT media_id FROM media_genres WHERE genre_id IN ("+ph+
+			") GROUP BY media_id HAVING COUNT(DISTINCT genre_id) = ?)")
+		for _, id := range q.GenreIDs {
+			args = append(args, id)
+		}
+		args = append(args, len(q.GenreIDs))
 	}
 	if q.ContentFilterRank > 0 {
 		where = append(where, "(m.content_block_rank IS NULL OR m.content_block_rank > ?)")

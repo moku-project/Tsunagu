@@ -84,7 +84,8 @@ func (q *Queries) GetContentFilterInputs(ctx context.Context, id int64) (GetCont
 }
 
 const libraryGenreFacets = `-- name: LibraryGenreFacets :many
-SELECT g.name AS name,
+SELECT g.id AS id,
+       g.name AS name,
        CAST(COUNT(*) AS INTEGER) AS count,
        CAST(0 AS INTEGER) AS max_weight
 FROM media_genres mg
@@ -97,6 +98,7 @@ ORDER BY count DESC, name
 `
 
 type LibraryGenreFacetsRow struct {
+	ID        int64  `json:"id"`
 	Name      string `json:"name"`
 	Count     int64  `json:"count"`
 	MaxWeight int64  `json:"max_weight"`
@@ -111,7 +113,12 @@ func (q *Queries) LibraryGenreFacets(ctx context.Context, minCount interface{}) 
 	items := []LibraryGenreFacetsRow{}
 	for rows.Next() {
 		var i LibraryGenreFacetsRow
-		if err := rows.Scan(&i.Name, &i.Count, &i.MaxWeight); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Count,
+			&i.MaxWeight,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -126,7 +133,8 @@ func (q *Queries) LibraryGenreFacets(ctx context.Context, minCount interface{}) 
 }
 
 const libraryTagFacets = `-- name: LibraryTagFacets :many
-SELECT t.name AS name,
+SELECT t.id AS id,
+       t.name AS name,
        CAST(COUNT(*) AS INTEGER) AS count,
        CAST(COALESCE(MAX(mt.weight), 0) AS INTEGER) AS max_weight
 FROM media_tags mt
@@ -139,6 +147,7 @@ ORDER BY count DESC, name
 `
 
 type LibraryTagFacetsRow struct {
+	ID        int64  `json:"id"`
 	Name      string `json:"name"`
 	Count     int64  `json:"count"`
 	MaxWeight int64  `json:"max_weight"`
@@ -153,7 +162,12 @@ func (q *Queries) LibraryTagFacets(ctx context.Context, minCount interface{}) ([
 	items := []LibraryTagFacetsRow{}
 	for rows.Next() {
 		var i LibraryTagFacetsRow
-		if err := rows.Scan(&i.Name, &i.Count, &i.MaxWeight); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Count,
+			&i.MaxWeight,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
