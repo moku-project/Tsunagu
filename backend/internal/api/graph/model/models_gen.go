@@ -74,6 +74,13 @@ type ContentFilterRule struct {
 	IsDefault  bool              `json:"isDefault"`
 }
 
+type DatabaseBackup struct {
+	Name      string  `json:"name"`
+	Path      string  `json:"path"`
+	Bytes     float64 `json:"bytes"`
+	CreatedAt string  `json:"createdAt"`
+}
+
 type Download struct {
 	ID              string         `json:"id"`
 	MediaID         string         `json:"mediaId"`
@@ -343,10 +350,23 @@ type SortFilterInput struct {
 	Ascending *bool  `json:"ascending,omitempty"`
 }
 
+type StorageCategory struct {
+	Key       string  `json:"key"`
+	Label     string  `json:"label"`
+	Path      string  `json:"path"`
+	Bytes     float64 `json:"bytes"`
+	FileCount int32   `json:"fileCount"`
+	Clearable bool    `json:"clearable"`
+}
+
 type StorageInfo struct {
-	UsedBytes  float64 `json:"usedBytes"`
-	TotalBytes float64 `json:"totalBytes"`
-	FreeBytes  float64 `json:"freeBytes"`
+	UsedBytes    float64            `json:"usedBytes"`
+	TotalBytes   float64            `json:"totalBytes"`
+	FreeBytes    float64            `json:"freeBytes"`
+	DataDir      string             `json:"dataDir"`
+	MediaDir     string             `json:"mediaDir"`
+	DatabasePath string             `json:"databasePath"`
+	Categories   []*StorageCategory `json:"categories"`
 }
 
 type SubtitleTrack struct {

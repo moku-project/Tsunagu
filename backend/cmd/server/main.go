@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"flag"
 	"fmt"
 	"html"
@@ -109,6 +110,7 @@ func main() {
 	}
 	defer conn.Close()
 	q := sqlcgen.New(conn)
+	globalDB = conn
 
 	fsDir, _ := filepath.Abs(filepath.Join(filepath.Dir(bootCfg.DBPath), "flaresolverr"))
 	fsMgr := flaresolverr.NewManager(fsDir)
@@ -384,7 +386,7 @@ func corsMiddleware(next http.Handler) http.Handler {
 }
 
 func registerGraphQL(mux *http.ServeMux, sc *sandbox.SupervisedClient, sy *sync.Syncer, dm *download.Manager, tk *tracker.Manager, md *metadata.Manager, sr *streamresolve.Resolver, q *sqlcgen.Queries) {
-	resolver := &graph.Resolver{Sy: sy, Sc: sc, Dm: dm, Ls: localsource.New(q, globalMediaDir), Tk: tk, Md: md, Sr: sr, Q: q, Fs: globalFsMgr, Cfg: globalStore, Cf: globalCf, MediaDir: globalMediaDir, Name: serverName, Version: serverVersion, BuildTime: serverBuildTime}
+	resolver := &graph.Resolver{Sy: sy, Sc: sc, Dm: dm, Ls: localsource.New(q, globalMediaDir), Tk: tk, Md: md, Sr: sr, Q: q, DB: globalDB, Fs: globalFsMgr, Cfg: globalStore, Cf: globalCf, MediaDir: globalMediaDir, Name: serverName, Version: serverVersion, BuildTime: serverBuildTime}
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: resolver}))
 	srv.Use(extension.FixedComplexityLimit(8000))
 	mux.Handle("/api/graphql", withLoaders(q, srv))
@@ -406,6 +408,7 @@ func registerRoutes(mux *http.ServeMux) {
 }
 
 var globalMediaDir string
+var globalDB *sql.DB
 var globalFsMgr *flaresolverr.Manager
 var globalStore *config.Store
 var globalCf *contentfilter.Manager

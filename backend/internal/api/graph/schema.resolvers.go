@@ -1042,6 +1042,31 @@ func (r *mutationResolver) ClearImageCache(ctx context.Context) (bool, error) {
 	return true, nil
 }
 
+// ClearStorageCategory is the resolver for the clearStorageCategory field.
+func (r *mutationResolver) ClearStorageCategory(ctx context.Context, key string) (*model.StorageInfo, error) {
+	if err := r.clearCategory(ctx, key); err != nil {
+		return nil, err
+	}
+	return r.storageInfoModel()
+}
+
+// CreateDatabaseBackup is the resolver for the createDatabaseBackup field.
+func (r *mutationResolver) CreateDatabaseBackup(ctx context.Context) (*model.DatabaseBackup, error) {
+	b, err := r.createBackup(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return toDatabaseBackup(b), nil
+}
+
+// DeleteDatabaseBackup is the resolver for the deleteDatabaseBackup field.
+func (r *mutationResolver) DeleteDatabaseBackup(ctx context.Context, name string) (bool, error) {
+	if err := r.deleteBackup(name); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 // StartLibraryUpdate is the resolver for the startLibraryUpdate field.
 func (r *mutationResolver) StartLibraryUpdate(ctx context.Context, folderID *string) (bool, error) {
 	var fid *int64
@@ -1860,19 +1885,20 @@ func (r *queryResolver) LibraryUpdateStatus(ctx context.Context) (*model.Library
 
 // StorageInfo is the resolver for the storageInfo field.
 func (r *queryResolver) StorageInfo(ctx context.Context) (*model.StorageInfo, error) {
-	used, err := dirSize(r.MediaDir)
+	return r.storageInfoModel()
+}
+
+// DatabaseBackups is the resolver for the databaseBackups field.
+func (r *queryResolver) DatabaseBackups(ctx context.Context) ([]*model.DatabaseBackup, error) {
+	list, err := r.listBackups()
 	if err != nil {
-		return nil, fmt.Errorf("computing media dir size: %w", err)
+		return nil, err
 	}
-	total, free, err := diskStats(r.MediaDir)
-	if err != nil {
-		return nil, fmt.Errorf("computing disk stats: %w", err)
+	out := make([]*model.DatabaseBackup, 0, len(list))
+	for _, b := range list {
+		out = append(out, toDatabaseBackup(b))
 	}
-	return &model.StorageInfo{
-		UsedBytes:  float64(used),
-		TotalBytes: float64(total),
-		FreeBytes:  float64(free),
-	}, nil
+	return out, nil
 }
 
 // Trackers is the resolver for the trackers field.

@@ -93,6 +93,13 @@ type ComplexityRoot struct {
 		MinWeight  func(childComplexity int) int
 	}
 
+	DatabaseBackup struct {
+		Bytes     func(childComplexity int) int
+		CreatedAt func(childComplexity int) int
+		Name      func(childComplexity int) int
+		Path      func(childComplexity int) int
+	}
+
 	Download struct {
 		BytesPerSec     func(childComplexity int) int
 		Chapter         func(childComplexity int) int
@@ -247,7 +254,10 @@ type ComplexityRoot struct {
 		BindTrack                 func(childComplexity int, mediaID string, trackerKey string, remoteID string) int
 		ClearDownloads            func(childComplexity int, status []model.DownloadStatus) int
 		ClearImageCache           func(childComplexity int) int
+		ClearStorageCategory      func(childComplexity int, key string) int
+		CreateDatabaseBackup      func(childComplexity int) int
 		CreateFolder              func(childComplexity int, name string, parentFolderID *string) int
+		DeleteDatabaseBackup      func(childComplexity int, name string) int
 		DeleteDownload            func(childComplexity int, mediaID string, chapterIds []string) int
 		DeleteFolder              func(childComplexity int, folderID string) int
 		DeleteRepository          func(childComplexity int, repositoryID string) int
@@ -302,6 +312,7 @@ type ComplexityRoot struct {
 		ChapterUpdates      func(childComplexity int, since *time.Time, limit *int32) int
 		CloudflareSolver    func(childComplexity int) int
 		ContentFilterRules  func(childComplexity int) int
+		DatabaseBackups     func(childComplexity int) int
 		DownloadQueue       func(childComplexity int) int
 		DownloadStatus      func(childComplexity int, mediaID string, chapterID string) int
 		DownloaderStatus    func(childComplexity int) int
@@ -398,10 +409,23 @@ type ComplexityRoot struct {
 		Values    func(childComplexity int) int
 	}
 
+	StorageCategory struct {
+		Bytes     func(childComplexity int) int
+		Clearable func(childComplexity int) int
+		FileCount func(childComplexity int) int
+		Key       func(childComplexity int) int
+		Label     func(childComplexity int) int
+		Path      func(childComplexity int) int
+	}
+
 	StorageInfo struct {
-		FreeBytes  func(childComplexity int) int
-		TotalBytes func(childComplexity int) int
-		UsedBytes  func(childComplexity int) int
+		Categories   func(childComplexity int) int
+		DataDir      func(childComplexity int) int
+		DatabasePath func(childComplexity int) int
+		FreeBytes    func(childComplexity int) int
+		MediaDir     func(childComplexity int) int
+		TotalBytes   func(childComplexity int) int
+		UsedBytes    func(childComplexity int) int
 	}
 
 	SubtitleTrack struct {
@@ -569,6 +593,9 @@ type MutationResolver interface {
 	ReorderFolder(ctx context.Context, folderID string, sortOrder int32) (*model.Folder, error)
 	UpdateFolderFlags(ctx context.Context, folderID string, includeInUpdate *bool, includeInDownload *bool) (*model.Folder, error)
 	ClearImageCache(ctx context.Context) (bool, error)
+	ClearStorageCategory(ctx context.Context, key string) (*model.StorageInfo, error)
+	CreateDatabaseBackup(ctx context.Context) (*model.DatabaseBackup, error)
+	DeleteDatabaseBackup(ctx context.Context, name string) (bool, error)
 	StartLibraryUpdate(ctx context.Context, folderID *string) (bool, error)
 	SetMediaCover(ctx context.Context, mediaID string, url *string) (*model.Media, error)
 	RescanLocalMedia(ctx context.Context) ([]*model.Media, error)
@@ -613,6 +640,7 @@ type QueryResolver interface {
 	ChapterUpdates(ctx context.Context, since *time.Time, limit *int32) ([]*model.RecentChapter, error)
 	LibraryUpdateStatus(ctx context.Context) (*model.LibraryUpdateStatus, error)
 	StorageInfo(ctx context.Context) (*model.StorageInfo, error)
+	DatabaseBackups(ctx context.Context) ([]*model.DatabaseBackup, error)
 	Trackers(ctx context.Context) ([]*model.Tracker, error)
 	TrackSearch(ctx context.Context, trackerKey string, query string, contentType *model.ContentType) ([]*model.TrackSearchResult, error)
 	SearchMetadata(ctx context.Context, query string, contentType model.ContentType, provider *string) ([]*model.MetadataCandidate, error)
@@ -866,6 +894,31 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.ContentFilterRule.MinWeight(childComplexity), true
+
+	case "DatabaseBackup.bytes":
+		if e.ComplexityRoot.DatabaseBackup.Bytes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DatabaseBackup.Bytes(childComplexity), true
+	case "DatabaseBackup.createdAt":
+		if e.ComplexityRoot.DatabaseBackup.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DatabaseBackup.CreatedAt(childComplexity), true
+	case "DatabaseBackup.name":
+		if e.ComplexityRoot.DatabaseBackup.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DatabaseBackup.Name(childComplexity), true
+	case "DatabaseBackup.path":
+		if e.ComplexityRoot.DatabaseBackup.Path == nil {
+			break
+		}
+
+		return e.ComplexityRoot.DatabaseBackup.Path(childComplexity), true
 
 	case "Download.bytesPerSec":
 		if e.ComplexityRoot.Download.BytesPerSec == nil {
@@ -1611,6 +1664,23 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.ClearImageCache(childComplexity), true
+	case "Mutation.clearStorageCategory":
+		if e.ComplexityRoot.Mutation.ClearStorageCategory == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_clearStorageCategory_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.ClearStorageCategory(childComplexity, args["key"].(string)), true
+	case "Mutation.createDatabaseBackup":
+		if e.ComplexityRoot.Mutation.CreateDatabaseBackup == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Mutation.CreateDatabaseBackup(childComplexity), true
 	case "Mutation.createFolder":
 		if e.ComplexityRoot.Mutation.CreateFolder == nil {
 			break
@@ -1622,6 +1692,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CreateFolder(childComplexity, args["name"].(string), args["parentFolderId"].(*string)), true
+	case "Mutation.deleteDatabaseBackup":
+		if e.ComplexityRoot.Mutation.DeleteDatabaseBackup == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteDatabaseBackup_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.DeleteDatabaseBackup(childComplexity, args["name"].(string)), true
 	case "Mutation.deleteDownload":
 		if e.ComplexityRoot.Mutation.DeleteDownload == nil {
 			break
@@ -2129,6 +2210,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.ContentFilterRules(childComplexity), true
+	case "Query.databaseBackups":
+		if e.ComplexityRoot.Query.DatabaseBackups == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.DatabaseBackups(childComplexity), true
 	case "Query.downloadQueue":
 		if e.ComplexityRoot.Query.DownloadQueue == nil {
 			break
@@ -2632,12 +2719,73 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.SortFilter.Values(childComplexity), true
 
+	case "StorageCategory.bytes":
+		if e.ComplexityRoot.StorageCategory.Bytes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.StorageCategory.Bytes(childComplexity), true
+	case "StorageCategory.clearable":
+		if e.ComplexityRoot.StorageCategory.Clearable == nil {
+			break
+		}
+
+		return e.ComplexityRoot.StorageCategory.Clearable(childComplexity), true
+	case "StorageCategory.fileCount":
+		if e.ComplexityRoot.StorageCategory.FileCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.StorageCategory.FileCount(childComplexity), true
+	case "StorageCategory.key":
+		if e.ComplexityRoot.StorageCategory.Key == nil {
+			break
+		}
+
+		return e.ComplexityRoot.StorageCategory.Key(childComplexity), true
+	case "StorageCategory.label":
+		if e.ComplexityRoot.StorageCategory.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.StorageCategory.Label(childComplexity), true
+	case "StorageCategory.path":
+		if e.ComplexityRoot.StorageCategory.Path == nil {
+			break
+		}
+
+		return e.ComplexityRoot.StorageCategory.Path(childComplexity), true
+
+	case "StorageInfo.categories":
+		if e.ComplexityRoot.StorageInfo.Categories == nil {
+			break
+		}
+
+		return e.ComplexityRoot.StorageInfo.Categories(childComplexity), true
+	case "StorageInfo.dataDir":
+		if e.ComplexityRoot.StorageInfo.DataDir == nil {
+			break
+		}
+
+		return e.ComplexityRoot.StorageInfo.DataDir(childComplexity), true
+	case "StorageInfo.databasePath":
+		if e.ComplexityRoot.StorageInfo.DatabasePath == nil {
+			break
+		}
+
+		return e.ComplexityRoot.StorageInfo.DatabasePath(childComplexity), true
 	case "StorageInfo.freeBytes":
 		if e.ComplexityRoot.StorageInfo.FreeBytes == nil {
 			break
 		}
 
 		return e.ComplexityRoot.StorageInfo.FreeBytes(childComplexity), true
+	case "StorageInfo.mediaDir":
+		if e.ComplexityRoot.StorageInfo.MediaDir == nil {
+			break
+		}
+
+		return e.ComplexityRoot.StorageInfo.MediaDir(childComplexity), true
 	case "StorageInfo.totalBytes":
 		if e.ComplexityRoot.StorageInfo.TotalBytes == nil {
 			break
@@ -3219,6 +3367,20 @@ func (ec *executionContext) childFields_ContentFilterRule(ctx context.Context, f
 	return nil, fmt.Errorf("no field named %q was found under type ContentFilterRule", field.Name)
 }
 
+func (ec *executionContext) childFields_DatabaseBackup(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "name":
+		return ec.fieldContext_DatabaseBackup_name(ctx, field)
+	case "path":
+		return ec.fieldContext_DatabaseBackup_path(ctx, field)
+	case "bytes":
+		return ec.fieldContext_DatabaseBackup_bytes(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_DatabaseBackup_createdAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type DatabaseBackup", field.Name)
+}
+
 func (ec *executionContext) childFields_Download(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "id":
@@ -3591,6 +3753,24 @@ func (ec *executionContext) childFields_SkipMarker(ctx context.Context, field gr
 	return nil, fmt.Errorf("no field named %q was found under type SkipMarker", field.Name)
 }
 
+func (ec *executionContext) childFields_StorageCategory(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "key":
+		return ec.fieldContext_StorageCategory_key(ctx, field)
+	case "label":
+		return ec.fieldContext_StorageCategory_label(ctx, field)
+	case "path":
+		return ec.fieldContext_StorageCategory_path(ctx, field)
+	case "bytes":
+		return ec.fieldContext_StorageCategory_bytes(ctx, field)
+	case "fileCount":
+		return ec.fieldContext_StorageCategory_fileCount(ctx, field)
+	case "clearable":
+		return ec.fieldContext_StorageCategory_clearable(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type StorageCategory", field.Name)
+}
+
 func (ec *executionContext) childFields_StorageInfo(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "usedBytes":
@@ -3599,6 +3779,14 @@ func (ec *executionContext) childFields_StorageInfo(ctx context.Context, field g
 		return ec.fieldContext_StorageInfo_totalBytes(ctx, field)
 	case "freeBytes":
 		return ec.fieldContext_StorageInfo_freeBytes(ctx, field)
+	case "dataDir":
+		return ec.fieldContext_StorageInfo_dataDir(ctx, field)
+	case "mediaDir":
+		return ec.fieldContext_StorageInfo_mediaDir(ctx, field)
+	case "databasePath":
+		return ec.fieldContext_StorageInfo_databasePath(ctx, field)
+	case "categories":
+		return ec.fieldContext_StorageInfo_categories(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type StorageInfo", field.Name)
 }
@@ -4041,6 +4229,20 @@ func (ec *executionContext) field_Mutation_clearDownloads_args(ctx context.Conte
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_clearStorageCategory_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "key",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["key"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_createFolder_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -4060,6 +4262,20 @@ func (ec *executionContext) field_Mutation_createFolder_args(ctx context.Context
 		return nil, err
 	}
 	args["parentFolderId"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteDatabaseBackup_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "name",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["name"] = arg0
 	return args, nil
 }
 
@@ -6276,6 +6492,98 @@ func (ec *executionContext) _ContentFilterRule_isDefault(ctx context.Context, fi
 }
 func (ec *executionContext) fieldContext_ContentFilterRule_isDefault(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("ContentFilterRule", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _DatabaseBackup_name(ctx context.Context, field graphql.CollectedField, obj *model.DatabaseBackup) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DatabaseBackup_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DatabaseBackup_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DatabaseBackup", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DatabaseBackup_path(ctx context.Context, field graphql.CollectedField, obj *model.DatabaseBackup) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DatabaseBackup_path(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Path, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DatabaseBackup_path(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DatabaseBackup", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _DatabaseBackup_bytes(ctx context.Context, field graphql.CollectedField, obj *model.DatabaseBackup) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DatabaseBackup_bytes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Bytes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DatabaseBackup_bytes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DatabaseBackup", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _DatabaseBackup_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.DatabaseBackup) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_DatabaseBackup_createdAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CreatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_DatabaseBackup_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("DatabaseBackup", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _Download_id(ctx context.Context, field graphql.CollectedField, obj *model.Download) (ret graphql.Marshaler) {
@@ -10517,6 +10825,126 @@ func (ec *executionContext) fieldContext_Mutation_clearImageCache(_ context.Cont
 	return graphql.NewScalarFieldContext("Mutation", field, true, true, errors.New("field of type Boolean does not have child fields"))
 }
 
+func (ec *executionContext) _Mutation_clearStorageCategory(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_clearStorageCategory(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().ClearStorageCategory(ctx, fc.Args["key"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.StorageInfo) graphql.Marshaler {
+			return ec.marshalNStorageInfo2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐStorageInfo(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_clearStorageCategory(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_StorageInfo(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_clearStorageCategory_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createDatabaseBackup(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_createDatabaseBackup(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Mutation().CreateDatabaseBackup(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.DatabaseBackup) graphql.Marshaler {
+			return ec.marshalNDatabaseBackup2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐDatabaseBackup(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_createDatabaseBackup(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DatabaseBackup(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteDatabaseBackup(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_deleteDatabaseBackup(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().DeleteDatabaseBackup(ctx, fc.Args["name"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_deleteDatabaseBackup(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteDatabaseBackup_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_startLibraryUpdate(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -12221,6 +12649,38 @@ func (ec *executionContext) fieldContext_Query_storageInfo(_ context.Context, fi
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_databaseBackups(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_databaseBackups(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Query().DatabaseBackups(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.DatabaseBackup) graphql.Marshaler {
+			return ec.marshalNDatabaseBackup2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐDatabaseBackupᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_databaseBackups(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_DatabaseBackup(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_trackers(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -13408,6 +13868,144 @@ func (ec *executionContext) fieldContext_SortFilter_ascending(_ context.Context,
 	return graphql.NewScalarFieldContext("SortFilter", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
+func (ec *executionContext) _StorageCategory_key(ctx context.Context, field graphql.CollectedField, obj *model.StorageCategory) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_StorageCategory_key(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Key, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_StorageCategory_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("StorageCategory", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _StorageCategory_label(ctx context.Context, field graphql.CollectedField, obj *model.StorageCategory) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_StorageCategory_label(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Label, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_StorageCategory_label(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("StorageCategory", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _StorageCategory_path(ctx context.Context, field graphql.CollectedField, obj *model.StorageCategory) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_StorageCategory_path(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Path, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_StorageCategory_path(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("StorageCategory", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _StorageCategory_bytes(ctx context.Context, field graphql.CollectedField, obj *model.StorageCategory) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_StorageCategory_bytes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Bytes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_StorageCategory_bytes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("StorageCategory", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _StorageCategory_fileCount(ctx context.Context, field graphql.CollectedField, obj *model.StorageCategory) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_StorageCategory_fileCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FileCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_StorageCategory_fileCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("StorageCategory", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _StorageCategory_clearable(ctx context.Context, field graphql.CollectedField, obj *model.StorageCategory) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_StorageCategory_clearable(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Clearable, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_StorageCategory_clearable(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("StorageCategory", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
 func (ec *executionContext) _StorageInfo_usedBytes(ctx context.Context, field graphql.CollectedField, obj *model.StorageInfo) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -13475,6 +14073,107 @@ func (ec *executionContext) _StorageInfo_freeBytes(ctx context.Context, field gr
 }
 func (ec *executionContext) fieldContext_StorageInfo_freeBytes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("StorageInfo", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _StorageInfo_dataDir(ctx context.Context, field graphql.CollectedField, obj *model.StorageInfo) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_StorageInfo_dataDir(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DataDir, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_StorageInfo_dataDir(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("StorageInfo", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _StorageInfo_mediaDir(ctx context.Context, field graphql.CollectedField, obj *model.StorageInfo) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_StorageInfo_mediaDir(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MediaDir, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_StorageInfo_mediaDir(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("StorageInfo", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _StorageInfo_databasePath(ctx context.Context, field graphql.CollectedField, obj *model.StorageInfo) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_StorageInfo_databasePath(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DatabasePath, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_StorageInfo_databasePath(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("StorageInfo", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _StorageInfo_categories(ctx context.Context, field graphql.CollectedField, obj *model.StorageInfo) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_StorageInfo_categories(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Categories, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.StorageCategory) graphql.Marshaler {
+			return ec.marshalNStorageCategory2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐStorageCategoryᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_StorageInfo_categories(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "StorageInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_StorageCategory(ctx, field)
+		},
+	}
+	return fc, nil
 }
 
 func (ec *executionContext) _SubtitleTrack_lang(ctx context.Context, field graphql.CollectedField, obj *model.SubtitleTrack) (ret graphql.Marshaler) {
@@ -17026,6 +17725,59 @@ func (ec *executionContext) _ContentFilterRule(ctx context.Context, sel ast.Sele
 	return out
 }
 
+var databaseBackupImplementors = []string{"DatabaseBackup"}
+
+func (ec *executionContext) _DatabaseBackup(ctx context.Context, sel ast.SelectionSet, obj *model.DatabaseBackup) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, databaseBackupImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DatabaseBackup")
+		case "name":
+			out.Values[i] = ec._DatabaseBackup_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "path":
+			out.Values[i] = ec._DatabaseBackup_path(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "bytes":
+			out.Values[i] = ec._DatabaseBackup_bytes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._DatabaseBackup_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var downloadImplementors = []string{"Download"}
 
 func (ec *executionContext) _Download(ctx context.Context, sel ast.SelectionSet, obj *model.Download) graphql.Marshaler {
@@ -18784,6 +19536,27 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "clearStorageCategory":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_clearStorageCategory(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createDatabaseBackup":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createDatabaseBackup(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteDatabaseBackup":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteDatabaseBackup(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "startLibraryUpdate":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_startLibraryUpdate(ctx, field)
@@ -19554,6 +20327,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "databaseBackups":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_databaseBackups(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "trackers":
 			field := field
 
@@ -20174,6 +20969,69 @@ func (ec *executionContext) _SortFilter(ctx context.Context, sel ast.SelectionSe
 	return out
 }
 
+var storageCategoryImplementors = []string{"StorageCategory"}
+
+func (ec *executionContext) _StorageCategory(ctx context.Context, sel ast.SelectionSet, obj *model.StorageCategory) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, storageCategoryImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("StorageCategory")
+		case "key":
+			out.Values[i] = ec._StorageCategory_key(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "label":
+			out.Values[i] = ec._StorageCategory_label(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "path":
+			out.Values[i] = ec._StorageCategory_path(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "bytes":
+			out.Values[i] = ec._StorageCategory_bytes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "fileCount":
+			out.Values[i] = ec._StorageCategory_fileCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "clearable":
+			out.Values[i] = ec._StorageCategory_clearable(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var storageInfoImplementors = []string{"StorageInfo"}
 
 func (ec *executionContext) _StorageInfo(ctx context.Context, sel ast.SelectionSet, obj *model.StorageInfo) graphql.Marshaler {
@@ -20198,6 +21056,26 @@ func (ec *executionContext) _StorageInfo(ctx context.Context, sel ast.SelectionS
 			}
 		case "freeBytes":
 			out.Values[i] = ec._StorageInfo_freeBytes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "dataDir":
+			out.Values[i] = ec._StorageInfo_dataDir(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "mediaDir":
+			out.Values[i] = ec._StorageInfo_mediaDir(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "databasePath":
+			out.Values[i] = ec._StorageInfo_databasePath(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "categories":
+			out.Values[i] = ec._StorageInfo_categories(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -21413,6 +22291,36 @@ func (ec *executionContext) marshalNContentType2tsunaguᚋbackendᚋinternalᚋa
 	return v
 }
 
+func (ec *executionContext) marshalNDatabaseBackup2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐDatabaseBackup(ctx context.Context, sel ast.SelectionSet, v model.DatabaseBackup) graphql.Marshaler {
+	return ec._DatabaseBackup(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDatabaseBackup2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐDatabaseBackupᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.DatabaseBackup) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNDatabaseBackup2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐDatabaseBackup(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDatabaseBackup2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐDatabaseBackup(ctx context.Context, sel ast.SelectionSet, v *model.DatabaseBackup) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DatabaseBackup(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNDownload2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐDownload(ctx context.Context, sel ast.SelectionSet, v model.Download) graphql.Marshaler {
 	return ec._Download(ctx, sel, &v)
 }
@@ -21977,6 +22885,32 @@ func (ec *executionContext) unmarshalNSolverState2tsunaguᚋbackendᚋinternal�
 
 func (ec *executionContext) marshalNSolverState2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSolverState(ctx context.Context, sel ast.SelectionSet, v model.SolverState) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) marshalNStorageCategory2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐStorageCategoryᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.StorageCategory) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNStorageCategory2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐStorageCategory(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNStorageCategory2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐStorageCategory(ctx context.Context, sel ast.SelectionSet, v *model.StorageCategory) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._StorageCategory(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNStorageInfo2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐStorageInfo(ctx context.Context, sel ast.SelectionSet, v model.StorageInfo) graphql.Marshaler {

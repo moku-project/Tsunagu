@@ -334,6 +334,26 @@ type StorageInfo {
   usedBytes: Float!
   totalBytes: Float!
   freeBytes: Float!
+  dataDir: String!
+  mediaDir: String!
+  databasePath: String!
+  categories: [StorageCategory!]!
+}
+
+type StorageCategory {
+  key: String!
+  label: String!
+  path: String!
+  bytes: Float!
+  fileCount: Int!
+  clearable: Boolean!
+}
+
+type DatabaseBackup {
+  name: String!
+  path: String!
+  bytes: Float!
+  createdAt: String!
 }
 
 type AboutServer {
@@ -422,6 +442,7 @@ type Query {
 
   libraryUpdateStatus: LibraryUpdateStatus!
   storageInfo: StorageInfo!
+  databaseBackups: [DatabaseBackup!]!
 
   trackers: [Tracker!]!
 
@@ -489,6 +510,9 @@ type Mutation {
   reorderFolder(folderId: ID!, sortOrder: Int!): Folder!
   updateFolderFlags(folderId: ID!, includeInUpdate: Boolean, includeInDownload: Boolean): Folder!
   clearImageCache: Boolean!
+  clearStorageCategory(key: String!): StorageInfo!
+  createDatabaseBackup: DatabaseBackup!
+  deleteDatabaseBackup(name: String!): Boolean!
 
   startLibraryUpdate(folderId: ID): Boolean!
 

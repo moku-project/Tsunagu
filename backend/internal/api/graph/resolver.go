@@ -2,6 +2,7 @@ package graph
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 
@@ -28,6 +29,7 @@ type Resolver struct {
 	Md        *metadata.Manager
 	Sr        *streamresolve.Resolver
 	Q         *sqlcgen.Queries
+	DB        *sql.DB
 	Fs        *flaresolverr.Manager
 	Cfg       *config.Store
 	Cf        *contentfilter.Manager

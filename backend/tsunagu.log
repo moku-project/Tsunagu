@@ -2693,3 +2693,38 @@ Caused by: java.io.IOException: Open in WebView to bypass site protection
 2026/09/01 23:59:14.123694 POST /api/graphql 200 1.004278797s
 2026/09/02 00:00:03.193041 POST /api/graphql 200 1.451438125s
 2026/09/02 00:02:16.395576 POST /api/graphql 200 1.583186336s
+2026/09/02 00:11:02.181371 POST /api/graphql 200 1.220728813s
+2026/09/02 00:11:38.570950 POST /api/graphql 200 981.171703ms
+2026/09/02 00:11:44.381997 POST /api/graphql 200 1.413714841s
+2026/09/02 00:12:02.924672 POST /api/graphql 200 1.150761707s
+2026/09/02 00:13:15.147564 POST /api/graphql 200 891.575583ms
+2026/09/02 00:13:23.880509 POST /api/graphql 200 794.735166ms
+2026/09/02 00:13:36.564783 POST /api/graphql 422 437.147µs
+2026/09/02 00:15:21.972447 shutting down
+2026/09/02 00:15:23.869525 === Tsunagu dev (unknown) starting, pid 824577 ===
+2026/09/02 00:15:23.884979 sandbox: spawning /nix/store/1slz0vmmgsd7p6i4c0jaywkpw56wl2yg-openjdk-21.0.12+8/lib/openjdk/bin/java -cp /home/shozikan/Projects/Manga/Tsunagu/sandbox/build/libs/sandbox-0.1.0-all.jar tsunagu.MainKt (source: JAVA_HOME/PATH)
+2026/09/02 00:15:24.186541 [sandbox] [main] INFO eu.kanade.tachiyomi.network.TlsSetup - TLS: Conscrypt provider installed (v2.5.2)
+2026/09/02 00:15:24.672481 [sandbox] tsunagu sandbox listening on :50051
+2026/09/02 00:15:24.843890 sandbox: ready at localhost:50051
+2026/09/02 00:15:26.715984 tsunagu dev listening on [::]:6007
+2026/09/02 00:15:26.718468 metadata backfill: 1 unmatched media, working through them (~1m)
+2026/09/02 00:15:26.720868 content filter: recomputed 6 media
+2026/09/02 00:15:27.090979 tracker poll: reconciled 2 media
+2026/09/02 00:15:27.747523 metadata backfill: done -- matched 0/1
+2026/09/02 00:15:32.202056 POST /api/graphql 200 906.723758ms
+2026/09/02 00:21:49.040919 POST /api/graphql 200 1.207101198s
+2026/09/02 00:22:49.925762 POST /api/graphql 200 1.044603039s
+2026/09/02 00:23:25.626553 POST /api/graphql 200 1.338311313s
+2026/09/02 00:23:26.350625 POST /api/graphql 200 500.323109ms
+2026/09/02 00:23:26.601653 POST /api/graphql 200 751.301651ms
+2026/09/02 00:23:26.901513 POST /api/graphql 200 547.626958ms
+2026/09/02 00:23:26.905187 GET /proxy/cover/781 502 267.922883ms
+2026/09/02 00:23:26.989688 [sandbox] [grpc-default-executor-1] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:196
+2026/09/02 00:23:27.464929 POST /api/graphql 200 561.228401ms
+2026/09/02 00:23:27.480910 POST /api/graphql 200 1.630372735s
+2026/09/02 00:23:27.651761 POST /api/graphql 200 659.508323ms
+2026/09/02 00:23:27.661605 [sandbox] [grpc-default-executor-1] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/02 00:23:28.214668 POST /api/graphql 200 2.364431925s
+2026/09/02 00:23:28.214721 POST /api/graphql 200 732.096011ms
+2026/09/02 00:23:33.828792 POST /api/graphql 200 1.260416868s
+2026/09/02 00:23:37.397274 shutting down
