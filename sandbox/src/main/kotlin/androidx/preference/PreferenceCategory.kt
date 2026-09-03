@@ -1,3 +1,5 @@
 package androidx.preference
 
-open class PreferenceCategory : Preference()
+import android.content.Context
+
+open class PreferenceCategory @JvmOverloads constructor(context: Context? = null) : PreferenceGroup(context)

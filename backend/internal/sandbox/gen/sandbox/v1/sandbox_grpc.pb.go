@@ -34,6 +34,8 @@ const (
 	ExtensionService_GetFilterList_FullMethodName        = "/sandbox.v1.ExtensionService/GetFilterList"
 	ExtensionService_GetPopularManga_FullMethodName      = "/sandbox.v1.ExtensionService/GetPopularManga"
 	ExtensionService_GetLatestUpdates_FullMethodName     = "/sandbox.v1.ExtensionService/GetLatestUpdates"
+	ExtensionService_GetSourcePreferences_FullMethodName = "/sandbox.v1.ExtensionService/GetSourcePreferences"
+	ExtensionService_SetSourcePreference_FullMethodName  = "/sandbox.v1.ExtensionService/SetSourcePreference"
 )
 
 // ExtensionServiceClient is the client API for ExtensionService service.
@@ -55,6 +57,8 @@ type ExtensionServiceClient interface {
 	GetFilterList(ctx context.Context, in *GetFilterListRequest, opts ...grpc.CallOption) (*GetFilterListResponse, error)
 	GetPopularManga(ctx context.Context, in *BrowseRequest, opts ...grpc.CallOption) (*SearchResponse, error)
 	GetLatestUpdates(ctx context.Context, in *BrowseRequest, opts ...grpc.CallOption) (*SearchResponse, error)
+	GetSourcePreferences(ctx context.Context, in *GetSourcePreferencesRequest, opts ...grpc.CallOption) (*GetSourcePreferencesResponse, error)
+	SetSourcePreference(ctx context.Context, in *SetSourcePreferenceRequest, opts ...grpc.CallOption) (*Empty, error)
 }
 
 type extensionServiceClient struct {
@@ -215,6 +219,26 @@ func (c *extensionServiceClient) GetLatestUpdates(ctx context.Context, in *Brows
 	return out, nil
 }
 
+func (c *extensionServiceClient) GetSourcePreferences(ctx context.Context, in *GetSourcePreferencesRequest, opts ...grpc.CallOption) (*GetSourcePreferencesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetSourcePreferencesResponse)
+	err := c.cc.Invoke(ctx, ExtensionService_GetSourcePreferences_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *extensionServiceClient) SetSourcePreference(ctx context.Context, in *SetSourcePreferenceRequest, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, ExtensionService_SetSourcePreference_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ExtensionServiceServer is the server API for ExtensionService service.
 // All implementations must embed UnimplementedExtensionServiceServer
 // for forward compatibility.
@@ -234,6 +258,8 @@ type ExtensionServiceServer interface {
 	GetFilterList(context.Context, *GetFilterListRequest) (*GetFilterListResponse, error)
 	GetPopularManga(context.Context, *BrowseRequest) (*SearchResponse, error)
 	GetLatestUpdates(context.Context, *BrowseRequest) (*SearchResponse, error)
+	GetSourcePreferences(context.Context, *GetSourcePreferencesRequest) (*GetSourcePreferencesResponse, error)
+	SetSourcePreference(context.Context, *SetSourcePreferenceRequest) (*Empty, error)
 	mustEmbedUnimplementedExtensionServiceServer()
 }
 
@@ -288,6 +314,12 @@ func (UnimplementedExtensionServiceServer) GetPopularManga(context.Context, *Bro
 }
 func (UnimplementedExtensionServiceServer) GetLatestUpdates(context.Context, *BrowseRequest) (*SearchResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetLatestUpdates not implemented")
+}
+func (UnimplementedExtensionServiceServer) GetSourcePreferences(context.Context, *GetSourcePreferencesRequest) (*GetSourcePreferencesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetSourcePreferences not implemented")
+}
+func (UnimplementedExtensionServiceServer) SetSourcePreference(context.Context, *SetSourcePreferenceRequest) (*Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method SetSourcePreference not implemented")
 }
 func (UnimplementedExtensionServiceServer) mustEmbedUnimplementedExtensionServiceServer() {}
 func (UnimplementedExtensionServiceServer) testEmbeddedByValue()                          {}
@@ -580,6 +612,42 @@ func _ExtensionService_GetLatestUpdates_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ExtensionService_GetSourcePreferences_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSourcePreferencesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtensionServiceServer).GetSourcePreferences(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ExtensionService_GetSourcePreferences_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtensionServiceServer).GetSourcePreferences(ctx, req.(*GetSourcePreferencesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ExtensionService_SetSourcePreference_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetSourcePreferenceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtensionServiceServer).SetSourcePreference(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ExtensionService_SetSourcePreference_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtensionServiceServer).SetSourcePreference(ctx, req.(*SetSourcePreferenceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ExtensionService_ServiceDesc is the grpc.ServiceDesc for ExtensionService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -646,6 +714,14 @@ var ExtensionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetLatestUpdates",
 			Handler:    _ExtensionService_GetLatestUpdates_Handler,
+		},
+		{
+			MethodName: "GetSourcePreferences",
+			Handler:    _ExtensionService_GetSourcePreferences_Handler,
+		},
+		{
+			MethodName: "SetSourcePreference",
+			Handler:    _ExtensionService_SetSourcePreference_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

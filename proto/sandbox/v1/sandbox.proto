@@ -20,6 +20,8 @@ service ExtensionService {
   rpc GetFilterList(GetFilterListRequest) returns (GetFilterListResponse);
   rpc GetPopularManga(BrowseRequest) returns (SearchResponse);
   rpc GetLatestUpdates(BrowseRequest) returns (SearchResponse);
+  rpc GetSourcePreferences(GetSourcePreferencesRequest) returns (GetSourcePreferencesResponse);
+  rpc SetSourcePreference(SetSourcePreferenceRequest) returns (Empty);
 }
 
 enum ContentType {
@@ -200,6 +202,31 @@ message ExtensionMetadata {
   string name = 2;
   ContentType content_type = 3;
   string lang = 4;
+}
+
+message GetSourcePreferencesRequest {
+  string extension_id = 1;
+}
+
+message SourcePreference {
+  string key = 1;
+  string title = 2;
+  string summary = 3;
+  string type = 4;
+  repeated string entries = 5;
+  repeated string entry_values = 6;
+  string current_value = 7;
+  string default_value = 8;
+}
+
+message GetSourcePreferencesResponse {
+  repeated SourcePreference preferences = 1;
+}
+
+message SetSourcePreferenceRequest {
+  string extension_id = 1;
+  string key = 2;
+  string value = 3;
 }
 
 message GetFilterListRequest {

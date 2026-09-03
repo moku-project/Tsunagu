@@ -431,6 +431,7 @@ type Query {
   readingProgress(mediaId: ID!): [ReadingProgress!]!
   search(extensionId: ID!, query: String!, page: Int, filters: [FilterInput!]): SearchResponse!
   filterOptions(extensionId: ID!): [FilterNode!]!
+  sourcePreferences(extensionId: ID!): [SourcePreference!]!
   popularManga(extensionId: ID!, page: Int): SearchResponse!
   latestUpdates(extensionId: ID!, page: Int): SearchResponse!
   downloadStatus(mediaId: ID!, chapterId: ID!): Download
@@ -488,6 +489,7 @@ type Mutation {
   recomputeContentFilter: Boolean!
   installCloudflareSolver: CloudflareSolver!
   uninstallCloudflareSolver: Boolean!
+  setSourcePreference(extensionId: ID!, key: String!, value: String!): [SourcePreference!]!
   installExtension(packageName: String!): Extension!
   installExternalExtension(url: String!): Extension!
   uninstallExtension(packageName: String!): Extension!
@@ -581,6 +583,19 @@ type SortFilter {
   hasState: Boolean!
   index: Int
   ascending: Boolean
+}
+
+enum SourcePreferenceType { LIST MULTI_SELECT SWITCH EDIT_TEXT }
+
+type SourcePreference {
+  key: String!
+  title: String!
+  summary: String!
+  type: SourcePreferenceType!
+  entries: [String!]!
+  entryValues: [String!]!
+  currentValue: String!
+  defaultValue: String!
 }
 
 input FilterInput {

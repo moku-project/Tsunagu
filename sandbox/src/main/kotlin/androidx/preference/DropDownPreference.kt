@@ -1,3 +1,5 @@
 package androidx.preference
 
-open class DropDownPreference : ListPreference()
+import android.content.Context
+
+open class DropDownPreference @JvmOverloads constructor(context: Context? = null) : ListPreference(context)

@@ -150,6 +150,46 @@ class ExtensionServiceImpl(
         }
     }
 
+    override fun getSourcePreferences(
+        request: Sandbox.GetSourcePreferencesRequest,
+        responseObserver: StreamObserver<Sandbox.GetSourcePreferencesResponse>,
+    ) {
+        val extension = registry.get(request.extensionId)
+        if (extension == null) {
+            responseObserver.onError(notFound(request.extensionId))
+            return
+        }
+        try {
+            val prefs = SourcePrefSerde.harvest(extension.source)
+            responseObserver.onNext(
+                Sandbox.GetSourcePreferencesResponse.newBuilder().addAllPreferences(prefs).build(),
+            )
+            responseObserver.onCompleted()
+        } catch (e: Throwable) {
+            logExtensionFailure(e)
+            responseObserver.onError(internal(e))
+        }
+    }
+
+    override fun setSourcePreference(
+        request: Sandbox.SetSourcePreferenceRequest,
+        responseObserver: StreamObserver<Sandbox.Empty>,
+    ) {
+        val extension = registry.get(request.extensionId)
+        if (extension == null) {
+            responseObserver.onError(notFound(request.extensionId))
+            return
+        }
+        try {
+            SourcePrefSerde.apply(extension.source, request.key, request.value)
+            responseObserver.onNext(Sandbox.Empty.getDefaultInstance())
+            responseObserver.onCompleted()
+        } catch (e: Throwable) {
+            logExtensionFailure(e)
+            responseObserver.onError(internal(e))
+        }
+    }
+
     override fun getFilterList(
         request: Sandbox.GetFilterListRequest,
         responseObserver: StreamObserver<Sandbox.GetFilterListResponse>,

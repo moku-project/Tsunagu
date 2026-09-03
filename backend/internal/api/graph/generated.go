@@ -286,6 +286,7 @@ type ComplexityRoot struct {
 		RetryDownload             func(childComplexity int, mediaID string, chapterID string) int
 		SetInLibrary              func(childComplexity int, mediaID string, inLibrary bool) int
 		SetMediaCover             func(childComplexity int, mediaID string, url *string) int
+		SetSourcePreference       func(childComplexity int, extensionID string, key string, value string) int
 		StartDownloader           func(childComplexity int) int
 		StartLibraryUpdate        func(childComplexity int, folderID *string) int
 		StopDownloader            func(childComplexity int) int
@@ -337,6 +338,7 @@ type ComplexityRoot struct {
 		SearchMetadata      func(childComplexity int, query string, contentType model.ContentType, provider *string) int
 		ServerSettings      func(childComplexity int) int
 		SkipTimestamps      func(childComplexity int, chapterID string, episodeLengthMs *int32) int
+		SourcePreferences   func(childComplexity int, extensionID string) int
 		StorageInfo         func(childComplexity int) int
 		TrackSearch         func(childComplexity int, trackerKey string, query string, contentType *model.ContentType) int
 		Trackers            func(childComplexity int) int
@@ -407,6 +409,17 @@ type ComplexityRoot struct {
 		Index     func(childComplexity int) int
 		Name      func(childComplexity int) int
 		Values    func(childComplexity int) int
+	}
+
+	SourcePreference struct {
+		CurrentValue func(childComplexity int) int
+		DefaultValue func(childComplexity int) int
+		Entries      func(childComplexity int) int
+		EntryValues  func(childComplexity int) int
+		Key          func(childComplexity int) int
+		Summary      func(childComplexity int) int
+		Title        func(childComplexity int) int
+		Type         func(childComplexity int) int
 	}
 
 	StorageCategory struct {
@@ -572,6 +585,7 @@ type MutationResolver interface {
 	RecomputeContentFilter(ctx context.Context) (bool, error)
 	InstallCloudflareSolver(ctx context.Context) (*model.CloudflareSolver, error)
 	UninstallCloudflareSolver(ctx context.Context) (bool, error)
+	SetSourcePreference(ctx context.Context, extensionID string, key string, value string) ([]*model.SourcePreference, error)
 	InstallExtension(ctx context.Context, packageName string) (*model.Extension, error)
 	InstallExternalExtension(ctx context.Context, url string) (*model.Extension, error)
 	UninstallExtension(ctx context.Context, packageName string) (*model.Extension, error)
@@ -631,6 +645,7 @@ type QueryResolver interface {
 	ReadingProgress(ctx context.Context, mediaID string) ([]*model.ReadingProgress, error)
 	Search(ctx context.Context, extensionID string, query string, page *int32, filters []*model.FilterInput) (*model.SearchResponse, error)
 	FilterOptions(ctx context.Context, extensionID string) ([]model.FilterNode, error)
+	SourcePreferences(ctx context.Context, extensionID string) ([]*model.SourcePreference, error)
 	PopularManga(ctx context.Context, extensionID string, page *int32) (*model.SearchResponse, error)
 	LatestUpdates(ctx context.Context, extensionID string, page *int32) (*model.SearchResponse, error)
 	DownloadStatus(ctx context.Context, mediaID string, chapterID string) (*model.Download, error)
@@ -1991,6 +2006,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.SetMediaCover(childComplexity, args["mediaId"].(string), args["url"].(*string)), true
+	case "Mutation.setSourcePreference":
+		if e.ComplexityRoot.Mutation.SetSourcePreference == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_setSourcePreference_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.SetSourcePreference(childComplexity, args["extensionId"].(string), args["key"].(string), args["value"].(string)), true
 	case "Mutation.startDownloader":
 		if e.ComplexityRoot.Mutation.StartDownloader == nil {
 			break
@@ -2446,6 +2472,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.SkipTimestamps(childComplexity, args["chapterId"].(string), args["episodeLengthMs"].(*int32)), true
+	case "Query.sourcePreferences":
+		if e.ComplexityRoot.Query.SourcePreferences == nil {
+			break
+		}
+
+		args, err := ec.field_Query_sourcePreferences_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.SourcePreferences(childComplexity, args["extensionId"].(string)), true
 	case "Query.storageInfo":
 		if e.ComplexityRoot.Query.StorageInfo == nil {
 			break
@@ -2718,6 +2755,55 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.SortFilter.Values(childComplexity), true
+
+	case "SourcePreference.currentValue":
+		if e.ComplexityRoot.SourcePreference.CurrentValue == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SourcePreference.CurrentValue(childComplexity), true
+	case "SourcePreference.defaultValue":
+		if e.ComplexityRoot.SourcePreference.DefaultValue == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SourcePreference.DefaultValue(childComplexity), true
+	case "SourcePreference.entries":
+		if e.ComplexityRoot.SourcePreference.Entries == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SourcePreference.Entries(childComplexity), true
+	case "SourcePreference.entryValues":
+		if e.ComplexityRoot.SourcePreference.EntryValues == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SourcePreference.EntryValues(childComplexity), true
+	case "SourcePreference.key":
+		if e.ComplexityRoot.SourcePreference.Key == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SourcePreference.Key(childComplexity), true
+	case "SourcePreference.summary":
+		if e.ComplexityRoot.SourcePreference.Summary == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SourcePreference.Summary(childComplexity), true
+	case "SourcePreference.title":
+		if e.ComplexityRoot.SourcePreference.Title == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SourcePreference.Title(childComplexity), true
+	case "SourcePreference.type":
+		if e.ComplexityRoot.SourcePreference.Type == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SourcePreference.Type(childComplexity), true
 
 	case "StorageCategory.bytes":
 		if e.ComplexityRoot.StorageCategory.Bytes == nil {
@@ -3753,6 +3839,28 @@ func (ec *executionContext) childFields_SkipMarker(ctx context.Context, field gr
 	return nil, fmt.Errorf("no field named %q was found under type SkipMarker", field.Name)
 }
 
+func (ec *executionContext) childFields_SourcePreference(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "key":
+		return ec.fieldContext_SourcePreference_key(ctx, field)
+	case "title":
+		return ec.fieldContext_SourcePreference_title(ctx, field)
+	case "summary":
+		return ec.fieldContext_SourcePreference_summary(ctx, field)
+	case "type":
+		return ec.fieldContext_SourcePreference_type(ctx, field)
+	case "entries":
+		return ec.fieldContext_SourcePreference_entries(ctx, field)
+	case "entryValues":
+		return ec.fieldContext_SourcePreference_entryValues(ctx, field)
+	case "currentValue":
+		return ec.fieldContext_SourcePreference_currentValue(ctx, field)
+	case "defaultValue":
+		return ec.fieldContext_SourcePreference_defaultValue(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type SourcePreference", field.Name)
+}
+
 func (ec *executionContext) childFields_StorageCategory(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "key":
@@ -4759,6 +4867,36 @@ func (ec *executionContext) field_Mutation_setMediaCover_args(ctx context.Contex
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_setSourcePreference_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "extensionId",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["extensionId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "key",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["key"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "value",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["value"] = arg2
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_startLibraryUpdate_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -5504,6 +5642,20 @@ func (ec *executionContext) field_Query_skipTimestamps_args(ctx context.Context,
 		return nil, err
 	}
 	args["episodeLengthMs"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_sourcePreferences_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "extensionId",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["extensionId"] = arg0
 	return args, nil
 }
 
@@ -9964,6 +10116,50 @@ func (ec *executionContext) fieldContext_Mutation_uninstallCloudflareSolver(_ co
 	return graphql.NewScalarFieldContext("Mutation", field, true, true, errors.New("field of type Boolean does not have child fields"))
 }
 
+func (ec *executionContext) _Mutation_setSourcePreference(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_setSourcePreference(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().SetSourcePreference(ctx, fc.Args["extensionId"].(string), fc.Args["key"].(string), fc.Args["value"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.SourcePreference) graphql.Marshaler {
+			return ec.marshalNSourcePreference2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSourcePreferenceᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_setSourcePreference(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_SourcePreference(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_setSourcePreference_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_installExtension(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -12301,6 +12497,50 @@ func (ec *executionContext) fieldContext_Query_filterOptions(ctx context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_sourcePreferences(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_sourcePreferences(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().SourcePreferences(ctx, fc.Args["extensionId"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.SourcePreference) graphql.Marshaler {
+			return ec.marshalNSourcePreference2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSourcePreferenceᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_sourcePreferences(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_SourcePreference(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_sourcePreferences_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_popularManga(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -13866,6 +14106,190 @@ func (ec *executionContext) _SortFilter_ascending(ctx context.Context, field gra
 }
 func (ec *executionContext) fieldContext_SortFilter_ascending(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("SortFilter", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _SourcePreference_key(ctx context.Context, field graphql.CollectedField, obj *model.SourcePreference) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SourcePreference_key(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Key, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SourcePreference_key(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SourcePreference", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _SourcePreference_title(ctx context.Context, field graphql.CollectedField, obj *model.SourcePreference) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SourcePreference_title(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Title, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SourcePreference_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SourcePreference", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _SourcePreference_summary(ctx context.Context, field graphql.CollectedField, obj *model.SourcePreference) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SourcePreference_summary(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Summary, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SourcePreference_summary(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SourcePreference", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _SourcePreference_type(ctx context.Context, field graphql.CollectedField, obj *model.SourcePreference) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SourcePreference_type(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Type, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v model.SourcePreferenceType) graphql.Marshaler {
+			return ec.marshalNSourcePreferenceType2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSourcePreferenceType(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SourcePreference_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SourcePreference", field, false, false, errors.New("field of type SourcePreferenceType does not have child fields"))
+}
+
+func (ec *executionContext) _SourcePreference_entries(ctx context.Context, field graphql.CollectedField, obj *model.SourcePreference) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SourcePreference_entries(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Entries, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []string) graphql.Marshaler {
+			return ec.marshalNString2ᚕstringᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SourcePreference_entries(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SourcePreference", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _SourcePreference_entryValues(ctx context.Context, field graphql.CollectedField, obj *model.SourcePreference) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SourcePreference_entryValues(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EntryValues, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []string) graphql.Marshaler {
+			return ec.marshalNString2ᚕstringᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SourcePreference_entryValues(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SourcePreference", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _SourcePreference_currentValue(ctx context.Context, field graphql.CollectedField, obj *model.SourcePreference) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SourcePreference_currentValue(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CurrentValue, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SourcePreference_currentValue(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SourcePreference", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _SourcePreference_defaultValue(ctx context.Context, field graphql.CollectedField, obj *model.SourcePreference) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SourcePreference_defaultValue(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DefaultValue, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SourcePreference_defaultValue(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SourcePreference", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _StorageCategory_key(ctx context.Context, field graphql.CollectedField, obj *model.StorageCategory) (ret graphql.Marshaler) {
@@ -19389,6 +19813,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "setSourcePreference":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_setSourcePreference(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "installExtension":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_installExtension(ctx, field)
@@ -20117,6 +20548,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_filterOptions(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "sourcePreferences":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_sourcePreferences(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -20946,6 +21399,79 @@ func (ec *executionContext) _SortFilter(ctx context.Context, sel ast.SelectionSe
 		case "ascending":
 			out.Values[i] = ec._SortFilter_ascending(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var sourcePreferenceImplementors = []string{"SourcePreference"}
+
+func (ec *executionContext) _SourcePreference(ctx context.Context, sel ast.SelectionSet, obj *model.SourcePreference) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, sourcePreferenceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SourcePreference")
+		case "key":
+			out.Values[i] = ec._SourcePreference_key(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "title":
+			out.Values[i] = ec._SourcePreference_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "summary":
+			out.Values[i] = ec._SourcePreference_summary(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "type":
+			out.Values[i] = ec._SourcePreference_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "entries":
+			out.Values[i] = ec._SourcePreference_entries(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "entryValues":
+			out.Values[i] = ec._SourcePreference_entryValues(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "currentValue":
+			out.Values[i] = ec._SourcePreference_currentValue(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "defaultValue":
+			out.Values[i] = ec._SourcePreference_defaultValue(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		default:
@@ -22884,6 +23410,42 @@ func (ec *executionContext) unmarshalNSolverState2tsunaguᚋbackendᚋinternal�
 }
 
 func (ec *executionContext) marshalNSolverState2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSolverState(ctx context.Context, sel ast.SelectionSet, v model.SolverState) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) marshalNSourcePreference2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSourcePreferenceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SourcePreference) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNSourcePreference2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSourcePreference(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNSourcePreference2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSourcePreference(ctx context.Context, sel ast.SelectionSet, v *model.SourcePreference) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SourcePreference(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNSourcePreferenceType2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSourcePreferenceType(ctx context.Context, v any) (model.SourcePreferenceType, error) {
+	var res model.SourcePreferenceType
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSourcePreferenceType2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSourcePreferenceType(ctx context.Context, sel ast.SelectionSet, v model.SourcePreferenceType) graphql.Marshaler {
 	return v
 }
 

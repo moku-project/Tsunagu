@@ -1,3 +1,9 @@
 package androidx.preference
 
-open class SeekBarPreference : Preference()
+import android.content.Context
+
+open class SeekBarPreference @JvmOverloads constructor(context: Context? = null) : Preference(context) {
+    var value: Int = 0
+    var min: Int = 0
+    var max: Int = 100
+}

@@ -675,6 +675,40 @@ func toFilterNodes(ns []*sandboxv1.FilterNode) []model.FilterNode {
 	return out
 }
 
+func toSourcePreferenceType(s string) model.SourcePreferenceType {
+	switch s {
+	case "multiselect":
+		return model.SourcePreferenceTypeMultiSelect
+	case "switch":
+		return model.SourcePreferenceTypeSwitch
+	case "edittext":
+		return model.SourcePreferenceTypeEditText
+	default:
+		return model.SourcePreferenceTypeList
+	}
+}
+
+func toSourcePreference(p *sandboxv1.SourcePreference) *model.SourcePreference {
+	return &model.SourcePreference{
+		Key:          p.GetKey(),
+		Title:        p.GetTitle(),
+		Summary:      p.GetSummary(),
+		Type:         toSourcePreferenceType(p.GetType()),
+		Entries:      p.GetEntries(),
+		EntryValues:  p.GetEntryValues(),
+		CurrentValue: p.GetCurrentValue(),
+		DefaultValue: p.GetDefaultValue(),
+	}
+}
+
+func toSourcePreferences(ps []*sandboxv1.SourcePreference) []*model.SourcePreference {
+	out := make([]*model.SourcePreference, 0, len(ps))
+	for _, p := range ps {
+		out = append(out, toSourcePreference(p))
+	}
+	return out
+}
+
 func toProtoFilterNode(in *model.FilterInput) *sandboxv1.FilterNode {
 	n := &sandboxv1.FilterNode{Name: in.Name}
 	switch {

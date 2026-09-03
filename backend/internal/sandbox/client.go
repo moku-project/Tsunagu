@@ -152,6 +152,21 @@ func (c *Client) GetFilterList(ctx context.Context, extensionID string) (*sandbo
 	return c.rpc.GetFilterList(ctx, &sandboxv1.GetFilterListRequest{ExtensionId: extensionID})
 }
 
+func (c *Client) GetSourcePreferences(ctx context.Context, extensionID string) (*sandboxv1.GetSourcePreferencesResponse, error) {
+	ctx, cancel := c.withTimeout(ctx)
+	defer cancel()
+	return c.rpc.GetSourcePreferences(ctx, &sandboxv1.GetSourcePreferencesRequest{ExtensionId: extensionID})
+}
+
+func (c *Client) SetSourcePreference(ctx context.Context, extensionID, key, value string) error {
+	ctx, cancel := c.withTimeout(ctx)
+	defer cancel()
+	_, err := c.rpc.SetSourcePreference(ctx, &sandboxv1.SetSourcePreferenceRequest{
+		ExtensionId: extensionID, Key: key, Value: value,
+	})
+	return err
+}
+
 func (c *Client) PeekExtension(ctx context.Context, filePath string) (*sandboxv1.ExtensionMetadata, error) {
 	ctx, cancel := c.withTimeout(ctx)
 	defer cancel()

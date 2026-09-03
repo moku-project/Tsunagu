@@ -30,6 +30,7 @@ fun main() {
     val storageDir = File(System.getenv("SANDBOX_STORAGE_DIR") ?: "plugin-storage")
     val novelEnabled = System.getenv("SANDBOX_ENABLE_NOVEL")?.toBooleanStrictOrNull() ?: false
     PluginStorage.baseDir = storageDir
+    android.app.Application.prefsRoot = File(storageDir, "shared-prefs")
     val registry = ExtensionRegistry(extensionsDir, novelEnabled)
     GetSource.bind(registry)
     registry.loadAll()

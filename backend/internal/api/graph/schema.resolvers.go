@@ -611,6 +611,26 @@ func (r *mutationResolver) UninstallCloudflareSolver(ctx context.Context) (bool,
 	return true, nil
 }
 
+// SetSourcePreference is the resolver for the setSourcePreference field.
+func (r *mutationResolver) SetSourcePreference(ctx context.Context, extensionID string, key string, value string) ([]*model.SourcePreference, error) {
+	ext, err := r.resolveExtension(ctx, extensionID)
+	if err != nil {
+		return nil, err
+	}
+	c, err := r.Sc.Ensure(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := c.SetSourcePreference(ctx, ext.PackageName, key, value); err != nil {
+		return nil, err
+	}
+	resp, err := c.GetSourcePreferences(ctx, ext.PackageName)
+	if err != nil {
+		return nil, err
+	}
+	return toSourcePreferences(resp.GetPreferences()), nil
+}
+
 // InstallExtension is the resolver for the installExtension field.
 func (r *mutationResolver) InstallExtension(ctx context.Context, packageName string) (*model.Extension, error) {
 	ext, err := r.Sy.InstallExtension(ctx, packageName)
@@ -1635,6 +1655,23 @@ func (r *queryResolver) FilterOptions(ctx context.Context, extensionID string) (
 		return nil, err
 	}
 	return toFilterNodes(resp.Filters), nil
+}
+
+// SourcePreferences is the resolver for the sourcePreferences field.
+func (r *queryResolver) SourcePreferences(ctx context.Context, extensionID string) ([]*model.SourcePreference, error) {
+	ext, err := r.resolveExtension(ctx, extensionID)
+	if err != nil {
+		return nil, err
+	}
+	c, err := r.Sc.Ensure(ctx)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := c.GetSourcePreferences(ctx, ext.PackageName)
+	if err != nil {
+		return nil, err
+	}
+	return toSourcePreferences(resp.GetPreferences()), nil
 }
 
 // PopularManga is the resolver for the popularManga field.

@@ -350,6 +350,17 @@ type SortFilterInput struct {
 	Ascending *bool  `json:"ascending,omitempty"`
 }
 
+type SourcePreference struct {
+	Key          string               `json:"key"`
+	Title        string               `json:"title"`
+	Summary      string               `json:"summary"`
+	Type         SourcePreferenceType `json:"type"`
+	Entries      []string             `json:"entries"`
+	EntryValues  []string             `json:"entryValues"`
+	CurrentValue string               `json:"currentValue"`
+	DefaultValue string               `json:"defaultValue"`
+}
+
 type StorageCategory struct {
 	Key       string  `json:"key"`
 	Label     string  `json:"label"`
@@ -1102,6 +1113,65 @@ func (e *SolverState) UnmarshalJSON(b []byte) error {
 }
 
 func (e SolverState) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type SourcePreferenceType string
+
+const (
+	SourcePreferenceTypeList        SourcePreferenceType = "LIST"
+	SourcePreferenceTypeMultiSelect SourcePreferenceType = "MULTI_SELECT"
+	SourcePreferenceTypeSwitch      SourcePreferenceType = "SWITCH"
+	SourcePreferenceTypeEditText    SourcePreferenceType = "EDIT_TEXT"
+)
+
+var AllSourcePreferenceType = []SourcePreferenceType{
+	SourcePreferenceTypeList,
+	SourcePreferenceTypeMultiSelect,
+	SourcePreferenceTypeSwitch,
+	SourcePreferenceTypeEditText,
+}
+
+func (e SourcePreferenceType) IsValid() bool {
+	switch e {
+	case SourcePreferenceTypeList, SourcePreferenceTypeMultiSelect, SourcePreferenceTypeSwitch, SourcePreferenceTypeEditText:
+		return true
+	}
+	return false
+}
+
+func (e SourcePreferenceType) String() string {
+	return string(e)
+}
+
+func (e *SourcePreferenceType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SourcePreferenceType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SourcePreferenceType", str)
+	}
+	return nil
+}
+
+func (e SourcePreferenceType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *SourcePreferenceType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e SourcePreferenceType) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil
