@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"flag"
 	"fmt"
 	"html"
@@ -18,9 +19,13 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/vektah/gqlparser/v2/gqlerror"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"tsunagu/backend/internal/api/graph"
 	"tsunagu/backend/internal/api/rest"
@@ -389,8 +394,52 @@ func registerGraphQL(mux *http.ServeMux, sc *sandbox.SupervisedClient, sy *sync.
 	resolver := &graph.Resolver{Sy: sy, Sc: sc, Dm: dm, Ls: localsource.New(q, globalMediaDir), Tk: tk, Md: md, Sr: sr, Q: q, DB: globalDB, Fs: globalFsMgr, Cfg: globalStore, Cf: globalCf, MediaDir: globalMediaDir, Name: serverName, Version: serverVersion, BuildTime: serverBuildTime}
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: resolver}))
 	srv.Use(extension.FixedComplexityLimit(8000))
+	srv.SetErrorPresenter(sandboxErrorPresenter)
 	mux.Handle("/api/graphql", withLoaders(q, srv))
 	mux.Handle("/api/graphql/playground", playground.Handler("Tsunagu GraphQL", "/api/graphql"))
+}
+
+func sandboxErrorPresenter(ctx context.Context, e error) *gqlerror.Error {
+	gqlErr := graphql.DefaultErrorPresenter(ctx, e)
+
+	var st *status.Status
+	for err := e; err != nil; err = errors.Unwrap(err) {
+		if s, ok := status.FromError(err); ok && s.Code() != codes.OK {
+			st = s
+			break
+		}
+	}
+	if st == nil {
+		return gqlErr
+	}
+
+	code := "SOURCE_ERROR"
+	msg := st.Message()
+	if i := strings.Index(msg, ": "); i > 0 && (strings.HasPrefix(msg[:i], "SOURCE_") || msg[:i] == "INTERNAL") {
+		code = msg[:i]
+		msg = msg[i+2:]
+	} else {
+		switch st.Code() {
+		case codes.NotFound:
+			code = "SOURCE_NOT_FOUND"
+		case codes.Unavailable:
+			code = "SOURCE_UNAVAILABLE"
+		case codes.ResourceExhausted:
+			code = "SOURCE_RATE_LIMITED"
+		case codes.FailedPrecondition:
+			code = "SOURCE_CLOUDFLARE"
+		case codes.DataLoss:
+			code = "SOURCE_PARSE"
+		}
+	}
+
+	if gqlErr.Extensions == nil {
+		gqlErr.Extensions = map[string]any{}
+	}
+	gqlErr.Extensions["code"] = code
+	gqlErr.Extensions["grpc"] = st.Code().String()
+	gqlErr.Message = msg
+	return gqlErr
 }
 
 func withLoaders(q *sqlcgen.Queries, next http.Handler) http.Handler {

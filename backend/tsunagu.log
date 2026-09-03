@@ -6568,3 +6568,199 @@ Caused by: java.io.IOException: Open in WebView to bypass site protection
 2026/09/02 23:37:46.814397 POST /api/graphql 200 805.575111ms
 2026/09/02 23:38:07.147928 POST /api/graphql 200 1.497544779s
 2026/09/02 23:38:26.791844 shutting down
+2026/09/02 23:40:01.805218 === Tsunagu dev (unknown) starting, pid 1143939 ===
+2026/09/02 23:40:01.822873 sandbox: spawning /nix/store/1slz0vmmgsd7p6i4c0jaywkpw56wl2yg-openjdk-21.0.12+8/lib/openjdk/bin/java -cp /home/shozikan/Projects/Manga/Tsunagu/sandbox/build/libs/sandbox-0.1.0-all.jar tsunagu.MainKt (source: JAVA_HOME/PATH)
+2026/09/02 23:40:02.076304 [sandbox] [main] INFO eu.kanade.tachiyomi.network.TlsSetup - TLS: Conscrypt provider installed (v2.5.2)
+2026/09/02 23:40:02.566749 [sandbox] tsunagu sandbox listening on :50051
+2026/09/02 23:40:02.782719 sandbox: ready at localhost:50051
+2026/09/02 23:40:05.813708 tsunagu dev listening on [::]:6007
+2026/09/02 23:40:05.817984 metadata backfill: 1 unmatched media, working through them (~1m)
+2026/09/02 23:40:05.823790 content filter: recomputed 6 media
+2026/09/02 23:40:06.149805 tracker poll: reconciled 2 media
+2026/09/02 23:40:06.624911 POST /api/graphql 200 805.182086ms
+2026/09/02 23:40:06.824134 metadata backfill: done -- matched 0/1
+2026/09/02 23:40:07.945843 POST /api/graphql 200 1.050746614s
+2026/09/02 23:41:10.069566 POST /api/graphql 200 507.492461ms
+2026/09/02 23:41:10.298261 POST /api/graphql 200 736.108241ms
+2026/09/02 23:41:10.864617 POST /api/graphql 200 563.642264ms
+2026/09/02 23:41:10.963688 [sandbox] [grpc-default-executor-2] ERROR tsunagu.grpc.ExtensionServiceImpl - extension call failed: HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class @ OkHttpExtensionsKt$asObservable$1$requestArbiter$1.request:41; OkHttpExtensionsKt.asObservable$lambda$0:59; RxCompatKt.awaitSingle:13; ExtensionServiceImpl$getPopularManga$page$2.invokeSuspend:236
+2026/09/02 23:41:10.965264 POST /api/graphql 200 844.4198ms
+2026/09/02 23:41:11.233315 POST /api/graphql 200 1.67101901s
+2026/09/02 23:41:11.302529 POST /api/graphql 200 680.694736ms
+2026/09/02 23:41:11.312579 [sandbox] [grpc-default-executor-0] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/02 23:41:11.437407 POST /api/graphql 200 569.403877ms
+2026/09/02 23:41:11.835272 POST /api/graphql 200 866.958351ms
+2026/09/02 23:41:12.044062 [sandbox] [grpc-default-executor-2] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/02 23:41:12.173769 [sandbox] [grpc-default-executor-3] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.mangago has no popular listing, returning empty page
+2026/09/02 23:41:12.201164 [sandbox] [grpc-default-executor-3] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/02 23:41:12.584811 POST /api/graphql 200 677.211865ms
+2026/09/02 23:41:15.103297 POST /api/graphql 200 571.641622ms
+2026/09/02 23:41:15.109540 POST /api/graphql 200 577.75877ms
+2026/09/02 23:41:17.352153 POST /api/graphql 200 2.247572905s
+2026/09/02 23:41:17.626460 POST /api/graphql 200 2.515907889s
+2026/09/02 23:41:18.371799 POST /api/graphql 200 742.157165ms
+2026/09/02 23:41:21.728989 POST /api/graphql 200 3.260275686s
+2026/09/02 23:41:22.979825 POST /api/graphql 200 3.446962335s
+2026/09/02 23:41:47.794592 shutting down
+2026/09/02 23:41:49.306246 === Tsunagu dev (unknown) starting, pid 1151327 ===
+2026/09/02 23:41:49.323762 sandbox: spawning /nix/store/1slz0vmmgsd7p6i4c0jaywkpw56wl2yg-openjdk-21.0.12+8/lib/openjdk/bin/java -cp /home/shozikan/Projects/Manga/Tsunagu/sandbox/build/libs/sandbox-0.1.0-all.jar tsunagu.MainKt (source: JAVA_HOME/PATH)
+2026/09/02 23:41:49.421690 [sandbox] Error: Could not find or load main class tsunagu.MainKt
+Caused by: java.lang.ClassNotFoundException: tsunagu.MainKt
+2026/09/02 23:42:15.025733 === Tsunagu dev (unknown) starting, pid 1153340 ===
+2026/09/02 23:42:15.041176 sandbox: spawning /nix/store/1slz0vmmgsd7p6i4c0jaywkpw56wl2yg-openjdk-21.0.12+8/lib/openjdk/bin/java -cp /home/shozikan/Projects/Manga/Tsunagu/sandbox/build/libs/sandbox-0.1.0-all.jar tsunagu.MainKt (source: JAVA_HOME/PATH)
+2026/09/02 23:42:15.309998 [sandbox] [main] INFO eu.kanade.tachiyomi.network.TlsSetup - TLS: Conscrypt provider installed (v2.5.2)
+2026/09/02 23:42:15.855058 [sandbox] tsunagu sandbox listening on :50051
+2026/09/02 23:42:16.001443 sandbox: ready at localhost:50051
+2026/09/02 23:42:18.943507 tsunagu dev listening on [::]:6007
+2026/09/02 23:42:18.948323 metadata backfill: 1 unmatched media, working through them (~1m)
+2026/09/02 23:42:18.951519 content filter: recomputed 6 media
+2026/09/02 23:42:19.293313 tracker poll: reconciled 2 media
+2026/09/02 23:42:19.711720 POST /api/graphql 200 761.538695ms
+2026/09/02 23:42:19.949091 metadata backfill: done -- matched 0/1
+2026/09/02 23:42:21.172047 POST /api/graphql 200 1.143345644s
+2026/09/02 23:42:37.614216 POST /api/graphql 200 512.035265ms
+2026/09/02 23:42:40.876416 POST /api/graphql 200 1.491736742s
+2026/09/02 23:42:53.716680 POST /api/graphql 200 616.506567ms
+2026/09/02 23:43:42.457865 POST /api/graphql 200 716.062453ms
+2026/09/02 23:43:45.664234 POST /api/graphql 200 1.087785086s
+2026/09/02 23:43:54.970634 POST /api/graphql 200 731.465748ms
+2026/09/02 23:44:09.350298 POST /api/graphql 200 3.426310542s
+2026/09/02 23:44:13.831508 POST /api/graphql 200 3.313870921s
+2026/09/02 23:44:15.951874 POST /api/graphql 200 689.467319ms
+2026/09/02 23:44:16.600074 POST /api/graphql 200 645.02467ms
+2026/09/02 23:44:21.785074 POST /api/graphql 200 1.296484394s
+2026/09/02 23:44:51.556972 POST /api/graphql 200 742.083073ms
+2026/09/02 23:45:03.566092 POST /api/graphql 200 2.730016703s
+2026/09/02 23:45:09.118007 POST /api/graphql 200 4.838716241s
+2026/09/02 23:45:44.829157 POST /api/graphql 200 2.696549261s
+2026/09/02 23:45:44.937993 POST /api/graphql 200 841.907006ms
+2026/09/02 23:52:49.934126 POST /api/graphql 200 669.956217ms
+2026/09/02 23:52:51.139603 POST /api/graphql 200 847.982529ms
+2026/09/02 23:52:54.205275 POST /api/graphql 200 1.2851145s
+2026/09/02 23:52:54.972503 POST /api/graphql 200 762.537676ms
+2026/09/02 23:52:58.698289 POST /api/graphql 200 520.088893ms
+2026/09/02 23:52:58.916671 POST /api/graphql 200 738.321059ms
+2026/09/02 23:52:58.936109 POST /api/graphql 200 757.704961ms
+2026/09/02 23:52:59.481745 POST /api/graphql 200 562.088912ms
+2026/09/02 23:52:59.827036 [sandbox] [grpc-default-executor-3] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed [SOURCE_NOT_FOUND]: The source returned 404 (entry or endpoint missing). (HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class)
+2026/09/02 23:52:59.828302 POST /api/graphql 200 863.3572ms
+2026/09/02 23:53:00.026146 POST /api/graphql 200 675.675073ms
+2026/09/02 23:53:00.108096 POST /api/graphql 200 558.937149ms
+2026/09/02 23:53:00.662871 POST /api/graphql 200 831.806046ms
+2026/09/02 23:53:01.381715 POST /api/graphql 200 3.203186138s
+2026/09/02 23:53:02.037009 POST /api/graphql 200 514.669362ms
+2026/09/02 23:53:03.056689 POST /api/graphql 200 546.210756ms
+2026/09/02 23:53:03.305607 [sandbox] [grpc-default-executor-5] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed [SOURCE_NOT_FOUND]: The source returned 404 (entry or endpoint missing). (HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class)
+2026/09/02 23:53:04.089386 POST /api/graphql 200 603.877405ms
+2026/09/02 23:53:04.271126 POST /api/graphql 200 783.090899ms
+2026/09/02 23:53:07.476439 [sandbox] [grpc-default-executor-6] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed [SOURCE_NOT_FOUND]: The source returned 404 (entry or endpoint missing). (HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class)
+2026/09/02 23:53:07.863581 POST /api/graphql 200 745.300434ms
+2026/09/02 23:53:07.900783 POST /api/graphql 200 782.70023ms
+2026/09/02 23:53:08.004089 GET /proxy/cover/2571 502 139.361703ms
+2026/09/02 23:53:16.364241 [sandbox] [grpc-default-executor-5] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed [SOURCE_NOT_FOUND]: The source returned 404 (entry or endpoint missing). (HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class)
+2026/09/02 23:53:16.380004 GET /proxy/cover/781 502 163.884184ms
+2026/09/02 23:53:16.903631 POST /api/graphql 200 888.278684ms
+2026/09/02 23:53:22.847006 GET /proxy/cover/781 502 153.261934ms
+2026/09/02 23:53:23.170120 POST /api/graphql 200 798.157417ms
+2026/09/02 23:53:23.438282 [sandbox] [grpc-default-executor-7] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed [SOURCE_NOT_FOUND]: The source returned 404 (entry or endpoint missing). (HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class)
+2026/09/02 23:53:23.438886 POST /api/graphql 200 817.943011ms
+2026/09/02 23:54:04.776506 [sandbox] [grpc-default-executor-4] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed [SOURCE_NOT_FOUND]: The source returned 404 (entry or endpoint missing). (HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class)
+2026/09/02 23:54:05.040372 GET /proxy/cover/2571 502 174.243257ms
+2026/09/02 23:54:05.181002 POST /api/graphql 200 626.561578ms
+2026/09/02 23:54:05.442894 POST /api/graphql 200 888.520769ms
+2026/09/02 23:54:09.724699 POST /api/graphql 200 839.486441ms
+2026/09/02 23:54:12.345492 POST /api/graphql 200 762.246324ms
+2026/09/02 23:55:02.185692 POST /api/graphql 200 592.665789ms
+2026/09/02 23:55:02.986302 GET /proxy/cover/781 502 168.528657ms
+2026/09/02 23:55:03.085279 [sandbox] [grpc-default-executor-5] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed [SOURCE_NOT_FOUND]: The source returned 404 (entry or endpoint missing). (HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class)
+2026/09/02 23:55:03.393828 POST /api/graphql 200 804.997417ms
+2026/09/02 23:55:03.636672 POST /api/graphql 200 549.16796ms
+2026/09/02 23:55:11.364400 GET /proxy/cover/781 502 173.540589ms
+2026/09/02 23:55:11.932804 [sandbox] [grpc-default-executor-5] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed [SOURCE_NOT_FOUND]: The source returned 404 (entry or endpoint missing). (HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class)
+2026/09/02 23:55:11.933455 POST /api/graphql 200 768.241366ms
+2026/09/02 23:55:20.851825 [sandbox] [grpc-default-executor-5] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed [SOURCE_NOT_FOUND]: The source returned 404 (entry or endpoint missing). (HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class)
+2026/09/02 23:55:20.861939 GET /proxy/cover/781 502 162.717553ms
+2026/09/02 23:55:20.882685 POST /api/graphql 200 509.988157ms
+2026/09/02 23:55:31.890900 GET /proxy/cover/839 502 174.169677ms
+2026/09/02 23:55:32.152920 GET /proxy/cover/847 502 181.181517ms
+2026/09/02 23:55:57.933180 POST /api/graphql 200 1.846367117s
+2026/09/02 23:56:22.101453 POST /api/graphql 200 1.068867596s
+2026/09/02 23:56:30.480756 POST /api/graphql 200 1.474465042s
+2026/09/02 23:56:43.006798 POST /api/graphql 200 1.700839975s
+2026/09/02 23:56:48.708567 POST /api/graphql 200 1.475477516s
+2026/09/02 23:56:51.203443 POST /api/graphql 200 650.644545ms
+2026/09/02 23:56:51.351614 [sandbox] [grpc-default-executor-9] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed [SOURCE_NOT_FOUND]: The source returned 404 (entry or endpoint missing). (HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class)
+2026/09/02 23:56:55.073726 POST /api/graphql 200 685.684113ms
+2026/09/02 23:57:06.532658 [sandbox] [grpc-default-executor-10] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed [SOURCE_NOT_FOUND]: The source returned 404 (entry or endpoint missing). (HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class)
+2026/09/02 23:57:06.926932 [sandbox] [grpc-default-executor-10] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/02 23:57:07.034041 POST /api/graphql 200 1.056909585s
+2026/09/02 23:57:13.370896 POST /api/graphql 200 1.437012829s
+2026/09/02 23:57:17.436100 POST /api/graphql 200 1.306150913s
+2026/09/02 23:57:46.770484 GET /proxy/cover/781 502 161.13341ms
+2026/09/02 23:57:47.400466 [sandbox] [grpc-default-executor-9] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed [SOURCE_NOT_FOUND]: The source returned 404 (entry or endpoint missing). (HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class)
+2026/09/02 23:57:47.400960 POST /api/graphql 200 830.622374ms
+2026/09/02 23:57:47.405050 [sandbox] [grpc-default-executor-9] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/02 23:57:47.714090 POST /api/graphql 200 605.880417ms
+2026/09/02 23:57:47.754213 [sandbox] [grpc-default-executor-5] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/02 23:57:48.172820 [sandbox] [grpc-default-executor-9] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.mangago has no popular listing, returning empty page
+2026/09/02 23:57:48.192989 [sandbox] [grpc-default-executor-10] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/02 23:57:48.208188 POST /api/graphql 200 566.251759ms
+2026/09/02 23:57:58.419290 GET /proxy/cover/839 502 185.521933ms
+2026/09/02 23:57:58.543255 GET /proxy/cover/847 502 200.344679ms
+2026/09/02 23:58:09.385251 POST /api/graphql 200 644.567199ms
+2026/09/02 23:58:10.279578 POST /api/graphql 200 553.001418ms
+2026/09/02 23:58:10.391652 POST /api/graphql 200 665.102648ms
+2026/09/02 23:58:10.407585 POST /api/graphql 200 681.034528ms
+2026/09/02 23:58:10.689739 [sandbox] [grpc-default-executor-9] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed [SOURCE_NOT_FOUND]: The source returned 404 (entry or endpoint missing). (HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class)
+2026/09/02 23:58:10.993211 POST /api/graphql 200 551.804399ms
+2026/09/02 23:58:11.138480 [sandbox] [grpc-default-executor-10] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/02 23:58:11.245328 POST /api/graphql 200 603.01268ms
+2026/09/02 23:58:11.550871 POST /api/graphql 200 555.752963ms
+2026/09/02 23:58:11.575672 [sandbox] [grpc-default-executor-10] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/02 23:58:11.604554 POST /api/graphql 200 876.071703ms
+2026/09/02 23:58:11.640232 [sandbox] [grpc-default-executor-10] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.mangago has no popular listing, returning empty page
+2026/09/02 23:58:11.707869 [sandbox] [grpc-default-executor-10] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/02 23:58:18.944167 GET /proxy/cover/781 502 190.458004ms
+2026/09/02 23:58:19.313001 POST /api/graphql 200 873.019479ms
+2026/09/02 23:58:19.603072 [sandbox] [grpc-default-executor-12] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed [SOURCE_NOT_FOUND]: The source returned 404 (entry or endpoint missing). (HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class)
+2026/09/02 23:58:19.603453 POST /api/graphql 200 871.451677ms
+2026/09/02 23:58:19.606626 [sandbox] [grpc-default-executor-12] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/02 23:58:20.066073 POST /api/graphql 200 683.931536ms
+2026/09/02 23:58:20.101949 [sandbox] [grpc-default-executor-12] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/02 23:58:20.401014 [sandbox] [grpc-default-executor-10] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.mangago has no popular listing, returning empty page
+2026/09/02 23:58:20.478052 [sandbox] [grpc-default-executor-12] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/02 23:58:29.191958 GET /proxy/cover/781 502 170.497813ms
+2026/09/02 23:58:29.711098 [sandbox] [grpc-default-executor-10] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed [SOURCE_NOT_FOUND]: The source returned 404 (entry or endpoint missing). (HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class)
+2026/09/02 23:58:29.711417 POST /api/graphql 200 760.042233ms
+2026/09/02 23:58:29.743984 [sandbox] [grpc-default-executor-10] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.batcave has no popular listing, returning empty page
+2026/09/02 23:58:30.224775 POST /api/graphql 200 589.249239ms
+2026/09/02 23:58:30.236817 [sandbox] [grpc-default-executor-13] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.all.mangafire has no popular listing, returning empty page
+2026/09/02 23:58:30.322550 [sandbox] [grpc-default-executor-13] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.mangago has no popular listing, returning empty page
+2026/09/02 23:58:30.427759 [sandbox] [grpc-default-executor-12] INFO tsunagu.grpc.ExtensionServiceImpl - extension eu.kanade.tachiyomi.extension.en.weebcentral has no popular listing, returning empty page
+2026/09/02 23:58:30.464215 POST /api/graphql 200 782.129142ms
+2026/09/02 23:58:30.941365 POST /api/graphql 200 706.227819ms
+2026/09/02 23:58:42.357360 POST /api/graphql 200 1.52490223s
+2026/09/02 23:58:58.700320 GET /proxy/cover/839 502 168.517842ms
+2026/09/02 23:59:03.450278 GET /proxy/cover/847 502 182.674863ms
+2026/09/02 23:59:30.314688 POST /api/graphql 200 579.120759ms
+2026/09/02 23:59:30.438181 POST /api/graphql 200 702.226539ms
+2026/09/02 23:59:30.489046 [sandbox] [grpc-default-executor-10] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed [SOURCE_NOT_FOUND]: The source returned 404 (entry or endpoint missing). (HttpException: HTTP error 404 <- OnNextValue: OnError while emitting onNext value: okhttp3.Response.class)
+2026/09/02 23:59:30.489498 POST /api/graphql 200 753.877509ms
+2026/09/02 23:59:30.537462 POST /api/graphql 200 801.95644ms
+2026/09/02 23:59:30.641362 [sandbox] E/BatCave: Failed to fetch filter data (IOException: Open in WebView to bypass site protection)
+2026/09/02 23:59:30.779419 [sandbox] [grpc-default-executor-9] WARN tsunagu.grpc.ExtensionServiceImpl - extension call failed [SOURCE_CLOUDFLARE]: This source is behind Cloudflare protection. (IOException: Open in WebView to bypass site protection <- IOException: Open in WebView to bypass site protection)
+2026/09/02 23:59:30.780116 POST /api/graphql 200 661.043022ms
+2026/09/02 23:59:30.858784 POST /api/graphql 200 542.264715ms
+2026/09/02 23:59:31.043053 POST /api/graphql 200 603.137598ms
+2026/09/02 23:59:34.248772 POST /api/graphql 200 774.666953ms
+2026/09/02 23:59:37.065706 POST /api/graphql 200 1.177417298s
+2026/09/03 00:00:44.438984 [sandbox] [grpc-default-executor-16] INFO tsunagu.grpc.ExtensionServiceImpl - getVideoStream /watch/the-saga-of-tanya-the-evil/ep-1: 35 source(s), subs=4 audio=0 timestamps=0
+2026/09/03 00:00:48.976438 POST /api/graphql 200 608.246082ms
+2026/09/03 00:00:48.982946 POST /api/graphql 200 615.714155ms
+2026/09/03 00:01:22.855463 POST /api/graphql 200 627.819448ms
+2026/09/03 00:01:26.022814 [sandbox] [grpc-default-executor-16] INFO tsunagu.grpc.ExtensionServiceImpl - getVideoStream /watch/the-saga-of-tanya-the-evil/ep-1: 35 source(s), subs=4 audio=0 timestamps=0
+2026/09/03 00:01:42.746134 POST /api/graphql 200 698.446455ms
+2026/09/03 00:01:49.346370 POST /api/graphql 200 1.231072184s
+2026/09/03 00:02:07.239022 [sandbox] [grpc-default-executor-16] INFO tsunagu.grpc.ExtensionServiceImpl - getVideoStream /watch/the-saga-of-tanya-the-evil/ep-1: 35 source(s), subs=4 audio=0 timestamps=0
+2026/09/03 00:02:07.241495 POST /api/graphql 200 3.259404704s
+2026/09/03 00:02:24.926012 POST /api/graphql 200 1.471619871s

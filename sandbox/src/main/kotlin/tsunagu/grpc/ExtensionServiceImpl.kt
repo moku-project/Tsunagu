@@ -58,10 +58,14 @@ class ExtensionServiceImpl(
             logger.error(e) { "extension call failed" }
             return
         }
-        val network = generateSequence(e) { it.cause }.any { it is java.io.IOException }
+        val (code, human) = SourceErrors.classify(e)
+        if (code != SourceErrors.INTERNAL) {
+            logger.warn { "extension call failed [$code]: $human (${compactCause(e)})" }
+            return
+        }
         val where = appFrames(e)
         val msg = "extension call failed: ${compactCause(e)}" + if (where.isNotEmpty()) " @ $where" else ""
-        if (network) logger.warn { msg } else logger.error { msg }
+        logger.error { msg }
     }
 
     override fun loadExtensions(
@@ -770,8 +774,7 @@ class ExtensionServiceImpl(
     private fun notFound(extensionId: String) =
         StatusRuntimeException(Status.NOT_FOUND.withDescription("extension not found: $extensionId"))
 
-    private fun internal(e: Throwable) =
-        StatusRuntimeException(Status.INTERNAL.withDescription(e.toString()).withCause(e))
+    private fun internal(e: Throwable) = SourceErrors.toStatus(e)
 
     private fun unimplemented() = StatusRuntimeException(Status.UNIMPLEMENTED)
 }
