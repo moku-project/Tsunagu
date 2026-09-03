@@ -6,10 +6,6 @@ import (
 	"strings"
 )
 
-// Kind is an internal detail: BOOTSTRAP settings are consumed before the DB /
-// Store exists, so a stored value can never apply and the file is always
-// authoritative. RUNTIME settings can be layered from app_settings on top of
-// the file. Whether the UI may write a setting is a separate flag, Editable.
 type Kind string
 
 const (
@@ -121,14 +117,13 @@ const (
 )
 
 var settings = []Setting{
-	// ---- not UI-editable: edit tsunagu.toml and restart ----
+
 	{"data_dir", KindBootstrap, TypeString, ScopeFullRestart, notEditable, "Root directory for the DB, caches, extensions and downloads. Set via --data-dir.", strGet(func(c *Config) *string { return &c.DataDir }), strSet(func(c *Config) *string { return &c.DataDir })},
 	{"db_path", KindBootstrap, TypeString, ScopeFullRestart, notEditable, "SQLite database file.", strGet(func(c *Config) *string { return &c.DBPath }), strSet(func(c *Config) *string { return &c.DBPath })},
 	{"http_addr", KindBootstrap, TypeString, ScopeFullRestart, notEditable, "Address the HTTP API binds to.", strGet(func(c *Config) *string { return &c.HTTPAddr }), strSet(func(c *Config) *string { return &c.HTTPAddr })},
 	{"api_token", KindRuntime, TypeString, ScopeFullRestart, notEditable, "Require this bearer token on API requests when set.", strGet(func(c *Config) *string { return &c.APIToken }), strSet(func(c *Config) *string { return &c.APIToken })},
 	{"sandbox_jar_path", KindRuntime, TypeString, ScopeFullRestart, notEditable, "Path to sandbox.jar. A bundled launcher may override this at runtime.", strGet(func(c *Config) *string { return &c.SandboxJarPath }), strSet(func(c *Config) *string { return &c.SandboxJarPath })},
 
-	// ---- UI-editable ----
 	{"public_url", KindRuntime, TypeString, ScopeFullRestart, editable, "Externally reachable base URL (OAuth callbacks, image links).", strGet(func(c *Config) *string { return &c.PublicURL }), strSet(func(c *Config) *string { return &c.PublicURL })},
 	{"media_dir", KindRuntime, TypeString, ScopeFullRestart, editable, "Where covers, downloads and other media are stored. Move existing files yourself before changing.", strGet(func(c *Config) *string { return &c.MediaDir }), strSet(func(c *Config) *string { return &c.MediaDir })},
 	{"jar_cache_dir", KindRuntime, TypeString, ScopeFullRestart, editable, "Where downloaded extension jars are cached.", strGet(func(c *Config) *string { return &c.JarCacheDir }), strSet(func(c *Config) *string { return &c.JarCacheDir })},

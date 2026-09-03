@@ -151,14 +151,7 @@ func (sc *SupervisedClient) spawnLocked() error {
 			cmd.Env = append(cmd.Env, "SANDBOX_FLARESOLVERR_URL="+u)
 		}
 	}
-	// On some Windows hosts, AF_UNIX connect() fails with WSAEINVAL for socket
-	// files created under %USERPROFILE%\AppData (AV/EDR filter, Controlled
-	// Folder Access, etc.). The JVM's NIO Selector self-pipe puts its socket
-	// in the OS temp dir (GetTempPath -> %TMP%/%TEMP%), which defaults to
-	// %LOCALAPPDATA%\Temp, so the sandbox dies in NioEventLoop.openSelector
-	// before it can serve gRPC. If the current temp dir can't host an AF_UNIX
-	// socket, redirect the child's TMP/TEMP to one that can. -Djava.io.tmpdir
-	// does NOT help here: the native selector code reads the env var.
+
 	if tmp := usableSandboxTempDir(); tmp != "" {
 		cmd.Env = append(cmd.Env, "TMP="+tmp, "TEMP="+tmp)
 		log.Printf("sandbox: redirecting child TMP/TEMP to %s (default temp dir rejects AF_UNIX sockets)", tmp)

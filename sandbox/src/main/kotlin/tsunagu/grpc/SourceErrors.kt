@@ -7,14 +7,6 @@ import java.io.IOException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 
-/**
- * Classifies extension/source failures into stable machine codes so the backend
- * and UI can react (offer the Cloudflare solver, say "source is down", etc.)
- * instead of surfacing a raw stack trace.
- *
- * The gRPC error description is "<CODE>: <human message>"; the backend parses
- * the CODE prefix back out.
- */
 object SourceErrors {
 
     const val CLOUDFLARE = "SOURCE_CLOUDFLARE"
@@ -85,7 +77,6 @@ object SourceErrors {
         return StatusRuntimeException(status.withDescription("$code: $human").withCause(e))
     }
 
-    /** Expected upstream conditions log as one WARN line; real bugs stay ERROR. */
     fun isExpected(e: Throwable): Boolean {
         val (code, _) = classify(e)
         return code != INTERNAL

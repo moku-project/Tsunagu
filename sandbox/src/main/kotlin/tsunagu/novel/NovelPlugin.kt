@@ -44,9 +44,6 @@ class NovelPlugin(
     private val jsThread: Thread,
 ) : AutoCloseable {
 
-    // A JS Context is pinned to a single thread. Every operation that touches
-    // `context`, `pluginValue`, or any derived Value must run on `jsThread`,
-    // dispatched through `exec`. Callers block for the result.
     private fun <T> onJs(block: () -> T): T {
         if (Thread.currentThread() === jsThread) return block()
         return try {

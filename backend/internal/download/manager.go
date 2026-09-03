@@ -421,16 +421,18 @@ func (m *Manager) downloadAnime(ctx context.Context, jobID int64, client *sandbo
 		log.Printf("download: progress update failed for job %d: %v", jobID, err)
 	}
 
-	args := []string{"-y"}
+	inputArgs := []string{"-y"}
 
-	if headers := stream.GetHeaders(); len(headers) > 0 {
-		var sb strings.Builder
-		for k, v := range headers {
+	{
+		sb := strings.Builder{}
+		sb.WriteString("Accept-Encoding: identity\r\n")
+		for k, v := range stream.GetHeaders() {
 			switch strings.ToLower(k) {
 			case "user-agent":
-				args = append(args, "-user_agent", v)
+				inputArgs = append(inputArgs, "-user_agent", v)
 			case "referer", "referrer":
-				args = append(args, "-referer", v)
+				inputArgs = append(inputArgs, "-referer", v)
+			case "accept-encoding":
 			default:
 				sb.WriteString(k)
 				sb.WriteString(": ")
@@ -438,27 +440,28 @@ func (m *Manager) downloadAnime(ctx context.Context, jobID int64, client *sandbo
 				sb.WriteString("\r\n")
 			}
 		}
-		if sb.Len() > 0 {
-			args = append(args, "-headers", sb.String())
-		}
+		inputArgs = append(inputArgs, "-headers", sb.String())
 	}
 
-	if strings.Contains(streamURL, ".m3u8") {
-
-		args = append(args,
+	if strings.Contains(streamURL, ".m3u8") || strings.Contains(streamURL, "/m3u8?") {
+		inputArgs = append(inputArgs,
 			"-protocol_whitelist", "file,http,https,tcp,tls,crypto,data",
 			"-allowed_extensions", "ALL",
 			"-allowed_segment_extensions", "ALL",
 		)
 	}
 
-	args = append(args,
+	inputArgs = append(inputArgs,
 		"-reconnect", "1",
 		"-reconnect_streamed", "1",
 		"-reconnect_delay_max", "5",
 		"-reconnect_on_network_error", "1",
+		"-analyzeduration", "20M",
+		"-probesize", "20M",
+		"-fflags", "+genpts+igndts+discardcorrupt",
+		"-err_detect", "ignore_err",
 	)
-	args = append(args, "-i", streamURL, "-c", "copy", outputPath)
+	inputArgs = append(inputArgs, "-i", streamURL)
 
 	if debugPath := os.Getenv("TSUNAGU_DEBUG_ANIME_M3U8"); debugPath != "" {
 		if resp, dErr := http.Get(streamURL); dErr == nil {
@@ -472,21 +475,50 @@ func (m *Manager) downloadAnime(ctx context.Context, jobID int64, client *sandbo
 	}
 
 	progressPath := outputPath + ".progress"
-	args = append([]string{"-progress", progressPath, "-nostats"}, args...)
 
-	cmd := exec.CommandContext(ctx, "ffmpeg", args...)
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
+	passes := [][]string{
+		{"-map", "0:v:0?", "-map", "0:a:0?", "-c", "copy", "-bsf:a", "aac_adtstoasc", "-movflags", "+faststart", outputPath},
+		{"-map", "0:v:0?", "-map", "0:a:0?", "-c:v", "libx264", "-preset", "veryfast", "-crf", "21", "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", outputPath},
+	}
 
-	stopProgress := make(chan struct{})
-	go m.watchFfmpegProgress(jobID, progressPath, stopProgress)
+	var lastErr error
+	var lastOut string
+	for i, out := range passes {
+		full := append([]string{"-progress", progressPath, "-nostats"}, inputArgs...)
+		full = append(full, out...)
 
-	err = cmd.Run()
-	close(stopProgress)
-	_ = os.Remove(progressPath)
+		cmd := exec.CommandContext(ctx, "ffmpeg", full...)
+		var stderr bytes.Buffer
+		cmd.Stderr = &stderr
+
+		stopProgress := make(chan struct{})
+		go m.watchFfmpegProgress(jobID, progressPath, stopProgress)
+
+		lastErr = cmd.Run()
+		close(stopProgress)
+		_ = os.Remove(progressPath)
+
+		if lastErr == nil {
+			if fi, statErr := os.Stat(outputPath); statErr == nil && fi.Size() > 0 {
+				break
+			}
+			lastErr = fmt.Errorf("ffmpeg reported success but produced no output")
+		}
+		lastOut = truncateForError(stderr.String())
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+		if i == 0 {
+			log.Printf("download: job %d stream-copy failed, retrying with transcode", jobID)
+			_ = os.Remove(outputPath)
+		}
+	}
+	err = lastErr
 
 	if err != nil {
-		return fmt.Errorf("ffmpeg failed: %w (output: %s)", err, truncateForError(stderr.String()))
+		if segErr := m.muxViaSegments(ctx, jobID, streamURL, stream.GetHeaders(), outputPath); segErr != nil {
+			return fmt.Errorf("ffmpeg failed: %w (output: %s); segment fallback: %v", err, lastOut, segErr)
+		}
 	}
 
 	if _, err := os.Stat(outputPath); err != nil {
@@ -506,6 +538,123 @@ func (m *Manager) downloadAnime(ctx context.Context, jobID int64, client *sandbo
 		Progress: 1,
 		ID:       jobID,
 	})
+}
+
+func (m *Manager) muxViaSegments(ctx context.Context, jobID int64, playlistURL string, headers map[string]string, outputPath string) error {
+	setHdrs := func(req *http.Request) {
+		req.Header.Set("Accept", "*/*")
+		req.Header.Set("Accept-Encoding", "identity")
+		for k, v := range headers {
+			req.Header.Set(k, v)
+		}
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, playlistURL, nil)
+	if err != nil {
+		return err
+	}
+	setHdrs(req)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("fetch playlist: %w", err)
+	}
+	body, _ := io.ReadAll(io.LimitReader(resp.Body, 8<<20))
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("playlist HTTP %d", resp.StatusCode)
+	}
+
+	base, _ := url.Parse(playlistURL)
+	var segs []string
+	sc := bufio.NewScanner(bytes.NewReader(body))
+	sc.Buffer(make([]byte, 0, 64<<10), 1<<20)
+	for sc.Scan() {
+		line := strings.TrimSpace(sc.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		if strings.ContainsRune(line, '�') {
+			return fmt.Errorf("playlist looks corrupted (binary/compressed response not decoded)")
+		}
+		if u, uErr := url.Parse(line); uErr == nil {
+			segs = append(segs, base.ResolveReference(u).String())
+		}
+	}
+	if len(segs) == 0 {
+		return fmt.Errorf("no segments in playlist")
+	}
+
+	dir := filepath.Dir(outputPath)
+	rawPath := filepath.Join(dir, "raw.ts")
+	raw, err := os.Create(rawPath)
+	if err != nil {
+		return err
+	}
+	defer os.Remove(rawPath)
+
+	for i, seg := range segs {
+		if ctx.Err() != nil {
+			raw.Close()
+			return ctx.Err()
+		}
+		sreq, rErr := http.NewRequestWithContext(ctx, http.MethodGet, seg, nil)
+		if rErr != nil {
+			raw.Close()
+			return rErr
+		}
+		setHdrs(sreq)
+		sresp, sErr := http.DefaultClient.Do(sreq)
+		if sErr != nil {
+			raw.Close()
+			return fmt.Errorf("segment %d: %w", i, sErr)
+		}
+		if sresp.StatusCode != http.StatusOK {
+			sresp.Body.Close()
+			raw.Close()
+			return fmt.Errorf("segment %d: HTTP %d", i, sresp.StatusCode)
+		}
+		_, cErr := io.Copy(raw, sresp.Body)
+		sresp.Body.Close()
+		if cErr != nil {
+			raw.Close()
+			return fmt.Errorf("segment %d write: %w", i, cErr)
+		}
+		if (i+1)%10 == 0 || i+1 == len(segs) {
+			_ = m.q.UpdateDownloadProgress(ctx, sqlcgen.UpdateDownloadProgressParams{
+				Status:   "downloading",
+				Progress: 0.1 + 0.7*float64(i+1)/float64(len(segs)),
+				ID:       jobID,
+			})
+		}
+	}
+	if err := raw.Close(); err != nil {
+		return err
+	}
+
+	common := []string{
+		"-y",
+		"-analyzeduration", "40M", "-probesize", "40M",
+		"-fflags", "+genpts+igndts+discardcorrupt", "-err_detect", "ignore_err",
+		"-i", rawPath,
+	}
+	for _, out := range [][]string{
+		{"-c", "copy", "-bsf:a", "aac_adtstoasc", "-movflags", "+faststart", outputPath},
+		{"-c:v", "libx264", "-preset", "veryfast", "-crf", "21", "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", outputPath},
+	} {
+		var stderr bytes.Buffer
+		cmd := exec.CommandContext(ctx, "ffmpeg", append(append([]string{}, common...), out...)...)
+		cmd.Stderr = &stderr
+		if runErr := cmd.Run(); runErr == nil {
+			if fi, sErr := os.Stat(outputPath); sErr == nil && fi.Size() > 0 {
+				return nil
+			}
+		}
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+		_ = os.Remove(outputPath)
+	}
+	return fmt.Errorf("ffmpeg could not mux %d concatenated segments", len(segs))
 }
 
 func (m *Manager) keepSandboxAlive(ctx context.Context) {

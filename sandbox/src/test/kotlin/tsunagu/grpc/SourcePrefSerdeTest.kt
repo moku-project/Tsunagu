@@ -105,7 +105,6 @@ class SourcePrefSerdeTest {
         assertEquals("true", after["nsfw"]!!.currentValue)
         assertTrue(after["ratings"]!!.currentValue.contains("pornographic"))
 
-        // persisted to disk and visible to a fresh prefs instance
         val fresh = FileBackedSharedPreferences(File(tmp, "source_42.json"))
         assertEquals("ja", fresh.getString("lang", null))
         assertEquals(true, fresh.getBoolean("nsfw", false))

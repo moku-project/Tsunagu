@@ -114,8 +114,6 @@ func (m *Manager) EnrichLibrary(ctx context.Context) {
 	m.refreshSparseTags(ctx)
 }
 
-// refreshSparseTags re-fetches the linked AniList entry for library items that
-// carry few tags, so older matches pick up the full (now un-capped) tag set.
 func (m *Manager) refreshSparseTags(ctx context.Context) {
 	ids, err := m.q.ListMediaIDsWithSparseTags(ctx, 5)
 	if err != nil || len(ids) == 0 {

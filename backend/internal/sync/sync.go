@@ -1046,7 +1046,6 @@ type LibraryQuery struct {
 	Limit          int
 	Offset         int
 
-	// ContentFilterRank: 0 = unrestricted (no filtering), 1 = moderate, 2 = strict.
 	ContentFilterRank int
 }
 

@@ -51,8 +51,6 @@ var (
 	serverBuildTime = "unknown"
 )
 
-// setupFileLog tees log output to <data-dir>/tsunagu.log (or ./tsunagu.log)
-// so startup failures are captured even when stdout/stderr go nowhere.
 func setupFileLog(dataDir string) {
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
 	dir := dataDir

@@ -107,7 +107,6 @@ func (r *Resolver) storageCats() []storageCat {
 	}
 }
 
-// downloadsBytes is the media dir minus the sub-caches that get their own row.
 func (r *Resolver) downloadsSizeCount() (int64, int, error) {
 	total, count, err := dirSizeCount(r.MediaDir)
 	if err != nil {

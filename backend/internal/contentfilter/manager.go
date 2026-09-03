@@ -128,8 +128,6 @@ func (mgr *Manager) ResetRules(ctx context.Context) error {
 	return nil
 }
 
-// RecomputeMedia refreshes one row's content_block_rank. Cheap; call after any
-// genre/tag/title/description change.
 func (mgr *Manager) RecomputeMedia(ctx context.Context, mediaID int64) error {
 	m, _ := mgr.snapshot()
 	if !m.hasRules() {
@@ -159,8 +157,6 @@ func (mgr *Manager) RecomputeMedia(ctx context.Context, mediaID int64) error {
 	return mgr.q.SetMediaContentBlockRank(ctx, sqlcgen.SetMediaContentBlockRankParams{ContentBlockRank: nr, ID: mediaID})
 }
 
-// RecomputeAll rescans every library item. Runs in the background; only one at a
-// time. Triggered by rule changes.
 func (mgr *Manager) RecomputeAll(ctx context.Context) error {
 	if !mgr.recomputing.CompareAndSwap(false, true) {
 		return nil
@@ -183,14 +179,10 @@ func (mgr *Manager) RecomputeAll(ctx context.Context) error {
 	return nil
 }
 
-// TitleAllowed is the browse-time check (search / popular / latest), before a
-// title has genres. Title-keyword rules only.
 func (mgr *Manager) TitleAllowed(title string) bool {
 	return mgr.BrowseAllowed(title, nil)
 }
 
-// BrowseAllowed checks a browse result against title + any genres the extension
-// supplied at list time. No DB access.
 func (mgr *Manager) BrowseAllowed(title string, genres []string) bool {
 	lvl := mgr.Level()
 	if lvl == Unrestricted {

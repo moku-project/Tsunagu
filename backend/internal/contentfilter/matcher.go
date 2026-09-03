@@ -32,8 +32,6 @@ func (l Level) String() string {
 	}
 }
 
-// Hidden reports whether a precomputed content_block_rank is hidden at level.
-// blockRank 0 = never filtered.
 func Hidden(blockRank int, lvl Level) bool {
 	return blockRank != 0 && blockRank <= int(lvl)
 }
@@ -41,15 +39,13 @@ func Hidden(blockRank int, lvl Level) bool {
 type Rule struct {
 	ID         int64
 	Category   string
-	Field      string // genre | tag | title | description
-	Keyword    string // lowercased, trimmed
+	Field      string
+	Keyword    string
 	MinWeight  int
-	BlockLevel int // 1 = hidden at Moderate+Strict, 2 = hidden at Strict only
+	BlockLevel int
 	IsDefault  bool
 }
 
-// alias maps a genre/tag variant to a canonical term that appears in the
-// default rule set, so a source emitting only "Mature" still trips "adult".
 var alias = map[string]string{
 	"mature":          "adult",
 	"18+":             "adult",
