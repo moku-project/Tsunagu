@@ -41,6 +41,7 @@ sandbox/extensions/
 backend/sandbox/
 backend/jar-cache/
 backend/tsunagu.toml
+backend/tsunagu.log
 backend/tsunagu.db
 backend/tsunagu.db-shm
 backend/tsunagu.db-wal
