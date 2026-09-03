@@ -596,13 +596,16 @@ func contentPageURLs(mediaID, chapterID string, count int) []string {
 }
 
 func (r *Resolver) resolveExtension(ctx context.Context, extensionID string) (sqlcgen.Extension, error) {
-	id, err := parseID(extensionID)
-	if err != nil {
-		return sqlcgen.Extension{}, fmt.Errorf("invalid extension id %q: %w", extensionID, err)
+	if id, err := parseID(extensionID); err == nil {
+		ext, err := r.Q.GetExtension(ctx, id)
+		if err != nil {
+			return sqlcgen.Extension{}, fmt.Errorf("lookup extension %d: %w", id, err)
+		}
+		return ext, nil
 	}
-	ext, err := r.Q.GetExtension(ctx, id)
+	ext, err := r.Q.GetExtensionByPackageName(ctx, extensionID)
 	if err != nil {
-		return sqlcgen.Extension{}, fmt.Errorf("lookup extension %d: %w", id, err)
+		return sqlcgen.Extension{}, fmt.Errorf("lookup extension %q: %w", extensionID, err)
 	}
 	return ext, nil
 }

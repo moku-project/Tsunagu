@@ -788,6 +788,9 @@ func (s *Syncer) MigrateMedia(ctx context.Context, c *sandbox.Client, fromMediaI
 		}
 	}
 
+	if _, err := qtx.AddMediaToLibrary(ctx, newMedia.ID); err != nil {
+		return sqlcgen.Medium{}, fmt.Errorf("add target to library: %w", err)
+	}
 	if _, err := qtx.RemoveMediaFromLibrary(ctx, fromMediaID); err != nil {
 		return sqlcgen.Medium{}, fmt.Errorf("remove source from library: %w", err)
 	}
