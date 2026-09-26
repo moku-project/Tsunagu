@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"context"
 	"database/sql"
 	"encoding/base64"
 	"net/http"
@@ -11,11 +12,13 @@ import (
 
 	"tsunagu/backend/internal/db/sqlcgen"
 	"tsunagu/backend/internal/image"
+	"tsunagu/backend/internal/sandbox"
 )
 
 type CoverProxyHandler struct {
 	Q             *sqlcgen.Queries
 	CoverCacheDir string
+	Sc            *sandbox.SupervisedClient
 }
 
 func (h *CoverProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -79,6 +82,17 @@ func (h *CoverProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
+	// direct fetch skips the extension, so Cloudflare-gated covers always fail it
+	if localPath == "" && h.Sc != nil && entry.ExtensionID.Valid {
+		if ext, extErr := h.Q.GetExtension(ctx, entry.ExtensionID.Int64); extErr == nil {
+			for _, u := range candidates {
+				if p, sbErr := h.fetchViaSandbox(ctx, ext.PackageName, u, destName); sbErr == nil {
+					localPath = p
+					break
+				}
+			}
+		}
+	}
 	if localPath == "" {
 		http.Error(w, "fetching cover failed", http.StatusBadGateway)
 		return
@@ -99,6 +113,18 @@ func (h *CoverProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", ct)
 	w.Header().Set("Cache-Control", "public, max-age=86400")
 	_, _ = w.Write(data)
+}
+
+func (h *CoverProxyHandler) fetchViaSandbox(ctx context.Context, packageName, url, destName string) (string, error) {
+	client, err := h.Sc.Ensure(ctx)
+	if err != nil {
+		return "", err
+	}
+	img, err := client.GetImageBytes(ctx, packageName, url)
+	if err != nil {
+		return "", err
+	}
+	return image.SaveBytesToFile(img.GetData(), img.GetContentType(), h.CoverCacheDir, destName)
 }
 
 type RemoteCoverProxyHandler struct {

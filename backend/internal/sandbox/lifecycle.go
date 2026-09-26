@@ -259,6 +259,17 @@ func (sc *SupervisedClient) killLocked() {
 	_ = os.Remove(sc.pidFile())
 }
 
+// Restart kills the running process so the next Ensure respawns it with fresh env vars.
+func (sc *SupervisedClient) Restart() {
+	sc.mu.Lock()
+	defer sc.mu.Unlock()
+	if sc.cmd == nil {
+		return
+	}
+	log.Printf("sandbox: restarting to pick up new config")
+	sc.killLocked()
+}
+
 func (sc *SupervisedClient) Shutdown() {
 	close(sc.stopReaper)
 	sc.mu.Lock()

@@ -134,12 +134,6 @@ func main() {
 	globalFsMgr = fsMgr
 
 	store := config.NewStore(bootCfg, q, tomlPath, activeKeys)
-	applyCloudflare := func(ctx context.Context) {
-		c := store.Config()
-		fsMgr.ApplyConfig(c.CloudflareSolverMode, c.CloudflareSolverURL)
-	}
-	store.OnChange("cloudflare_solver_mode", applyCloudflare)
-	store.OnChange("cloudflare_solver_url", applyCloudflare)
 
 	cfMgr, err := contentfilter.New(q)
 	if err != nil {
@@ -153,7 +147,7 @@ func main() {
 	if err := store.Sync(context.Background()); err != nil {
 		log.Fatalf("syncing config: %v", err)
 	}
-	applyCloudflare(context.Background())
+	fsMgr.ApplyConfig(store.Config().CloudflareSolverMode, store.Config().CloudflareSolverURL)
 	cfMgr.SetLevel(contentfilter.ParseLevel(store.Config().ContentFilterLevel))
 	globalStore = store
 
@@ -210,6 +204,15 @@ func main() {
 		},
 	})
 	defer supervised.Shutdown()
+
+	applyCloudflare := func(ctx context.Context) {
+		c := store.Config()
+		fsMgr.ApplyConfig(c.CloudflareSolverMode, c.CloudflareSolverURL)
+		// sandbox only reads SANDBOX_FLARESOLVERR_URL at spawn, so kick it
+		supervised.Restart()
+	}
+	store.OnChange("cloudflare_solver_mode", applyCloudflare)
+	store.OnChange("cloudflare_solver_url", applyCloudflare)
 
 	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
@@ -299,7 +302,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.Handle("/content/", &rest.ContentHandler{Q: q, Sc: supervised, Sr: streamResolver})
-	mux.Handle("/proxy/cover/", &rest.CoverProxyHandler{Q: q, CoverCacheDir: filepath.Join(absMediaDir, "covers")})
+	mux.Handle("/proxy/cover/", &rest.CoverProxyHandler{Q: q, CoverCacheDir: filepath.Join(absMediaDir, "covers"), Sc: supervised})
 	remoteImg := &rest.RemoteCoverProxyHandler{CoverCacheDir: filepath.Join(absMediaDir, "covers", "remote")}
 	mux.Handle("/proxy/cover/remote/", remoteImg)
 	mux.Handle("/proxy/img/", remoteImg)

@@ -75,6 +75,18 @@ var dirKind = map[string]string{
 	"novel":  "novel",
 }
 
+// ParseLocalExternalID extracts the content type from a local-source
+// external_id, e.g. "local:manga/Title" -> "manga".
+func ParseLocalExternalID(externalID string) (contentType string, ok bool) {
+	rest, found := strings.CutPrefix(externalID, "local:")
+	if !found {
+		return "", false
+	}
+	seg, _, _ := strings.Cut(rest, "/")
+	ct, ok := dirKind[strings.ToLower(seg)]
+	return ct, ok
+}
+
 var imageExts = map[string]bool{
 	".webp": true, ".jpg": true, ".jpeg": true, ".png": true,
 	".gif": true, ".avif": true, ".bmp": true,

@@ -12,7 +12,8 @@ import (
 	"google.golang.org/grpc/keepalive"
 )
 
-const defaultCallTimeout = 15 * time.Second
+// must exceed the sandbox's own 100s OkHttp call timeout
+const defaultCallTimeout = 110 * time.Second
 
 func ContentTypeToProto(s string) sandboxv1.ContentType {
 	switch s {

@@ -9,7 +9,11 @@ import (
 	"tsunagu/backend/internal/backup/mihonpb"
 	"tsunagu/backend/internal/chapternum"
 	"tsunagu/backend/internal/db/sqlcgen"
+	"tsunagu/backend/internal/localsource"
 )
+
+// Mihon's reserved source ID for local manga (LocalSource.ID = 0L).
+const localSourceID = 0
 
 type ImportResult struct {
 	MangaImported      int
@@ -80,27 +84,44 @@ func Import(ctx context.Context, q *sqlcgen.Queries, b *mihonpb.Backup) (ImportR
 	}
 
 	for _, bm := range b.Manga {
-		ext, ok := extBySourceID[bm.Source]
-		if !ok {
-			res.MangaSkipped++
-			res.Warnings = append(res.Warnings, fmt.Sprintf("skipped %q: matching source not installed", bm.Title))
-			continue
-		}
+		var media sqlcgen.Medium
 
-		media, err := q.UpsertMediaDetails(ctx, sqlcgen.UpsertMediaDetailsParams{
-			ExtensionID:   sql.NullInt64{Int64: ext.ID, Valid: true},
-			ExtensionName: ext.Name,
-			ExternalID:    bm.Url,
-			ContentType:   ext.ContentType,
-			Title:         bm.Title,
-			CoverPath:     nullString(derefOr(bm.ThumbnailUrl, "")),
-			Description:   nullString(derefOr(bm.Description, "")),
-			Status:        nullString(mangaStatusFromInt[bm.Status]),
-			Author:        nullString(derefOr(bm.Author, "")),
-			Artist:        nullString(derefOr(bm.Artist, "")),
-		})
-		if err != nil {
-			return res, err
+		if bm.Source == localSourceID {
+			ct, ok := localsource.ParseLocalExternalID(bm.Url)
+			if !ok {
+				res.MangaSkipped++
+				res.Warnings = append(res.Warnings, fmt.Sprintf("skipped %q: local-source entry with an unrecognized URL", bm.Title))
+				continue
+			}
+			m, err := upsertLocalMedia(ctx, q, ct, bm)
+			if err != nil {
+				return res, err
+			}
+			media = m
+		} else {
+			ext, ok := extBySourceID[bm.Source]
+			if !ok {
+				res.MangaSkipped++
+				res.Warnings = append(res.Warnings, fmt.Sprintf("skipped %q: matching source not installed", bm.Title))
+				continue
+			}
+
+			m, err := q.UpsertMediaDetails(ctx, sqlcgen.UpsertMediaDetailsParams{
+				ExtensionID:   sql.NullInt64{Int64: ext.ID, Valid: true},
+				ExtensionName: ext.Name,
+				ExternalID:    bm.Url,
+				ContentType:   ext.ContentType,
+				Title:         bm.Title,
+				CoverPath:     nullString(derefOr(bm.ThumbnailUrl, "")),
+				Description:   nullString(derefOr(bm.Description, "")),
+				Status:        nullString(mangaStatusFromInt[bm.Status]),
+				Author:        nullString(derefOr(bm.Author, "")),
+				Artist:        nullString(derefOr(bm.Artist, "")),
+			})
+			if err != nil {
+				return res, err
+			}
+			media = m
 		}
 		if _, err := q.AddMediaToLibrary(ctx, media.ID); err != nil {
 			return res, err
@@ -184,4 +205,21 @@ func Import(ctx context.Context, q *sqlcgen.Queries, b *mihonpb.Backup) (ImportR
 	}
 
 	return res, nil
+}
+
+// Looks up by external_id — NULL extension_id never conflicts in SQLite, so
+// UpsertMediaDetails's ON CONFLICT can't dedupe local rows.
+func upsertLocalMedia(ctx context.Context, q *sqlcgen.Queries, contentType string, bm *mihonpb.BackupManga) (sqlcgen.Medium, error) {
+	existing, err := q.GetLocalMediaByExternalID(ctx, bm.Url)
+	if err == nil {
+		return existing, nil
+	}
+	if err != sql.ErrNoRows {
+		return sqlcgen.Medium{}, err
+	}
+	return q.CreateLocalMedia(ctx, sqlcgen.CreateLocalMediaParams{
+		ExternalID:  bm.Url,
+		ContentType: contentType,
+		Title:       bm.Title,
+	})
 }
