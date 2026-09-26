@@ -467,8 +467,10 @@ class ExtensionServiceImpl(
         handle(responseObserver, request.extensionId) { source ->
             val chapter: SChapter = chapterStub(request.extensionId, request.sourceChapterId)
             val pages = runBlocking {
-                source.getPageList(chapter).map { page ->
-                    if (page.imageUrl == null) page.imageUrl = source.getImageUrl(page)
+                val pageList = source.getPageList(chapter)
+                val urls = resolvePageURLs(pageList) { source.getImageUrl(it) }
+                pageList.zip(urls).map { (page, url) ->
+                    page.imageUrl = url
                     source.resolveImageUrl(page)
                 }
             }
