@@ -19,6 +19,7 @@ import okhttp3.Request
 import okhttp3.Response
 import rx.Observable
 import tsunagu.util.awaitSingle
+import tsunagu.util.sourceUrlWithoutDomain
 import java.security.MessageDigest
 
 @Suppress("unused", "unused_parameter")
@@ -173,17 +174,7 @@ abstract class HttpSource : CatalogueSource {
         this.url = getUrlWithoutDomain(url)
     }
 
-    private fun getUrlWithoutDomain(orig: String): String {
-        return try {
-            val url = if (orig.startsWith("http")) orig.toHttpUrl() else "$baseUrl$orig".toHttpUrl()
-            var out = url.encodedPath
-            if (url.encodedQuery != null) out += "?${url.encodedQuery}"
-            if (url.encodedFragment != null) out += "#${url.encodedFragment}"
-            out
-        } catch (_: Exception) {
-            orig
-        }
-    }
+    private fun getUrlWithoutDomain(orig: String): String = sourceUrlWithoutDomain(orig)
 
     open fun getMangaUrl(manga: SManga): String {
         return try {

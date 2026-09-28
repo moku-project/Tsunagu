@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -697,7 +698,7 @@ func (h *ContentHandler) streamHLS(w http.ResponseWriter, r *http.Request, targe
 
 func (h *ContentHandler) writeSegment(w http.ResponseWriter, r *http.Request, key string, resp *http.Response) {
 	respCT := resp.Header.Get("Content-Type")
-	cacheable := resp.StatusCode == http.StatusOK && r.Header.Get("Range") == ""
+	cacheable := resp.StatusCode == http.StatusOK && r.Header.Get("Range") == "" && resp.ContentLength <= segCacheMaxObject
 
 	for _, hk := range []string{"Content-Type", "Content-Length", "Content-Range", "Accept-Ranges"} {
 		if v := resp.Header.Get(hk); v != "" {
@@ -707,15 +708,47 @@ func (h *ContentHandler) writeSegment(w http.ResponseWriter, r *http.Request, ke
 	w.Header().Set("Cache-Control", "no-store")
 	w.WriteHeader(resp.StatusCode)
 
-	if !cacheable {
-		_, _ = io.Copy(w, resp.Body)
-		return
+	// Deliver bytes immediately. The cache limit limits retained memory, never
+	// the response body: large segments must still reach the player in full.
+	controller := http.NewResponseController(w)
+	var cached []byte
+	var delivered int64
+	buffer := make([]byte, 32<<10)
+	for {
+		n, readErr := resp.Body.Read(buffer)
+		if n > 0 {
+			written, writeErr := w.Write(buffer[:n])
+			delivered += int64(written)
+			if writeErr != nil || written != n {
+				panic(http.ErrAbortHandler)
+			}
+			if err := controller.Flush(); err != nil && !errors.Is(err, http.ErrNotSupported) {
+				panic(http.ErrAbortHandler)
+			}
+			if cacheable {
+				if len(cached)+n <= segCacheMaxObject {
+					cached = append(cached, buffer[:n]...)
+				} else {
+					cacheable = false
+					cached = nil
+				}
+			}
+		}
+		if readErr == io.EOF {
+			if resp.ContentLength >= 0 && delivered != resp.ContentLength {
+				panic(http.ErrAbortHandler)
+			}
+			if cacheable {
+				streamSegments.put(key, cached, respCT)
+			}
+			return
+		}
+		if readErr != nil {
+			// An interrupted upstream response must not look complete or enter
+			// the cache. net/http closes the stream so the player can retry it.
+			panic(http.ErrAbortHandler)
+		}
 	}
-	body, err := io.ReadAll(io.LimitReader(resp.Body, segCacheMaxObject+1))
-	if err == nil && int64(len(body)) <= segCacheMaxObject {
-		streamSegments.put(key, body, respCT)
-	}
-	_, _ = w.Write(body)
 }
 
 func writeCachedSegment(w http.ResponseWriter, data []byte, ct string) {
