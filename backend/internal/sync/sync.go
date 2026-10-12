@@ -513,11 +513,10 @@ func (s *Syncer) ExtensionLanguages(ctx context.Context, q ExtensionQuery) ([]st
 }
 
 func extensionDownloadTarget(ext sqlcgen.Extension) (url string, fileExt string, err error) {
-	if ext.ContentType == "novel" {
-		if ext.JarUrl.Valid && ext.JarUrl.String != "" {
-			return ext.JarUrl.String, "js", nil
-		}
-		return "", "", fmt.Errorf("novel extension %s has no source url", ext.PackageName)
+	// LNReader plugins keep their .js source in jar_url; Tsundoku-format novel
+	// extensions are ordinary jars and fall through.
+	if ext.ContentType == "novel" && strings.HasSuffix(ext.JarUrl.String, ".js") {
+		return ext.JarUrl.String, "js", nil
 	}
 	if ext.JarUrl.Valid && ext.JarUrl.String != "" {
 		return ext.JarUrl.String, "jar", nil

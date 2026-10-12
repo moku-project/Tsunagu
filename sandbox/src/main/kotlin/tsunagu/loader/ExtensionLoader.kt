@@ -27,8 +27,11 @@ private fun List<Source>.pickPreferredLang(): Source? = find { it.lang == "en" }
 private fun List<AnimeSource>.pickPreferredLang(): AnimeSource? = find { it.lang == "en" } ?: firstOrNull()
 
 object ExtensionLoader {
-    private const val METADATA_SOURCE_CLASS = "tachiyomi.extension.class"
-    private const val METADATA_ANIME_SOURCE_CLASS = "tachiyomi.animeextension.class"
+    private val SOURCE_CLASS_KEYS = listOf(
+        "tachiyomi.extension.class",
+        "tachiyomi.animeextension.class",
+        "tachiyomi.novelextension.class", // Tsundoku-format novel extensions
+    )
 
     fun peekPackageName(file: File): String {
         if (file.extension == "js") {
@@ -67,13 +70,7 @@ object ExtensionLoader {
 
                 packageName = doc.documentElement.getAttribute("package")
 
-                val sourceClassMeta = getManifestMetaData(doc, METADATA_SOURCE_CLASS)
-                    ?: getManifestMetaData(doc, METADATA_ANIME_SOURCE_CLASS)
-                    ?: throw ExtensionLoadException("no $METADATA_SOURCE_CLASS or $METADATA_ANIME_SOURCE_CLASS meta-data in manifest for $packageName")
-
-                className = sourceClassMeta.trim().let {
-                    if (it.startsWith(".")) packageName + it else it
-                }
+                className = sourceClassName(doc, packageName)
             }
             jarFile = file
         } else {
@@ -84,13 +81,7 @@ object ExtensionLoader {
             val dBuilder = dbFactory.newDocumentBuilder()
             val doc = apk.manifestXml.byteInputStream().use { dBuilder.parse(it) }
 
-            val sourceClassMeta = getManifestMetaData(doc, METADATA_SOURCE_CLASS)
-                ?: getManifestMetaData(doc, METADATA_ANIME_SOURCE_CLASS)
-                ?: throw ExtensionLoadException("no $METADATA_SOURCE_CLASS or $METADATA_ANIME_SOURCE_CLASS meta-data in manifest for $packageName")
-
-            className = sourceClassMeta.trim().let {
-                if (it.startsWith(".")) packageName + it else it
-            }
+            className = sourceClassName(doc, packageName)
 
             jarFile = Dex2JarConverter.convert(file)
         }
@@ -119,6 +110,12 @@ object ExtensionLoader {
             ?: throw ExtensionLoadException("could not classify content type for $className")
 
         return LoadedExtension(packageName, source, classLoader, contentType)
+    }
+
+    private fun sourceClassName(doc: org.w3c.dom.Document, packageName: String): String {
+        val meta = SOURCE_CLASS_KEYS.firstNotNullOfOrNull { getManifestMetaData(doc, it) }
+            ?: throw ExtensionLoadException("no source class meta-data (${SOURCE_CLASS_KEYS.joinToString()}) in manifest for $packageName")
+        return meta.trim().let { if (it.startsWith(".")) packageName + it else it }
     }
 
     private fun getManifestMetaData(doc: org.w3c.dom.Document, key: String): String? {

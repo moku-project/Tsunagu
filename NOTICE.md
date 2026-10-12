@@ -33,6 +33,15 @@ Aniyomi is Mihon's anime-focused fork, and defines the parallel
 extensions are written against. Adapted under
 `sandbox/src/main/kotlin/eu/kanade/tachiyomi/animesource/`.
 
+## Tsundoku extensions-lib — Apache License 2.0
+
+<https://github.com/tsundoku-otaku/extensions-lib>
+
+Tsundoku's fork of the Mihon extension API adds the interfaces its novel
+extensions (e.g. the NovelSourcery repo) are compiled against. Adapted as
+`SourceTracker` and `RateLimited` under
+`sandbox/src/main/kotlin/eu/kanade/tachiyomi/source/`.
+
 ## Suwayomi — Mozilla Public License 2.0 (architectural reference, no copied code)
 
 <https://github.com/Suwayomi/Suwayomi-Server>

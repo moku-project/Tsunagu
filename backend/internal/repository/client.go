@@ -33,8 +33,11 @@ var validPackageName = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$`)
 func IsValidPackageName(s string) bool { return validPackageName.MatchString(s) }
 
 func ClassifyContentType(packageName string) string {
-	if strings.HasPrefix(packageName, "eu.kanade.tachiyomi.animeextension.") {
+	switch {
+	case strings.HasPrefix(packageName, "eu.kanade.tachiyomi.animeextension."):
 		return "anime"
+	case strings.HasPrefix(packageName, "eu.kanade.tachiyomi.novelextension."):
+		return "novel"
 	}
 	return "manga"
 }
@@ -108,7 +111,43 @@ func filterValid(exts []ParsedExtension) []ParsedExtension {
 	return out
 }
 
+// indexV2URL returns the protobuf index a Mihon-style repo advertises in the
+// repo.json next to its index (or at indexURL itself), or "" when it has none.
+// Such repos (Keiyoushi, NovelSourcery) serve a placeholder index.min.json to
+// apps that predate index_v2.
+func indexV2URL(indexURL string) string {
+	if !strings.HasSuffix(indexURL, ".json") {
+		return ""
+	}
+	repoJSON := indexURL
+	if !strings.HasSuffix(indexURL, "/repo.json") {
+		i := strings.LastIndex(indexURL, "/")
+		if i < 0 {
+			return ""
+		}
+		repoJSON = indexURL[:i] + "/repo.json"
+	}
+	resp, err := repoClient.Get(repoJSON)
+	if err != nil {
+		return ""
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return ""
+	}
+	var meta struct {
+		IndexV2 string `json:"index_v2"`
+	}
+	if err := json.NewDecoder(io.LimitReader(resp.Body, 1<<20)).Decode(&meta); err != nil {
+		return ""
+	}
+	return meta.IndexV2
+}
+
 func FetchIndex(indexURL string) ([]ParsedExtension, error) {
+	if v2 := indexV2URL(indexURL); v2 != "" {
+		indexURL = v2
+	}
 	resp, err := repoClient.Get(indexURL)
 	if err != nil {
 		return nil, fetchErrorf("failed to fetch %s: %v", indexURL, err)

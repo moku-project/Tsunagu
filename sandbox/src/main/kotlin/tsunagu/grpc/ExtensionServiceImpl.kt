@@ -24,6 +24,7 @@ import tsunagu.loader.LoadedExtension
 import tsunagu.novel.ChapterItem
 import tsunagu.novel.NovelJsBridge
 import tsunagu.novel.NovelPlugin
+import tsunagu.source.NovelSources
 import tsunagu.novel.SourceNovel
 import tsunagu.grpc.AnimeFilterSerde
 import tsunagu.grpc.FilterSerde.applyTo
@@ -384,13 +385,9 @@ class ExtensionServiceImpl(
             return
         }
         try {
-            val details = when (extension.contentType) {
-                ContentType.NOVEL -> {
-                    val plugin = extension.source as NovelPlugin
-                    toEntryDetailsNovel(plugin.parseNovel(request.sourceEntryId))
-                }
-                ContentType.ANIME -> {
-                    val source = extension.source as AnimeHttpSource
+            val details = when (val source = extension.source) {
+                is NovelPlugin -> toEntryDetailsNovel(source.parseNovel(request.sourceEntryId))
+                is AnimeHttpSource -> {
                     val stub = animeStub(request.extensionId, request.sourceEntryId)
 
                     val details = runBlocking { source.getAnimeDetails(stub) }
@@ -398,8 +395,7 @@ class ExtensionServiceImpl(
                     EntryModelCache.putAnime(request.extensionId, stub)
                     toEntryDetailsAnime(stub)
                 }
-                ContentType.MANGA -> {
-                    val source = extension.source as HttpSource
+                is HttpSource -> {
                     val stub = mangaStub(request.extensionId, request.sourceEntryId)
                     val update = runBlocking {
                         source.getMangaUpdate(stub, emptyList(), fetchDetails = true, fetchChapters = false)
@@ -408,6 +404,7 @@ class ExtensionServiceImpl(
                     EntryModelCache.putManga(request.extensionId, stub)
                     toEntryDetails(stub)
                 }
+                else -> throw IllegalStateException("extension ${request.extensionId} has no details API")
             }
             responseObserver.onNext(details)
             responseObserver.onCompleted()
@@ -427,16 +424,14 @@ class ExtensionServiceImpl(
             return
         }
         try {
-            val list = when (extension.contentType) {
-                ContentType.NOVEL -> {
-                    val plugin = extension.source as NovelPlugin
-                    val novel = plugin.parseNovel(request.sourceEntryId)
+            val list = when (val source = extension.source) {
+                is NovelPlugin -> {
+                    val novel = source.parseNovel(request.sourceEntryId)
                     val builder = Sandbox.ChapterList.newBuilder()
                     novel.chapters.forEach { chapter -> builder.addChapters(toChapterSummaryNovel(chapter)) }
                     builder.build()
                 }
-                else -> {
-                    val source = extension.source as HttpSource
+                is HttpSource -> {
                     val stub = mangaStub(request.extensionId, request.sourceEntryId)
                     val update = runBlocking {
                         source.getMangaUpdate(stub, emptyList(), fetchDetails = false, fetchChapters = true)
@@ -448,6 +443,7 @@ class ExtensionServiceImpl(
                     }
                     builder.build()
                 }
+                else -> throw IllegalStateException("extension ${request.extensionId} has no chapter API")
             }
             responseObserver.onNext(list)
             responseObserver.onCompleted()
@@ -491,8 +487,14 @@ class ExtensionServiceImpl(
             return
         }
         try {
-            val plugin = extension.source as NovelPlugin
-            val text = plugin.parseChapter(request.sourceChapterId)
+            val text = when (val source = extension.source) {
+                is NovelPlugin -> source.parseChapter(request.sourceChapterId)
+                is HttpSource -> runBlocking {
+                    val chapter = chapterStub(request.extensionId, request.sourceChapterId)
+                    NovelSources.chapterText(source, source.getPageList(chapter))
+                }
+                else -> throw IllegalStateException("extension ${request.extensionId} has no text API")
+            }
             responseObserver.onNext(
                 Sandbox.TextContent.newBuilder().setContent(text).setFormat("html").build(),
             )
