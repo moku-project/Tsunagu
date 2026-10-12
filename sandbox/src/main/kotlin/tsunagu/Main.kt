@@ -10,6 +10,7 @@ import kotlinx.serialization.json.Json
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
 import tsunagu.grpc.ExtensionServiceImpl
+import tsunagu.grpc.MemoStore
 import tsunagu.novel.PluginStorage
 import tsunagu.registry.ExtensionRegistry
 import tsunagu.source.GetSource
@@ -39,6 +40,7 @@ fun main() {
     val storageDir = File(System.getenv("SANDBOX_STORAGE_DIR") ?: "plugin-storage")
     val novelEnabled = System.getenv("SANDBOX_ENABLE_NOVEL")?.toBooleanStrictOrNull() ?: false
     PluginStorage.baseDir = storageDir
+    MemoStore.baseDir = File(storageDir, "memo")
     android.app.Application.prefsRoot = File(storageDir, "shared-prefs")
     val registry = ExtensionRegistry(extensionsDir, novelEnabled)
     GetSource.bind(registry)

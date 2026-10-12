@@ -116,7 +116,12 @@ class ExtensionServiceImpl(
         request: Sandbox.ExtensionRequest,
         responseObserver: StreamObserver<Sandbox.Empty>,
     ) {
-        registry.uninstall(request.extensionId)
+        try {
+            registry.uninstall(request.extensionId)
+        } catch (e: Exception) {
+            responseObserver.onError(internal(e))
+            return
+        }
         responseObserver.onNext(Sandbox.Empty.getDefaultInstance())
         responseObserver.onCompleted()
     }
@@ -361,19 +366,35 @@ class ExtensionServiceImpl(
 
     private fun mangaStub(extensionId: String, url: String): SManga =
         EntryModelCache.getManga(extensionId, url)?.apply { this.url = url }
-            ?: SManga.create().apply { this.url = url; title = "" }
+            ?: SManga.create().apply {
+                this.url = url
+                title = ""
+                EntryModelCache.mangaMemo(extensionId, url)?.let { memo = it }
+            }
 
     private fun animeStub(extensionId: String, url: String): SAnime =
         EntryModelCache.getAnime(extensionId, url)?.apply { this.url = url }
-            ?: SAnime.create().apply { this.url = url; title = "" }
+            ?: SAnime.create().apply {
+                this.url = url
+                title = ""
+                EntryModelCache.animeMemo(extensionId, url)?.let { memo = it }
+            }
 
-    private fun chapterStub(extensionId: String, url: String): SChapter =
-        EntryModelCache.getChapter(extensionId, url)?.apply { this.url = url }
-            ?: SChapter.create().apply { this.url = url; name = "" }
+    private fun chapterStub(extensionId: String, entryId: String, url: String): SChapter =
+        EntryModelCache.getChapter(extensionId, entryId, url)?.apply { this.url = url }
+            ?: SChapter.create().apply {
+                this.url = url
+                name = ""
+                EntryModelCache.chapterMemo(extensionId, entryId, url)?.let { memo = it }
+            }
 
-    private fun episodeStub(extensionId: String, url: String): SEpisode =
-        EntryModelCache.getEpisode(extensionId, url)?.apply { this.url = url }
-            ?: SEpisode.create().apply { this.url = url; name = "" }
+    private fun episodeStub(extensionId: String, entryId: String, url: String): SEpisode =
+        EntryModelCache.getEpisode(extensionId, entryId, url)?.apply { this.url = url }
+            ?: SEpisode.create().apply {
+                this.url = url
+                name = ""
+                EntryModelCache.episodeMemo(extensionId, entryId, url)?.let { memo = it }
+            }
 
     override fun getDetails(
         request: Sandbox.EntryRequest,
@@ -438,7 +459,7 @@ class ExtensionServiceImpl(
                     }
                     val builder = Sandbox.ChapterList.newBuilder()
                     update.chapters.forEach { chapter ->
-                        EntryModelCache.putChapter(request.extensionId, chapter)
+                        EntryModelCache.putChapter(request.extensionId, request.sourceEntryId, chapter)
                         builder.addChapters(toChapterSummary(chapter))
                     }
                     builder.build()
@@ -458,7 +479,7 @@ class ExtensionServiceImpl(
         responseObserver: StreamObserver<Sandbox.PageList>,
     ) {
         handle(responseObserver, request.extensionId) { source ->
-            val chapter: SChapter = chapterStub(request.extensionId, request.sourceChapterId)
+            val chapter: SChapter = chapterStub(request.extensionId, request.sourceEntryId, request.sourceChapterId)
             val pages = runBlocking {
                 val pageList = source.getPageList(chapter)
                 val urls = resolvePageURLs(pageList) { source.getImageUrl(it) }
@@ -490,7 +511,7 @@ class ExtensionServiceImpl(
             val text = when (val source = extension.source) {
                 is NovelPlugin -> source.parseChapter(request.sourceChapterId)
                 is HttpSource -> runBlocking {
-                    val chapter = chapterStub(request.extensionId, request.sourceChapterId)
+                    val chapter = chapterStub(request.extensionId, request.sourceEntryId, request.sourceChapterId)
                     NovelSources.chapterText(source, source.getPageList(chapter))
                 }
                 else -> throw IllegalStateException("extension ${request.extensionId} has no text API")
@@ -514,7 +535,7 @@ class ExtensionServiceImpl(
             val episodes = runBlocking { source.getEpisodeList(stub) }
             val builder = Sandbox.EpisodeList.newBuilder()
             episodes.forEach { episode ->
-                EntryModelCache.putEpisode(request.extensionId, episode)
+                EntryModelCache.putEpisode(request.extensionId, request.sourceEntryId, episode)
                 builder.addEpisodes(toEpisodeSummary(episode))
             }
             builder.build()
@@ -526,7 +547,7 @@ class ExtensionServiceImpl(
         responseObserver: StreamObserver<Sandbox.StreamInfo>,
     ) {
         handleAnime(responseObserver, request.extensionId) { source ->
-            val episode: SEpisode = episodeStub(request.extensionId, request.sourceEpisodeId)
+            val episode: SEpisode = episodeStub(request.extensionId, request.sourceEntryId, request.sourceEpisodeId)
             val videos = runBlocking { AnimeVideoLoader.loadVideos(source, episode) }
             if (videos.isEmpty()) {
                 throw IllegalStateException("no videos returned for episode ${request.sourceEpisodeId}")

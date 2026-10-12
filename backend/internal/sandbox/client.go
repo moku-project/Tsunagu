@@ -15,6 +15,8 @@ import (
 // must exceed the sandbox's own 100s OkHttp call timeout
 const defaultCallTimeout = 110 * time.Second
 
+const maxImageBytes = 64 << 20
+
 func ContentTypeToProto(s string) sandboxv1.ContentType {
 	switch s {
 	case "manga":
@@ -44,6 +46,9 @@ func NewClient(addr string) (*Client, error) {
 			PermitWithoutStream: true,
 		}),
 		grpc.WithDefaultServiceConfig(`{"loadBalancingConfig": [{"round_robin":{}}]}`),
+		// Page images and covers arrive whole in one message; long-strip pages
+		// routinely exceed gRPC's 4MB default.
+		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(maxImageBytes)),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("dial sandbox at %s: %w", addr, err)

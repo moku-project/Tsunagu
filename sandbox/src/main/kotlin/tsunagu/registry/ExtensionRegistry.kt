@@ -96,9 +96,12 @@ class ExtensionRegistry(
         val target = targetFile(extensionId, ext)
         val upToDate = target.exists() &&
             (target.canonicalFile == sourceFile.canonicalFile || target.length() == sourceFile.length())
+        // The backend re-installs every extension on startup; closing a loader that is
+        // serving a request breaks it mid-call, so keep the one already loaded.
+        if (upToDate) get(extensionId)?.let { return it }
         evict(extensionId)
         if (!upToDate) {
-            replaceFile(target) { Files.copy(sourceFile.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING) }
+            retryWhileLocked(target) { Files.copy(sourceFile.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING) }
         }
         return load(target)
     }
@@ -110,7 +113,9 @@ class ExtensionRegistry(
         pendingFiles.remove(extensionId)
     }
 
-    private fun replaceFile(target: File, write: () -> Unit) {
+    // Windows refuses to replace or delete a jar while any handle to it is open, and
+    // handles from a just-closed classloader can take a moment to be released.
+    private fun retryWhileLocked(target: File, write: () -> Unit) {
         var lastErr: Throwable? = null
         repeat(8) { attempt ->
             try {
@@ -146,23 +151,25 @@ class ExtensionRegistry(
 
         val target = targetFile(extensionId, ext)
         val upToDate = target.exists() && target.length() == bytes.size.toLong()
+        if (upToDate) get(extensionId)?.let { return it }
         evict(extensionId)
         if (!upToDate) {
-            replaceFile(target) { Files.write(target.toPath(), bytes) }
+            retryWhileLocked(target) { Files.write(target.toPath(), bytes) }
         }
         return load(target)
     }
 
     fun uninstall(extensionId: String) {
         requireSafeExtensionId(extensionId)
-        extensions.remove(extensionId)
-        File(extensionsDir, "$extensionId.apk").delete()
-        File(extensionsDir, "$extensionId.jar").delete()
-        File(extensionsDir, "$extensionId.js").delete()
+        evict(extensionId)
+        for (ext in listOf("apk", "jar", "js")) {
+            val file = File(extensionsDir, "$extensionId.$ext")
+            if (file.exists()) retryWhileLocked(file) { Files.delete(file.toPath()) }
+        }
     }
 
     fun invalidateAll() {
-        extensions.clear()
+        extensions.keys.toList().forEach(::evict)
         loadAll()
     }
 }
