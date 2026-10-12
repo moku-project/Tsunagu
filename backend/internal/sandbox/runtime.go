@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 )
 
 type ResolvedRuntime struct {
@@ -92,8 +93,16 @@ func locateSandboxJar(exeDir, jarRelPath string) string {
 
 	if repoRoot := findRepoRoot(); repoRoot != "" {
 		matches, err := filepath.Glob(filepath.Join(repoRoot, "sandbox", "build", "libs", "sandbox-*-all.jar"))
-		if err == nil && len(matches) > 0 {
-			return matches[0]
+		// Old versions linger in build/libs after a version bump; take the newest.
+		var newest string
+		var newestMod time.Time
+		for _, m := range matches {
+			if fi, err := os.Stat(m); err == nil && fi.ModTime().After(newestMod) {
+				newest, newestMod = m, fi.ModTime()
+			}
+		}
+		if err == nil && newest != "" {
+			return newest
 		}
 	}
 
