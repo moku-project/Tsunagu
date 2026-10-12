@@ -50,8 +50,8 @@ class CloudflareInterceptor(
             return response
         }
 
-        // Without cf-mitigated the block came from the origin, not a Cloudflare challenge.
-        // Embed hosts (e.g. anidrive.click) reject requests that don't look like an iframe navigation.
+        // Not a challenge: the origin itself refused. Some embed hosts (e.g. anidrive.click)
+        // only serve requests that look like a browser navigation, so retry once as one.
         if (!isChallenge(response)) {
             if (response.code != 403 || request.header("Sec-Fetch-Mode") != null) return response
             response.close()

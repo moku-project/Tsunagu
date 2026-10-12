@@ -1,7 +1,11 @@
 package rest
 
 import (
+	"bytes"
+	"io"
+	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -200,18 +204,40 @@ func TestRewriteHLSPlaylistKeepsAdHostedContent(t *testing.T) {
 	}
 }
 
-func TestStripToTransportStream(t *testing.T) {
+func imageResponse(body []byte) *http.Response {
+	return &http.Response{
+		StatusCode:    http.StatusOK,
+		Header:        http.Header{"Content-Type": {"image/png"}, "Content-Length": {strconv.Itoa(len(body))}},
+		ContentLength: int64(len(body)),
+		Body:          io.NopCloser(bytes.NewReader(body)),
+	}
+}
+
+func TestUnwrapDisguisedSegment(t *testing.T) {
 	png := []byte("\x89PNG\r\n\x1a\n\x00\x00\x00\x0dIHDR-junk-IEND\xaeB`\x82")
-	ts := make([]byte, 188*3)
-	for i := 0; i < len(ts); i += 188 {
+	// Longer than the peek buffer, so the tail must stream through untouched.
+	ts := make([]byte, tsPacketSize*2000)
+	for i := 0; i < len(ts); i += tsPacketSize {
 		ts[i] = tsSyncByte
+		ts[i+1] = byte(i / tsPacketSize)
 	}
-	got := stripToTransportStream(append(append([]byte{}, png...), ts...))
-	if len(got) != len(ts) || got[0] != tsSyncByte {
-		t.Fatalf("prefix not stripped: len=%d first=%x", len(got), got[0])
+
+	resp := imageResponse(append(append([]byte{}, png...), ts...))
+	unwrapDisguisedSegment(resp)
+	got, _ := io.ReadAll(resp.Body)
+	if !bytes.Equal(got, ts) {
+		t.Fatalf("body = %d bytes, want the %d-byte stream without the PNG prefix", len(got), len(ts))
 	}
-	plain := []byte("not a transport stream")
-	if string(stripToTransportStream(plain)) != string(plain) {
-		t.Fatal("non-TS payload must pass through unchanged")
+	if ct := resp.Header.Get("Content-Type"); ct != "video/mp2t" {
+		t.Fatalf("Content-Type = %q", ct)
+	}
+	if resp.ContentLength != int64(len(ts)) || resp.Header.Get("Content-Length") != strconv.Itoa(len(ts)) {
+		t.Fatalf("Content-Length = %d / %q, want %d", resp.ContentLength, resp.Header.Get("Content-Length"), len(ts))
+	}
+
+	resp = imageResponse(png)
+	unwrapDisguisedSegment(resp)
+	if got, _ := io.ReadAll(resp.Body); !bytes.Equal(got, png) || resp.Header.Get("Content-Type") != "image/png" {
+		t.Fatal("a real image must pass through unchanged")
 	}
 }

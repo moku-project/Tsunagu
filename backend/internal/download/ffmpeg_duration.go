@@ -16,6 +16,7 @@ var ffmpegDurationRe = regexp.MustCompile(`Duration: (\d+):(\d{2}):(\d{2}(?:\.\d
 type ffmpegStderr struct {
 	mu         sync.Mutex
 	buf        bytes.Buffer
+	scanned    int // complete lines before this offset have been searched
 	durationMs atomic.Int64
 }
 
@@ -24,8 +25,12 @@ func (s *ffmpegStderr) Write(p []byte) (int, error) {
 	defer s.mu.Unlock()
 	s.buf.Write(p)
 	if s.durationMs.Load() == 0 {
-		if ms := parseFfmpegDurationMs(s.buf.Bytes()); ms > 0 {
+		b := s.buf.Bytes()
+		if ms := parseFfmpegDurationMs(b[s.scanned:]); ms > 0 {
 			s.durationMs.Store(ms)
+		}
+		if i := bytes.LastIndexByte(b, '\n'); i >= 0 {
+			s.scanned = i + 1
 		}
 	}
 	return len(p), nil
@@ -45,30 +50,19 @@ func parseFfmpegDurationMs(out []byte) int64 {
 		return 0
 	}
 	h, _ := strconv.ParseInt(string(m[1]), 10, 64)
-	min, _ := strconv.ParseInt(string(m[2]), 10, 64)
+	mins, _ := strconv.ParseInt(string(m[2]), 10, 64)
 	sec, _ := strconv.ParseFloat(string(m[3]), 64)
-	return h*3_600_000 + min*60_000 + int64(sec*1000)
+	return h*3_600_000 + mins*60_000 + int64(sec*1000)
 }
 
 // ffmpegProgress maps ffmpeg's output position onto the job's progress range.
-// Without a known duration it falls back to the old size-based guess.
+// Without a known duration it falls back to a guess from the bytes written.
 func ffmpegProgress(outTimeUs, durationMs, totalSize int64) float64 {
 	if durationMs > 0 && outTimeUs > 0 {
-		p := float64(outTimeUs/1000) / float64(durationMs)
-		return clampFloat(p, 0.01, 0.99)
+		return min(max(float64(outTimeUs/1000)/float64(durationMs), 0.01), 0.99)
 	}
 	if totalSize > 0 {
-		return clampFloat(float64(totalSize)/(300*1024*1024), 0.1, 0.95)
+		return min(max(float64(totalSize)/(300<<20), 0.1), 0.95)
 	}
 	return 0.1
-}
-
-func clampFloat(v, lo, hi float64) float64 {
-	if v < lo {
-		return lo
-	}
-	if v > hi {
-		return hi
-	}
-	return v
 }

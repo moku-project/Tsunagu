@@ -825,8 +825,8 @@ func (m *Manager) watchFfmpegProgress(jobID int64, progressPath string, duration
 		case <-stop:
 			return
 		case <-ticker.C:
-			totalSize, outTimeMs := readFfmpegProgressFile(progressPath)
-			if totalSize == 0 && outTimeMs == 0 {
+			totalSize, outTimeUs := readFfmpegProgressFile(progressPath)
+			if totalSize == 0 && outTimeUs == 0 {
 				continue
 			}
 
@@ -840,7 +840,7 @@ func (m *Manager) watchFfmpegProgress(jobID int64, progressPath string, duration
 			lastSize = totalSize
 			lastSampleAt = now
 
-			progress := ffmpegProgress(outTimeMs, durationMs(), totalSize)
+			progress := ffmpegProgress(outTimeUs, durationMs(), totalSize)
 			if err := m.q.UpdateDownloadStats(ctx, sqlcgen.UpdateDownloadStatsParams{
 				Status:          "downloading",
 				Progress:        progress,
@@ -854,7 +854,7 @@ func (m *Manager) watchFfmpegProgress(jobID int64, progressPath string, duration
 	}
 }
 
-func readFfmpegProgressFile(path string) (totalSize int64, outTimeMs int64) {
+func readFfmpegProgressFile(path string) (totalSize int64, outTimeUs int64) {
 	f, err := os.Open(path)
 	if err != nil {
 		return 0, 0
@@ -870,14 +870,14 @@ func readFfmpegProgressFile(path string) (totalSize int64, outTimeMs int64) {
 			if n, err := parseInt64(v); err == nil {
 				totalSize = n
 			}
-		case strings.HasPrefix(line, "out_time_ms="):
+		case strings.HasPrefix(line, "out_time_ms="): // microseconds, despite the name
 			v := strings.TrimPrefix(line, "out_time_ms=")
 			if n, err := parseInt64(v); err == nil {
-				outTimeMs = n
+				outTimeUs = n
 			}
 		}
 	}
-	return totalSize, outTimeMs
+	return totalSize, outTimeUs
 }
 
 func parseInt64(s string) (int64, error) {

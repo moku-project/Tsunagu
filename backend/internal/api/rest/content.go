@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"bufio"
 	"context"
 	"database/sql"
 	"encoding/base64"
@@ -694,46 +695,51 @@ func (h *ContentHandler) streamHLS(w http.ResponseWriter, r *http.Request, targe
 	}
 
 	if resp.StatusCode == http.StatusOK && !isRanged && strings.HasPrefix(ct, "image/") {
-		writeDisguisedSegment(w, target.String(), resp)
-		return
+		unwrapDisguisedSegment(resp)
 	}
 
 	h.writeSegment(w, r, target.String(), resp)
 }
 
-// Some hosts disguise MPEG-TS segments as images (a tiny PNG header followed by
-// the stream). Players reject them, so the prefix is cut at the first TS sync.
-func writeDisguisedSegment(w http.ResponseWriter, key string, resp *http.Response) {
-	data, err := io.ReadAll(io.LimitReader(resp.Body, disguisedSegmentMax))
-	if err != nil {
-		panic(http.ErrAbortHandler)
+const (
+	tsPacketSize    = 188
+	tsSyncByte      = 0x47
+	tsSyncScanLimit = 64 << 10
+)
+
+// unwrapDisguisedSegment handles hosts that serve MPEG-TS segments as images
+// (a small PNG followed by the stream), which players reject: it drops the
+// prefix and relabels the body as video/mp2t. Real images are left alone.
+func unwrapDisguisedSegment(resp *http.Response) {
+	br := bufio.NewReaderSize(resp.Body, tsSyncScanLimit+3*tsPacketSize)
+	head, _ := br.Peek(tsSyncScanLimit + 3*tsPacketSize)
+	resp.Body = struct {
+		io.Reader
+		io.Closer
+	}{br, resp.Body}
+
+	off := tsStart(head)
+	if off < 0 {
+		return
 	}
-	data = stripToTransportStream(data)
-	ct := resp.Header.Get("Content-Type")
-	if len(data) > 0 && data[0] == tsSyncByte {
-		ct = "video/mp2t"
+	_, _ = br.Discard(off)
+	resp.Header.Set("Content-Type", "video/mp2t")
+	if resp.ContentLength >= 0 {
+		resp.ContentLength -= int64(off)
+		resp.Header.Set("Content-Length", strconv.FormatInt(resp.ContentLength, 10))
 	}
-	if len(data) <= segCacheMaxObject {
-		streamSegments.put(key, data, ct)
-	}
-	writeCachedSegment(w, data, ct)
 }
 
-func stripToTransportStream(data []byte) []byte {
-	const packet = 188
-	for i := 0; i < tsSyncScanLimit && i+2*packet < len(data); i++ {
-		if data[i] == tsSyncByte && data[i+packet] == tsSyncByte && data[i+2*packet] == tsSyncByte {
-			return data[i:]
+// tsStart returns the offset of the first of three consecutive TS packets in
+// the first tsSyncScanLimit bytes of data, or -1.
+func tsStart(data []byte) int {
+	for i := 0; i < tsSyncScanLimit && i+2*tsPacketSize < len(data); i++ {
+		if data[i] == tsSyncByte && data[i+tsPacketSize] == tsSyncByte && data[i+2*tsPacketSize] == tsSyncByte {
+			return i
 		}
 	}
-	return data
+	return -1
 }
-
-const (
-	tsSyncByte          = 0x47
-	tsSyncScanLimit     = 64 << 10
-	disguisedSegmentMax = 64 << 20
-)
 
 func (h *ContentHandler) writeSegment(w http.ResponseWriter, r *http.Request, key string, resp *http.Response) {
 	respCT := resp.Header.Get("Content-Type")
