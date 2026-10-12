@@ -693,8 +693,47 @@ func (h *ContentHandler) streamHLS(w http.ResponseWriter, r *http.Request, targe
 		return
 	}
 
+	if resp.StatusCode == http.StatusOK && !isRanged && strings.HasPrefix(ct, "image/") {
+		writeDisguisedSegment(w, target.String(), resp)
+		return
+	}
+
 	h.writeSegment(w, r, target.String(), resp)
 }
+
+// Some hosts disguise MPEG-TS segments as images (a tiny PNG header followed by
+// the stream). Players reject them, so the prefix is cut at the first TS sync.
+func writeDisguisedSegment(w http.ResponseWriter, key string, resp *http.Response) {
+	data, err := io.ReadAll(io.LimitReader(resp.Body, disguisedSegmentMax))
+	if err != nil {
+		panic(http.ErrAbortHandler)
+	}
+	data = stripToTransportStream(data)
+	ct := resp.Header.Get("Content-Type")
+	if len(data) > 0 && data[0] == tsSyncByte {
+		ct = "video/mp2t"
+	}
+	if len(data) <= segCacheMaxObject {
+		streamSegments.put(key, data, ct)
+	}
+	writeCachedSegment(w, data, ct)
+}
+
+func stripToTransportStream(data []byte) []byte {
+	const packet = 188
+	for i := 0; i < tsSyncScanLimit && i+2*packet < len(data); i++ {
+		if data[i] == tsSyncByte && data[i+packet] == tsSyncByte && data[i+2*packet] == tsSyncByte {
+			return data[i:]
+		}
+	}
+	return data
+}
+
+const (
+	tsSyncByte          = 0x47
+	tsSyncScanLimit     = 64 << 10
+	disguisedSegmentMax = 64 << 20
+)
 
 func (h *ContentHandler) writeSegment(w http.ResponseWriter, r *http.Request, key string, resp *http.Response) {
 	respCT := resp.Header.Get("Content-Type")
@@ -816,7 +855,23 @@ func perSegmentTag(t string) bool {
 		strings.HasPrefix(t, "#EXT-X-BYTERANGE")
 }
 
+// hasContentSegments reports whether any segment survives the ad filter. Some
+// hosts store the whole episode on ad CDNs, so filtering would empty the playlist.
+func hasContentSegments(body []byte, base *url.URL) bool {
+	for _, line := range strings.Split(string(body), "\n") {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" || strings.HasPrefix(trimmed, "#") {
+			continue
+		}
+		if !isAdSegment(resolveRef(base, trimmed)) {
+			return true
+		}
+	}
+	return false
+}
+
 func rewriteHLSPlaylist(body []byte, base *url.URL, hdrParam string) []byte {
+	filterAds := hasContentSegments(body, base)
 	out := make([]byte, 0, len(body)+len(body)/3)
 	var pending []string
 	flush := func() {
@@ -850,7 +905,7 @@ func rewriteHLSPlaylist(body []byte, base *url.URL, hdrParam string) []byte {
 			}
 		default:
 			abs := resolveRef(base, trimmed)
-			if isAdSegment(abs) {
+			if filterAds && isAdSegment(abs) {
 				pending = pending[:0]
 				continue
 			}

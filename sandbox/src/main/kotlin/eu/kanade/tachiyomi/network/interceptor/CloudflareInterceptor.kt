@@ -50,6 +50,14 @@ class CloudflareInterceptor(
             return response
         }
 
+        // Without cf-mitigated the block came from the origin, not a Cloudflare challenge.
+        // Embed hosts (e.g. anidrive.click) reject requests that don't look like an iframe navigation.
+        if (!isChallenge(response)) {
+            if (response.code != 403 || request.header("Sec-Fetch-Mode") != null) return response
+            response.close()
+            return chain.proceed(withNavigationHeaders(request))
+        }
+
         if (solverUrl.isEmpty()) {
             response.close()
             throw IOException("Cloudflare challenge on $host; set flaresolverr_url in settings to bypass it")
@@ -71,6 +79,28 @@ class CloudflareInterceptor(
         }
         // cf_clearance is bound to the solver's User-Agent, so the retry must send it.
         return chain.proceed(request.newBuilder().header("User-Agent", agent.userAgent).build())
+    }
+
+    private fun isChallenge(response: Response): Boolean {
+        if (response.header(CF_MITIGATED).equals("challenge", ignoreCase = true)) return true
+        val head = runCatching { response.peekBody(CHALLENGE_PEEK_BYTES).string() }.getOrDefault("")
+        return CHALLENGE_MARKERS.any { it in head }
+    }
+
+    private fun withNavigationHeaders(request: Request): Request {
+        val referer = request.header("Referer")?.toHttpUrlOrNull()
+        val site = when {
+            referer == null -> "none"
+            referer.host == request.url.host -> "same-origin"
+            else -> "cross-site"
+        }
+        return request.newBuilder()
+            .header("Accept", NAVIGATION_ACCEPT)
+            .header("Sec-Fetch-Dest", if (site == "cross-site") "iframe" else "document")
+            .header("Sec-Fetch-Mode", "navigate")
+            .header("Sec-Fetch-Site", site)
+            .header("Upgrade-Insecure-Requests", "1")
+            .build()
     }
 
     private data class SolvedAgent(val userAgent: String, val at: Long)
@@ -141,6 +171,11 @@ class CloudflareInterceptor(
     companion object {
         private val ERROR_CODES = listOf(403, 503)
         private val SERVER_CHECK = arrayOf("cloudflare-nginx", "cloudflare")
+        private const val CF_MITIGATED = "cf-mitigated"
+        private const val CHALLENGE_PEEK_BYTES = 64L * 1024
+        private val CHALLENGE_MARKERS = listOf("_cf_chl_opt", "cf-browser-verification")
+        private const val NAVIGATION_ACCEPT =
+            "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
         private val JSON_MEDIA = "application/json; charset=utf-8".toMediaType()
     }
 }

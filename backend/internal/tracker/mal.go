@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -41,10 +42,29 @@ func NewMAL(cfg MALConfig) *MAL {
 	return &MAL{
 		clientID:     cfg.ClientID,
 		clientSecret: cfg.ClientSecret,
-		callbackURL:  cfg.CallbackURL,
+		callbackURL:  loopbackAsLocalhost(cfg.CallbackURL),
 		http:         &http.Client{Timeout: 20 * time.Second},
 		pkce:         map[string]pkceEntry{},
 	}
+}
+
+// MAL compares redirect_uri literally against the app registration, which
+// lists http://localhost:6007; a loopback IP is rejected as invalid_client.
+func loopbackAsLocalhost(raw string) string {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return raw
+	}
+	ip := net.ParseIP(u.Hostname())
+	if ip == nil || !ip.IsLoopback() {
+		return raw
+	}
+	if port := u.Port(); port != "" {
+		u.Host = net.JoinHostPort("localhost", port)
+	} else {
+		u.Host = "localhost"
+	}
+	return u.String()
 }
 
 var errTokenRejected = errors.New("mal: token request rejected")

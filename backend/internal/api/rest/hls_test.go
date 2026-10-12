@@ -187,3 +187,31 @@ func TestRewriteHLSPlaylistDropsAds(t *testing.T) {
 		t.Fatalf("stale #EXTINF left:\n%s", out)
 	}
 }
+
+func TestRewriteHLSPlaylistKeepsAdHostedContent(t *testing.T) {
+	base, _ := url.Parse("https://static.anidrive.click/hls/x/abc-720.m3u8")
+	in := "#EXTM3U\n#EXT-X-TARGETDURATION:10\n" +
+		"#EXTINF:10.0,\nhttps://p16-ad-site-sign-sg.tiktokcdn.com/ad-site-i18n-sg/a.image\n" +
+		"#EXTINF:10.0,\nhttps://p16-ad-site-sign-sg.tiktokcdn.com/ad-site-i18n-sg/b.image\n" +
+		"#EXT-X-ENDLIST\n"
+	out := string(rewriteHLSPlaylist([]byte(in), base, ""))
+	if strings.Count(out, "#EXTINF") != 2 || strings.Count(out, "hls?u=") != 2 {
+		t.Fatalf("playlist hosted entirely on an ad CDN lost segments:\n%s", out)
+	}
+}
+
+func TestStripToTransportStream(t *testing.T) {
+	png := []byte("\x89PNG\r\n\x1a\n\x00\x00\x00\x0dIHDR-junk-IEND\xaeB`\x82")
+	ts := make([]byte, 188*3)
+	for i := 0; i < len(ts); i += 188 {
+		ts[i] = tsSyncByte
+	}
+	got := stripToTransportStream(append(append([]byte{}, png...), ts...))
+	if len(got) != len(ts) || got[0] != tsSyncByte {
+		t.Fatalf("prefix not stripped: len=%d first=%x", len(got), got[0])
+	}
+	plain := []byte("not a transport stream")
+	if string(stripToTransportStream(plain)) != string(plain) {
+		t.Fatal("non-TS payload must pass through unchanged")
+	}
+}

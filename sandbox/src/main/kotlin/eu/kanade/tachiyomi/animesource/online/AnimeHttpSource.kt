@@ -8,11 +8,13 @@ package eu.kanade.tachiyomi.animesource.online
 import eu.kanade.tachiyomi.animesource.AnimeCatalogueSource
 import eu.kanade.tachiyomi.animesource.model.AnimeFilterList
 import eu.kanade.tachiyomi.animesource.model.AnimesPage
+import eu.kanade.tachiyomi.animesource.model.Hoster
 import eu.kanade.tachiyomi.animesource.model.SAnime
 import eu.kanade.tachiyomi.animesource.model.SEpisode
 import eu.kanade.tachiyomi.animesource.model.Video
 import eu.kanade.tachiyomi.network.NetworkHelper
 import eu.kanade.tachiyomi.network.asObservableSuccess
+import eu.kanade.tachiyomi.network.awaitSuccess
 import org.koin.core.context.GlobalContext
 import okhttp3.Headers
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -33,11 +35,7 @@ abstract class AnimeHttpSource : AnimeCatalogueSource {
 
     open val versionId: Int = 1
 
-    override val id: Long by lazy {
-        val key = "${name.lowercase()}/$lang/$versionId"
-        val bytes = MessageDigest.getInstance("MD5").digest(key.toByteArray())
-        (0..7).map { bytes[it].toLong() and 0xff shl 8 * (7 - it) }.reduce(Long::or) and Long.MAX_VALUE
-    }
+    override val id: Long by lazy { generateId(name, lang, versionId) }
 
     val headers: Headers by lazy { headersBuilder().build() }
 
@@ -124,7 +122,50 @@ abstract class AnimeHttpSource : AnimeCatalogueSource {
     override suspend fun getVideoList(episode: SEpisode): List<Video> =
         fetchVideoList(episode).awaitSingle()
 
+    override suspend fun getSeasonList(anime: SAnime): List<SAnime> =
+        seasonListParse(client.newCall(seasonListRequest(anime)).awaitSuccess())
+
+    protected open fun seasonListRequest(anime: SAnime): Request = GET(baseUrl + anime.url, headers)
+
+    protected open fun seasonListParse(response: Response): List<SAnime> = throw UnsupportedOperationException()
+
+    override suspend fun getHosterList(episode: SEpisode): List<Hoster> =
+        hosterListParse(client.newCall(hosterListRequest(episode)).awaitSuccess())
+
+    protected open fun hosterListRequest(episode: SEpisode): Request = GET(baseUrl + episode.url, headers)
+
+    protected open fun hosterListParse(response: Response): List<Hoster> = throw UnsupportedOperationException()
+
+    override suspend fun getVideoList(hoster: Hoster): List<Video> =
+        videoListParse(client.newCall(videoListRequest(hoster)).awaitSuccess(), hoster)
+
+    protected open fun videoListRequest(hoster: Hoster): Request = GET(hoster.hosterUrl, headers)
+
+    protected open fun videoListParse(response: Response, hoster: Hoster): List<Video> =
+        throw UnsupportedOperationException()
+
+    /** Resolves a lazily-loaded video; null when it can't be played. */
+    open suspend fun resolveVideo(video: Video): Video? = video
+
+    open fun List<Hoster>.sortHosters(): List<Hoster> = this
+
     open fun List<Video>.sortVideos(): List<Video> = this
+
+    @Deprecated("Use resolveVideo instead")
+    open suspend fun getVideoUrl(video: Video): String =
+        videoUrlParse(client.newCall(videoUrlRequest(video)).awaitSuccess())
+
+    @Deprecated("Use resolveVideo instead")
+    protected open fun videoUrlRequest(video: Video): Request = GET(video.url, headers)
+
+    @Deprecated("Use resolveVideo instead")
+    protected open fun videoUrlParse(response: Response): String = throw UnsupportedOperationException()
+
+    protected fun generateId(name: String, lang: String, versionId: Int): Long {
+        val key = "${name.lowercase()}/$lang/$versionId"
+        val bytes = MessageDigest.getInstance("MD5").digest(key.toByteArray())
+        return (0..7).map { bytes[it].toLong() and 0xff shl 8 * (7 - it) }.reduce(Long::or) and Long.MAX_VALUE
+    }
 
     fun SEpisode.setUrlWithoutDomain(url: String) {
         this.url = getUrlWithoutDomain(url)

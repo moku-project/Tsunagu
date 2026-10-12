@@ -67,6 +67,15 @@ abstract class ParsedAnimeHttpSource : AnimeHttpSource() {
         return document.select(videoListSelector()).map { videoFromElement(it) }
     }
 
-    protected abstract fun videoListSelector(): String
-    protected abstract fun videoFromElement(element: Element): Video
+    // Not abstract: extensions-lib 16 dropped them, so lib 16 subclasses don't implement them.
+    protected open fun videoListSelector(): String = throw UnsupportedOperationException()
+    protected open fun videoFromElement(element: Element): Video = throw UnsupportedOperationException()
+
+    override fun seasonListParse(response: Response): List<SAnime> {
+        val document = response.asJsoup()
+        return document.select(seasonListSelector()).map { seasonFromElement(it) }
+    }
+
+    protected open fun seasonListSelector(): String = throw UnsupportedOperationException()
+    protected open fun seasonFromElement(element: Element): SAnime = throw UnsupportedOperationException()
 }

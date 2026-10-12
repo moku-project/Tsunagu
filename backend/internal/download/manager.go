@@ -46,7 +46,7 @@ type Manager struct {
 	stopCh    chan struct{}
 	wg        sync.WaitGroup
 	runningMu sync.Mutex
-	running   map[int64]context.CancelFunc
+	running   map[int64]*runningJob
 
 	pausedMu sync.RWMutex
 	paused   bool
@@ -69,7 +69,7 @@ func New(q *sqlcgen.Queries, sc *sandbox.SupervisedClient, mediaDir, downloadsDi
 		workers:      2,
 		wakeCh:       make(chan struct{}, 1),
 		stopCh:       make(chan struct{}),
-		running:      make(map[int64]context.CancelFunc),
+		running:      make(map[int64]*runningJob),
 	}
 }
 
@@ -129,24 +129,30 @@ func (m *Manager) processOne() {
 	}
 	job := jobs[0]
 
-	if err := m.q.UpdateDownloadProgress(ctx, sqlcgen.UpdateDownloadProgressParams{
-		Status:   "downloading",
-		Progress: 0,
-		ID:       job.ID,
-	}); err != nil {
+	// Workers race on the same queue; only the one whose UPDATE flips the row
+	// from 'queued' may run it.
+	claimed, err := m.q.ClaimQueuedDownload(ctx, job.ID)
+	if err != nil {
 		log.Printf("download: claim job %d failed: %v", job.ID, err)
+		return
+	}
+	if claimed == 0 {
 		return
 	}
 
 	jobCtx, cancel := context.WithCancel(ctx)
+	run := &runningJob{cancel: cancel, done: make(chan struct{})}
 	m.runningMu.Lock()
-	m.running[job.ChapterID] = cancel
+	m.running[job.ChapterID] = run
 	m.runningMu.Unlock()
 	defer func() {
 		m.runningMu.Lock()
-		delete(m.running, job.ChapterID)
+		if m.running[job.ChapterID] == run {
+			delete(m.running, job.ChapterID)
+		}
 		m.runningMu.Unlock()
 		cancel()
+		close(run.done)
 	}()
 
 	err = m.runJob(jobCtx, job.ID, job.ChapterID)
@@ -154,7 +160,7 @@ func (m *Manager) processOne() {
 
 		log.Printf("download: job %d (chapter %d) cancelled; discarding partial output", job.ID, job.ChapterID)
 		m.discardPartial(job.ChapterID)
-		_ = m.q.DeleteDownloadByChapter(context.Background(), job.ChapterID)
+		_ = m.q.DeleteDownload(context.Background(), job.ID)
 		return
 	}
 	if err != nil {
@@ -614,11 +620,11 @@ func (m *Manager) downloadAnime(ctx context.Context, jobID int64, client *sandbo
 		full = append(full, out...)
 
 		cmd := exec.CommandContext(ctx, "ffmpeg", full...)
-		var stderr bytes.Buffer
-		cmd.Stderr = &stderr
+		stderr := &ffmpegStderr{}
+		cmd.Stderr = stderr
 
 		stopProgress := make(chan struct{})
-		go m.watchFfmpegProgress(jobID, progressPath, stopProgress)
+		go m.watchFfmpegProgress(jobID, progressPath, stderr.DurationMs, stopProgress)
 
 		lastErr = cmd.Run()
 		close(stopProgress)
@@ -806,7 +812,7 @@ func truncateForError(s string) string {
 	return s[len(s)-max:]
 }
 
-func (m *Manager) watchFfmpegProgress(jobID int64, progressPath string, stop <-chan struct{}) {
+func (m *Manager) watchFfmpegProgress(jobID int64, progressPath string, durationMs func() int64, stop <-chan struct{}) {
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
 	ctx := context.Background()
@@ -834,16 +840,7 @@ func (m *Manager) watchFfmpegProgress(jobID int64, progressPath string, stop <-c
 			lastSize = totalSize
 			lastSampleAt = now
 
-			progress := 0.1
-			if totalSize > 0 {
-				progress = float64(totalSize) / (300 * 1024 * 1024)
-				if progress > 0.95 {
-					progress = 0.95
-				}
-				if progress < 0.1 {
-					progress = 0.1
-				}
-			}
+			progress := ffmpegProgress(outTimeMs, durationMs(), totalSize)
 			if err := m.q.UpdateDownloadStats(ctx, sqlcgen.UpdateDownloadStatsParams{
 				Status:          "downloading",
 				Progress:        progress,
@@ -889,14 +886,32 @@ func parseInt64(s string) (int64, error) {
 	return n, err
 }
 
+type runningJob struct {
+	cancel context.CancelFunc
+	done   chan struct{}
+}
+
+// Cancel stops the chapter's running job and waits for its cleanup, so a
+// caller that re-enqueues the chapter right after can't have the new row or
+// files deleted by the old worker.
 func (m *Manager) Cancel(ctx context.Context, chapterID int64) error {
 	m.runningMu.Lock()
-	cancel, ok := m.running[chapterID]
+	run, ok := m.running[chapterID]
 	m.runningMu.Unlock()
-	if ok {
-		cancel()
+	if !ok {
+		return nil
 	}
-	return nil
+	run.cancel()
+	wait := time.NewTimer(30 * time.Second)
+	defer wait.Stop()
+	select {
+	case <-run.done:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-wait.C:
+		return fmt.Errorf("download for chapter %d did not stop within 30s", chapterID)
+	}
 }
 
 func (m *Manager) discardPartial(chapterID int64) {

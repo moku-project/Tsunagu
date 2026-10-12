@@ -3,8 +3,6 @@
 
 package eu.kanade.tachiyomi.animesource.model
 
-import eu.kanade.tachiyomi.source.model.UpdateStrategy
-
 @Suppress("unused")
 interface SAnime {
 
@@ -24,7 +22,13 @@ interface SAnime {
 
     var thumbnail_url: String?
 
-    var update_strategy: UpdateStrategy
+    var background_url: String?
+
+    var update_strategy: AnimeUpdateStrategy
+
+    var fetch_type: FetchType
+
+    var season_number: Double
 
     var initialized: Boolean
 

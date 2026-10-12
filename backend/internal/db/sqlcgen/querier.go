@@ -17,6 +17,7 @@ type Querier interface {
 	AddTagToMedia(ctx context.Context, arg AddTagToMediaParams) error
 	BackfillMissingCoversFromMetadata(ctx context.Context) (int64, error)
 	CancelChapterDeletions(ctx context.Context, chapterIds []int64) error
+	ClaimQueuedDownload(ctx context.Context, id int64) (int64, error)
 	ClearDownloads(ctx context.Context) error
 	ClearDownloadsByStatus(ctx context.Context, statuses []string) error
 	ClearExtensionIconPaths(ctx context.Context) error

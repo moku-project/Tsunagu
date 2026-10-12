@@ -70,3 +70,18 @@ func TestMALExchangeNeedsCode(t *testing.T) {
 		t.Errorf("want code error, got %v", err)
 	}
 }
+
+func TestLoopbackAsLocalhost(t *testing.T) {
+	cases := map[string]string{
+		"http://127.0.0.1:6007/api/tracker/mal/callback":       "http://localhost:6007/api/tracker/mal/callback",
+		"http://[::1]:6007/api/tracker/mal/callback":           "http://localhost:6007/api/tracker/mal/callback",
+		"http://localhost:6007/api/tracker/mal/callback":       "http://localhost:6007/api/tracker/mal/callback",
+		"https://tsunagu.example.com/api/tracker/mal/callback": "https://tsunagu.example.com/api/tracker/mal/callback",
+		"http://192.168.0.10:6007/api/tracker/mal/callback":    "http://192.168.0.10:6007/api/tracker/mal/callback",
+	}
+	for in, want := range cases {
+		if got := loopbackAsLocalhost(in); got != want {
+			t.Errorf("loopbackAsLocalhost(%q) = %q, want %q", in, got, want)
+		}
+	}
+}

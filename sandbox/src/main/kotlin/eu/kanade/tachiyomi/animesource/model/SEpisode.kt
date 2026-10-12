@@ -14,7 +14,13 @@ interface SEpisode {
 
     var episode_number: Float
 
+    var fillermark: Boolean
+
     var scanlator: String?
+
+    var summary: String?
+
+    var preview_url: String?
 
     var memo: kotlinx.serialization.json.JsonObject?
 

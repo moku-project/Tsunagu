@@ -10,6 +10,9 @@ SELECT * FROM downloads WHERE status = 'queued' ORDER BY position;
 
 SELECT status, COUNT(*) AS count FROM downloads GROUP BY status;
 
+-- name: ClaimQueuedDownload :execrows
+UPDATE downloads SET status = 'downloading', progress = 0 WHERE id = ? AND status = 'queued';
+
 -- name: UpdateDownloadProgress :exec
 UPDATE downloads SET status = ?, progress = ? WHERE id = ?;
 

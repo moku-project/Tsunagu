@@ -12,6 +12,18 @@ import (
 	"time"
 )
 
+const claimQueuedDownload = `-- name: ClaimQueuedDownload :execrows
+UPDATE downloads SET status = 'downloading', progress = 0 WHERE id = ? AND status = 'queued'
+`
+
+func (q *Queries) ClaimQueuedDownload(ctx context.Context, id int64) (int64, error) {
+	result, err := q.db.ExecContext(ctx, claimQueuedDownload, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
 const clearDownloads = `-- name: ClearDownloads :exec
 DELETE FROM downloads WHERE status IN ('queued', 'failed')
 `
