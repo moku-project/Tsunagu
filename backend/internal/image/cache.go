@@ -24,7 +24,10 @@ func ExtFromContentType(ct string) string {
 }
 
 func DownloadToFile(url, destDir, destName string) (string, error) {
-	client := &http.Client{Timeout: 15 * time.Second}
+	return DownloadToFileWith(&http.Client{Timeout: 15 * time.Second}, url, destDir, destName)
+}
+
+func DownloadToFileWith(client *http.Client, url, destDir, destName string) (string, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return "", fmt.Errorf("fetching %s: %w", url, err)

@@ -2,16 +2,20 @@ package rest
 
 import (
 	"context"
+	"crypto/sha256"
 	"database/sql"
 	"encoding/base64"
+	"encoding/hex"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"tsunagu/backend/internal/db/sqlcgen"
 	"tsunagu/backend/internal/image"
+	"tsunagu/backend/internal/netguard"
 	"tsunagu/backend/internal/sandbox"
 )
 
@@ -154,8 +158,10 @@ func (h *RemoteCoverProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	destName := base64.URLEncoding.EncodeToString([]byte(upstreamURL))
-	localPath, err := image.DownloadToFile(upstreamURL, h.CoverCacheDir, destName)
+	// Hashed: base64 of a long URL passes the 255-byte file name limit.
+	sum := sha256.Sum256([]byte(upstreamURL))
+	destName := hex.EncodeToString(sum[:])
+	localPath, err := image.DownloadToFileWith(publicImageClient, upstreamURL, h.CoverCacheDir, destName)
 	if err != nil {
 		http.Error(w, "fetching cover failed", http.StatusBadGateway)
 		return
@@ -189,3 +195,6 @@ func readCachedCover(path string) ([]byte, string, bool) {
 	}
 	return b, contentType, true
 }
+
+// publicImageClient fetches /proxy/img targets, which any caller can name.
+var publicImageClient = &http.Client{Timeout: 15 * time.Second, Transport: netguard.Transport(nil)}

@@ -23,6 +23,7 @@ import (
 
 	"tsunagu/backend/internal/db/sqlcgen"
 	"tsunagu/backend/internal/localsource"
+	"tsunagu/backend/internal/netguard"
 	"tsunagu/backend/internal/sandbox"
 	sandboxv1 "tsunagu/backend/internal/sandbox/gen/sandbox/v1"
 	"tsunagu/backend/internal/streamresolve"
@@ -823,19 +824,8 @@ func applyUpstreamHeaders(req *http.Request, headers map[string]string) {
 
 var streamSegments = newSegCache(256 << 20)
 
-var proxyClient = &http.Client{
-	Transport: &http.Transport{
-		Proxy:                 http.ProxyFromEnvironment,
-		DialContext:           (&net.Dialer{Timeout: 10 * time.Second, KeepAlive: 30 * time.Second}).DialContext,
-		ForceAttemptHTTP2:     true,
-		MaxIdleConns:          100,
-		MaxIdleConnsPerHost:   8,
-		IdleConnTimeout:       90 * time.Second,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ResponseHeaderTimeout: 20 * time.Second,
-		ExpectContinueTimeout: time.Second,
-	},
-}
+// proxyClient fetches client-named URLs, so every dial is re-checked: see netguard.
+var proxyClient = &http.Client{Transport: netguard.Transport(streamLoopbackPort)}
 
 var hlsURIAttr = regexp.MustCompile(`URI="([^"]*)"`)
 
@@ -1326,14 +1316,21 @@ func publicHTTPURL(raw string) (*url.URL, bool) {
 		return nil, false
 	}
 	if ip := net.ParseIP(host); ip != nil {
-		if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsUnspecified() {
+		if netguard.Internal(ip) {
 			return nil, false
 		}
 	}
 	return u, true
 }
 
-var reservedLoopbackPorts = map[string]bool{"6007": true, "50051": true}
+var reservedLoopbackPorts = map[string]bool{"6007": true, "50051": true, "8191": true}
+
+// streamLoopbackPort admits the ephemeral loopback ports anime extensions run
+// their in-sandbox HLS proxies on, never our own services or privileged ports.
+func streamLoopbackPort(port string) bool {
+	n, err := strconv.Atoi(port)
+	return err == nil && n >= 1024 && !reservedLoopbackPorts[port]
+}
 
 // streamHTTPURL is publicHTTPURL for video/HLS/DASH targets. Some anime extensions
 // hand back URLs pointing at their own in-sandbox HLS proxy on a loopback
@@ -1353,14 +1350,7 @@ func streamHTTPURL(raw string) (*url.URL, bool) {
 		return nil, false
 	}
 	ip := net.ParseIP(u.Hostname())
-	if ip == nil || !ip.IsLoopback() {
-		return nil, false
-	}
-	port := u.Port()
-	if port == "" || reservedLoopbackPorts[port] {
-		return nil, false
-	}
-	if n, perr := strconv.Atoi(port); perr != nil || n < 1024 {
+	if ip == nil || !ip.IsLoopback() || !streamLoopbackPort(u.Port()) {
 		return nil, false
 	}
 	return u, true
