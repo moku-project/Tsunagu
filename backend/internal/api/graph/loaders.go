@@ -2,7 +2,9 @@ package graph
 
 import (
 	"context"
+	"database/sql"
 	"path/filepath"
+	"strings"
 
 	"github.com/vikstrous/dataloadgen"
 
@@ -30,6 +32,8 @@ type Loaders struct {
 	DownloadedPagesByChapter *dataloadgen.Loader[int64, int32]
 
 	DownloadedByChapter *dataloadgen.Loader[int64, bool]
+	ChapterByID         *dataloadgen.Loader[int64, *sqlcgen.Chapter]
+	PdfByChapter        *dataloadgen.Loader[int64, bool]
 
 	DownloadFolderPathByMedia *dataloadgen.Loader[int64, *string]
 }
@@ -55,6 +59,8 @@ func NewLoaders(q *sqlcgen.Queries) *Loaders {
 		LatestDownloadByChapter:  dataloadgen.NewLoader(latestDownloadByChapterFn(q)),
 		DownloadedPagesByChapter: dataloadgen.NewLoader(downloadedPagesByChapterFn(q)),
 		DownloadedByChapter:      dataloadgen.NewLoader(downloadedByChapterFn(q)),
+		ChapterByID:              dataloadgen.NewLoader(chapterByIDFn(q)),
+		PdfByChapter:             dataloadgen.NewLoader(pdfByChapterFn(q)),
 
 		DownloadFolderPathByMedia: dataloadgen.NewLoader(downloadFolderPathByMediaFn(q)),
 	}
@@ -492,6 +498,51 @@ func metadataLinkByMediaFn(q *sqlcgen.Queries) func(context.Context, []int64) ([
 			}
 		}
 		out := make([]*sqlcgen.MetadataLink, len(keys))
+		for i, k := range keys {
+			out[i] = m[k]
+		}
+		return out, nil
+	}
+}
+
+func chapterByIDFn(q *sqlcgen.Queries) func(context.Context, []int64) ([]*sqlcgen.Chapter, []error) {
+	return func(ctx context.Context, keys []int64) ([]*sqlcgen.Chapter, []error) {
+		rows, err := q.ListChaptersByIDs(ctx, keys)
+		if err != nil {
+			return make([]*sqlcgen.Chapter, len(keys)), repeatErr(err, len(keys))
+		}
+		m := make(map[int64]*sqlcgen.Chapter, len(rows))
+		for i := range rows {
+			m[rows[i].ID] = &rows[i]
+		}
+		out := make([]*sqlcgen.Chapter, len(keys))
+		errs := make([]error, len(keys))
+		for i, k := range keys {
+			if out[i] = m[k]; out[i] == nil {
+				errs[i] = sql.ErrNoRows
+			}
+		}
+		return out, errs
+	}
+}
+
+// pdfByChapterFn reports which chapters are a downloaded or local PDF, judged by
+// their first page's path.
+func pdfByChapterFn(q *sqlcgen.Queries) func(context.Context, []int64) ([]bool, []error) {
+	return func(ctx context.Context, keys []int64) ([]bool, []error) {
+		rows, err := q.ListFirstMangaPagePathsByChapterIDs(ctx, keys)
+		if err != nil {
+			return make([]bool, len(keys)), repeatErr(err, len(keys))
+		}
+		m := make(map[int64]bool, len(rows))
+		for _, r := range rows {
+			if !r.LocalPath.Valid {
+				continue
+			}
+			archivePath, _, ok := localsource.ParseZipPagePath(r.LocalPath.String)
+			m[r.ChapterID] = ok && strings.ToLower(filepath.Ext(archivePath)) == ".pdf"
+		}
+		out := make([]bool, len(keys))
 		for i, k := range keys {
 			out[i] = m[k]
 		}

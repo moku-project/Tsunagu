@@ -264,3 +264,11 @@ UPDATE OR IGNORE novel_chapter_content SET chapter_id = sqlc.arg(to_id) WHERE ch
 
 -- name: MoveChapterEpisodeStream :exec
 UPDATE OR IGNORE anime_episode_streams SET chapter_id = sqlc.arg(to_id) WHERE chapter_id = sqlc.arg(from_id);
+
+-- name: ListChaptersByIDs :many
+SELECT * FROM chapters WHERE id IN (sqlc.slice('ids'));
+
+-- name: ListFirstMangaPagePathsByChapterIDs :many
+SELECT mp.chapter_id, mp.local_path FROM manga_pages mp
+WHERE mp.chapter_id IN (sqlc.slice('chapter_ids'))
+  AND mp.page_number = (SELECT MIN(p2.page_number) FROM manga_pages p2 WHERE p2.chapter_id = mp.chapter_id);

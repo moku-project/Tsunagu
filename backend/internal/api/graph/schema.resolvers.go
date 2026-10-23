@@ -151,6 +151,13 @@ func (r *downloadResolver) Chapter(ctx context.Context, obj *model.Download) (*m
 	if err != nil {
 		return nil, err
 	}
+	if l := LoadersFromContext(ctx); l != nil {
+		ch, err := l.ChapterByID.Load(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		return toChapter(*ch), nil
+	}
 	ch, err := r.Q.GetChapter(ctx, id)
 	if err != nil {
 		return nil, err

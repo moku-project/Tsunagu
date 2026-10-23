@@ -786,6 +786,53 @@ func (q *Queries) ListChapterUpdates(ctx context.Context, arg ListChapterUpdates
 	return items, nil
 }
 
+const listChaptersByIDs = `-- name: ListChaptersByIDs :many
+SELECT id, media_id, external_id, title, number, uploaded_at, source_order, first_seen_at, scanlator FROM chapters WHERE id IN (/*SLICE:ids*/?)
+`
+
+func (q *Queries) ListChaptersByIDs(ctx context.Context, ids []int64) ([]Chapter, error) {
+	query := listChaptersByIDs
+	var queryParams []interface{}
+	if len(ids) > 0 {
+		for _, v := range ids {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:ids*/?", strings.Repeat(",?", len(ids))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:ids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Chapter{}
+	for rows.Next() {
+		var i Chapter
+		if err := rows.Scan(
+			&i.ID,
+			&i.MediaID,
+			&i.ExternalID,
+			&i.Title,
+			&i.Number,
+			&i.UploadedAt,
+			&i.SourceOrder,
+			&i.FirstSeenAt,
+			&i.Scanlator,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listChaptersByMedia = `-- name: ListChaptersByMedia :many
 SELECT id, media_id, external_id, title, number, uploaded_at, source_order, first_seen_at, scanlator FROM chapters WHERE media_id = ? ORDER BY source_order, number
 `
@@ -927,6 +974,50 @@ func (q *Queries) ListDownloadedNovelContentByChapterIDs(ctx context.Context, ch
 	items := []NovelChapterContent{}
 	for rows.Next() {
 		var i NovelChapterContent
+		if err := rows.Scan(&i.ChapterID, &i.LocalPath); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listFirstMangaPagePathsByChapterIDs = `-- name: ListFirstMangaPagePathsByChapterIDs :many
+SELECT mp.chapter_id, mp.local_path FROM manga_pages mp
+WHERE mp.chapter_id IN (/*SLICE:chapter_ids*/?)
+  AND mp.page_number = (SELECT MIN(p2.page_number) FROM manga_pages p2 WHERE p2.chapter_id = mp.chapter_id)
+`
+
+type ListFirstMangaPagePathsByChapterIDsRow struct {
+	ChapterID int64          `json:"chapter_id"`
+	LocalPath sql.NullString `json:"local_path"`
+}
+
+func (q *Queries) ListFirstMangaPagePathsByChapterIDs(ctx context.Context, chapterIds []int64) ([]ListFirstMangaPagePathsByChapterIDsRow, error) {
+	query := listFirstMangaPagePathsByChapterIDs
+	var queryParams []interface{}
+	if len(chapterIds) > 0 {
+		for _, v := range chapterIds {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:chapter_ids*/?", strings.Repeat(",?", len(chapterIds))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:chapter_ids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListFirstMangaPagePathsByChapterIDsRow{}
+	for rows.Next() {
+		var i ListFirstMangaPagePathsByChapterIDsRow
 		if err := rows.Scan(&i.ChapterID, &i.LocalPath); err != nil {
 			return nil, err
 		}

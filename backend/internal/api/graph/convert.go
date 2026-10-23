@@ -671,6 +671,9 @@ func pdfPageURLs(mediaID, chapterID string, count int) []string {
 }
 
 func (r *Resolver) chapterIsPdf(ctx context.Context, chapterID int64) (bool, error) {
+	if l := LoadersFromContext(ctx); l != nil {
+		return l.PdfByChapter.Load(ctx, chapterID)
+	}
 	pages, err := r.Q.ListMangaPages(ctx, chapterID)
 	if err != nil || len(pages) == 0 || !pages[0].LocalPath.Valid {
 		return false, err
