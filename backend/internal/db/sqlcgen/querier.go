@@ -17,7 +17,10 @@ type Querier interface {
 	AddTagToMedia(ctx context.Context, arg AddTagToMediaParams) error
 	BackfillMissingCoversFromMetadata(ctx context.Context) (int64, error)
 	CancelChapterDeletions(ctx context.Context, chapterIds []int64) error
+	ChapterHasDownload(ctx context.Context, chapterID int64) (bool, error)
 	ClaimQueuedDownload(ctx context.Context, id int64) (int64, error)
+	// A series' first sync is its backlog, not new releases; keep it off the Updates feed.
+	ClearChapterFirstSeen(ctx context.Context, mediaID int64) error
 	ClearDownloads(ctx context.Context) error
 	ClearDownloadsByStatus(ctx context.Context, statuses []string) error
 	ClearExtensionIconPaths(ctx context.Context) error
@@ -42,6 +45,7 @@ type Querier interface {
 	CreateTag(ctx context.Context, name string) (Tag, error)
 	DeleteAllMediaAutomation(ctx context.Context) error
 	DeleteAnimeEpisodeStream(ctx context.Context, chapterID int64) error
+	DeleteChapter(ctx context.Context, id int64) error
 	DeleteContentFilterRule(ctx context.Context, id int64) error
 	DeleteDownload(ctx context.Context, id int64) error
 	DeleteDownloadByChapter(ctx context.Context, chapterID int64) error
@@ -162,6 +166,11 @@ type Querier interface {
 	MarkMediaExtensionRemoved(ctx context.Context, extensionID sql.NullInt64) error
 	MaxReadChapterNumber(ctx context.Context, mediaID int64) (float64, error)
 	MediaInAutoDownloadFolder(ctx context.Context, mediaID int64) (bool, error)
+	MoveChapterDownloads(ctx context.Context, arg MoveChapterDownloadsParams) error
+	MoveChapterEpisodeStream(ctx context.Context, arg MoveChapterEpisodeStreamParams) error
+	MoveChapterNovelContent(ctx context.Context, arg MoveChapterNovelContentParams) error
+	MoveChapterPages(ctx context.Context, arg MoveChapterPagesParams) error
+	MoveChapterProgress(ctx context.Context, arg MoveChapterProgressParams) error
 	NextUnreadChapterByMediaIDs(ctx context.Context, mediaIds []int64) ([]Chapter, error)
 	QueryExtensions(ctx context.Context, arg QueryExtensionsParams) ([]Extension, error)
 	// Position updates from a reader or player. Unlike UpsertReadingProgress this never

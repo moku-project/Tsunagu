@@ -227,3 +227,28 @@ UPDATE chapters SET number = ? WHERE id = ?;
 -- Unlike GetChapterDownloadContext this works after the series' extension was
 -- removed, so orphaned downloads can still be deleted.
 SELECT m.content_type FROM chapters c JOIN media m ON m.id = c.media_id WHERE c.id = ?;
+
+-- name: ClearChapterFirstSeen :exec
+-- A series' first sync is its backlog, not new releases; keep it off the Updates feed.
+UPDATE chapters SET first_seen_at = NULL WHERE media_id = ?;
+
+-- name: ChapterHasDownload :one
+SELECT EXISTS (SELECT 1 FROM downloads WHERE chapter_id = ?) AS has_download;
+
+-- name: DeleteChapter :exec
+DELETE FROM chapters WHERE id = ?;
+
+-- name: MoveChapterProgress :exec
+UPDATE OR IGNORE reading_progress SET chapter_id = sqlc.arg(to_id) WHERE chapter_id = sqlc.arg(from_id);
+
+-- name: MoveChapterDownloads :exec
+UPDATE downloads SET chapter_id = sqlc.arg(to_id) WHERE chapter_id = sqlc.arg(from_id);
+
+-- name: MoveChapterPages :exec
+UPDATE OR IGNORE manga_pages SET chapter_id = sqlc.arg(to_id) WHERE chapter_id = sqlc.arg(from_id);
+
+-- name: MoveChapterNovelContent :exec
+UPDATE OR IGNORE novel_chapter_content SET chapter_id = sqlc.arg(to_id) WHERE chapter_id = sqlc.arg(from_id);
+
+-- name: MoveChapterEpisodeStream :exec
+UPDATE OR IGNORE anime_episode_streams SET chapter_id = sqlc.arg(to_id) WHERE chapter_id = sqlc.arg(from_id);

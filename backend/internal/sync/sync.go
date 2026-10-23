@@ -157,7 +157,7 @@ func (s *Syncer) runLibraryUpdate(sc *sandbox.SupervisedClient, ids []int64) {
 		s.updateProg.CurrentTitle = m.Title
 		s.updateMu.Unlock()
 
-		before, _ := s.q.ListChapterExternalIDsByMedia(ctx, id)
+		before, _ := s.q.ListChaptersByMedia(ctx, id)
 
 		// Ensure per title: it respawns a sandbox that crashed partway through.
 		var after []sqlcgen.Chapter
@@ -191,22 +191,93 @@ func (s *Syncer) runLibraryUpdate(sc *sandbox.SupervisedClient, ids []int64) {
 
 // newChapterIDs returns the chapters in after that weren't known before. A
 // first-ever sync (nothing known) returns none: every chapter looking new is a
-// backlog, not new releases, and mustn't be counted or auto-downloaded.
-func newChapterIDs(before []string, after []sqlcgen.Chapter) []int64 {
+// backlog, not new releases, and mustn't be counted or auto-downloaded. Nor
+// does a chapter that only replaced a known one under a new ID.
+func newChapterIDs(before, after []sqlcgen.Chapter) []int64 {
 	if len(before) == 0 {
 		return nil
 	}
-	known := make(map[string]struct{}, len(before))
-	for _, e := range before {
-		known[e] = struct{}{}
+	fresh, stale := diffChapters(before, after)
+	replaced := make(map[int64]bool)
+	match := chapterMatcher(fresh)
+	for _, old := range stale {
+		if ch, ok := match(old); ok {
+			replaced[ch.ID] = true
+		}
 	}
 	var ids []int64
-	for _, ch := range after {
-		if _, ok := known[ch.ExternalID]; !ok {
+	for _, ch := range fresh {
+		if !replaced[ch.ID] {
 			ids = append(ids, ch.ID)
 		}
 	}
 	return ids
+}
+
+// diffChapters splits a sync into chapters the source newly lists (fresh) and
+// known chapters it no longer lists (stale).
+func diffChapters(before, after []sqlcgen.Chapter) (fresh, stale []sqlcgen.Chapter) {
+	known := make(map[string]bool, len(before))
+	for _, ch := range before {
+		known[ch.ExternalID] = true
+	}
+	listed := make(map[string]bool, len(after))
+	for _, ch := range after {
+		listed[ch.ExternalID] = true
+		if !known[ch.ExternalID] {
+			fresh = append(fresh, ch)
+		}
+	}
+	for _, ch := range before {
+		if !listed[ch.ExternalID] {
+			stale = append(stale, ch)
+		}
+	}
+	return fresh, stale
+}
+
+// pruneStaleChapters handles chapters the source stopped listing. One that came
+// back under a new ID (a source changing its URL scheme) hands its progress and
+// downloads to the replacement; the rest are dropped unless downloaded, so a
+// copy the user kept stays readable.
+func pruneStaleChapters(ctx context.Context, q *sqlcgen.Queries, before, after []sqlcgen.Chapter) error {
+	fresh, stale := diffChapters(before, after)
+	// A source suddenly listing far fewer chapters is more likely failing than pruning.
+	partial := len(after) < len(before)/2
+	match := chapterMatcher(fresh)
+	for _, old := range stale {
+		if repl, ok := match(old); ok {
+			if err := moveChapterState(ctx, q, old.ID, repl.ID); err != nil {
+				return fmt.Errorf("move chapter %d to %d: %w", old.ID, repl.ID, err)
+			}
+		} else if partial {
+			continue
+		} else if has, err := q.ChapterHasDownload(ctx, old.ID); err != nil {
+			return err
+		} else if has {
+			continue
+		}
+		if err := q.DeleteChapter(ctx, old.ID); err != nil {
+			return fmt.Errorf("delete stale chapter %d: %w", old.ID, err)
+		}
+	}
+	return nil
+}
+
+func moveChapterState(ctx context.Context, q *sqlcgen.Queries, from, to int64) error {
+	if err := q.MoveChapterProgress(ctx, sqlcgen.MoveChapterProgressParams{FromID: from, ToID: to}); err != nil {
+		return err
+	}
+	if err := q.MoveChapterDownloads(ctx, sqlcgen.MoveChapterDownloadsParams{FromID: from, ToID: to}); err != nil {
+		return err
+	}
+	if err := q.MoveChapterPages(ctx, sqlcgen.MoveChapterPagesParams{FromID: from, ToID: to}); err != nil {
+		return err
+	}
+	if err := q.MoveChapterNovelContent(ctx, sqlcgen.MoveChapterNovelContentParams{FromID: from, ToID: to}); err != nil {
+		return err
+	}
+	return q.MoveChapterEpisodeStream(ctx, sqlcgen.MoveChapterEpisodeStreamParams{FromID: from, ToID: to})
 }
 
 func (s *Syncer) lockFor(packageName string) *sync.Mutex {
@@ -1484,6 +1555,11 @@ func (s *Syncer) SyncChapters(ctx context.Context, c *sandbox.Client, libraryEnt
 	defer tx.Rollback()
 	qtx := s.q.WithTx(tx)
 
+	existing, err := qtx.ListChaptersByMedia(ctx, libraryEntryID)
+	if err != nil {
+		return nil, fmt.Errorf("list chapters of media %d: %w", libraryEntryID, err)
+	}
+
 	scanlators := deriveScanlators(summaries)
 
 	chapters := make([]sqlcgen.Chapter, 0, len(summaries))
@@ -1505,6 +1581,17 @@ func (s *Syncer) SyncChapters(ctx context.Context, c *sandbox.Client, libraryEnt
 			return nil, fmt.Errorf("upsert chapter %s: %w", sm.SourceID, err)
 		}
 		chapters = append(chapters, chapter)
+	}
+
+	switch {
+	case len(existing) == 0:
+		if err := qtx.ClearChapterFirstSeen(ctx, libraryEntryID); err != nil {
+			return nil, fmt.Errorf("clear first-seen of media %d: %w", libraryEntryID, err)
+		}
+	case len(chapters) > 0:
+		if err := pruneStaleChapters(ctx, qtx, existing, chapters); err != nil {
+			return nil, err
+		}
 	}
 
 	if err := tx.Commit(); err != nil {

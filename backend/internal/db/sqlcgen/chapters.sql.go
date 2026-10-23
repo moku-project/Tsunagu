@@ -11,6 +11,27 @@ import (
 	"strings"
 )
 
+const chapterHasDownload = `-- name: ChapterHasDownload :one
+SELECT EXISTS (SELECT 1 FROM downloads WHERE chapter_id = ?) AS has_download
+`
+
+func (q *Queries) ChapterHasDownload(ctx context.Context, chapterID int64) (bool, error) {
+	row := q.db.QueryRowContext(ctx, chapterHasDownload, chapterID)
+	var has_download bool
+	err := row.Scan(&has_download)
+	return has_download, err
+}
+
+const clearChapterFirstSeen = `-- name: ClearChapterFirstSeen :exec
+UPDATE chapters SET first_seen_at = NULL WHERE media_id = ?
+`
+
+// A series' first sync is its backlog, not new releases; keep it off the Updates feed.
+func (q *Queries) ClearChapterFirstSeen(ctx context.Context, mediaID int64) error {
+	_, err := q.db.ExecContext(ctx, clearChapterFirstSeen, mediaID)
+	return err
+}
+
 const countChaptersByMediaIDs = `-- name: CountChaptersByMediaIDs :many
 SELECT media_id, COUNT(*) AS chapter_count
 FROM chapters
@@ -206,6 +227,15 @@ DELETE FROM anime_episode_streams WHERE chapter_id = ?
 
 func (q *Queries) DeleteAnimeEpisodeStream(ctx context.Context, chapterID int64) error {
 	_, err := q.db.ExecContext(ctx, deleteAnimeEpisodeStream, chapterID)
+	return err
+}
+
+const deleteChapter = `-- name: DeleteChapter :exec
+DELETE FROM chapters WHERE id = ?
+`
+
+func (q *Queries) DeleteChapter(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteChapter, id)
 	return err
 }
 
@@ -980,6 +1010,76 @@ func (q *Queries) ListRecentChapters(ctx context.Context, arg ListRecentChapters
 		return nil, err
 	}
 	return items, nil
+}
+
+const moveChapterDownloads = `-- name: MoveChapterDownloads :exec
+UPDATE downloads SET chapter_id = ?1 WHERE chapter_id = ?2
+`
+
+type MoveChapterDownloadsParams struct {
+	ToID   int64 `json:"to_id"`
+	FromID int64 `json:"from_id"`
+}
+
+func (q *Queries) MoveChapterDownloads(ctx context.Context, arg MoveChapterDownloadsParams) error {
+	_, err := q.db.ExecContext(ctx, moveChapterDownloads, arg.ToID, arg.FromID)
+	return err
+}
+
+const moveChapterEpisodeStream = `-- name: MoveChapterEpisodeStream :exec
+UPDATE OR IGNORE anime_episode_streams SET chapter_id = ?1 WHERE chapter_id = ?2
+`
+
+type MoveChapterEpisodeStreamParams struct {
+	ToID   int64 `json:"to_id"`
+	FromID int64 `json:"from_id"`
+}
+
+func (q *Queries) MoveChapterEpisodeStream(ctx context.Context, arg MoveChapterEpisodeStreamParams) error {
+	_, err := q.db.ExecContext(ctx, moveChapterEpisodeStream, arg.ToID, arg.FromID)
+	return err
+}
+
+const moveChapterNovelContent = `-- name: MoveChapterNovelContent :exec
+UPDATE OR IGNORE novel_chapter_content SET chapter_id = ?1 WHERE chapter_id = ?2
+`
+
+type MoveChapterNovelContentParams struct {
+	ToID   int64 `json:"to_id"`
+	FromID int64 `json:"from_id"`
+}
+
+func (q *Queries) MoveChapterNovelContent(ctx context.Context, arg MoveChapterNovelContentParams) error {
+	_, err := q.db.ExecContext(ctx, moveChapterNovelContent, arg.ToID, arg.FromID)
+	return err
+}
+
+const moveChapterPages = `-- name: MoveChapterPages :exec
+UPDATE OR IGNORE manga_pages SET chapter_id = ?1 WHERE chapter_id = ?2
+`
+
+type MoveChapterPagesParams struct {
+	ToID   int64 `json:"to_id"`
+	FromID int64 `json:"from_id"`
+}
+
+func (q *Queries) MoveChapterPages(ctx context.Context, arg MoveChapterPagesParams) error {
+	_, err := q.db.ExecContext(ctx, moveChapterPages, arg.ToID, arg.FromID)
+	return err
+}
+
+const moveChapterProgress = `-- name: MoveChapterProgress :exec
+UPDATE OR IGNORE reading_progress SET chapter_id = ?1 WHERE chapter_id = ?2
+`
+
+type MoveChapterProgressParams struct {
+	ToID   int64 `json:"to_id"`
+	FromID int64 `json:"from_id"`
+}
+
+func (q *Queries) MoveChapterProgress(ctx context.Context, arg MoveChapterProgressParams) error {
+	_, err := q.db.ExecContext(ctx, moveChapterProgress, arg.ToID, arg.FromID)
+	return err
 }
 
 const nextUnreadChapterByMediaIDs = `-- name: NextUnreadChapterByMediaIDs :many
