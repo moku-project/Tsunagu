@@ -17,7 +17,11 @@ const dsnPragmas = "?_pragma=foreign_keys(1)" +
 	"&_pragma=synchronous(NORMAL)" +
 	"&_pragma=busy_timeout(5000)" +
 	"&_pragma=cache_size(-20000)" +
-	"&_pragma=temp_store(MEMORY)"
+	"&_pragma=temp_store(MEMORY)" +
+	// Take the write lock at BEGIN: a deferred transaction that reads first and then
+	// writes fails with SQLITE_BUSY at once if another connection wrote meanwhile,
+	// without waiting on busy_timeout.
+	"&_txlock=immediate"
 
 //go:embed migrations/0001_init.sql
 var migration0001 string
