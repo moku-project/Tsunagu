@@ -877,11 +877,9 @@ class ExtensionServiceImpl(
             }
 
             val ext = sourceFile.extension.ifBlank { "apk" }
-            val packageName = if (ext == "js") {
-                sourceFile.nameWithoutExtension
-            } else {
-                ExtensionLoader.peekPackageName(sourceFile)
-            }
+            // A sideloaded .js arrives under a temporary name; its plugin id is what the
+            // file must be stored under for the registry to find it again.
+            val packageName = ExtensionLoader.peekPackageName(sourceFile)
 
             val targetFile = registry.install(sourceFile, packageName)
             val loaded = targetFile

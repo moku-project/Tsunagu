@@ -53,8 +53,23 @@ class ExtensionRegistry(
         }
         if (novelEnabled) {
             extensionsDir.listFiles { file -> file.extension == "js" }?.forEach { file ->
-                pendingFiles[file.nameWithoutExtension] = file
+                val named = renameSideload(file)
+                pendingFiles[named.nameWithoutExtension] = named
             }
+        }
+    }
+
+    // Older builds stored sideloaded plugins as sideload-<nanos>.js, which nothing
+    // looks up by; move them to <plugin id>.js.
+    private fun renameSideload(file: File): File {
+        if (!file.name.startsWith("sideload-")) return file
+        return runCatching {
+            val target = targetFile(ExtensionLoader.peekPackageName(file), "js")
+            if (!target.exists()) Files.move(file.toPath(), target.toPath()) else file.delete()
+            target
+        }.getOrElse {
+            println("FAILED to rename sideloaded plugin $file: ${it.message}")
+            file
         }
     }
 

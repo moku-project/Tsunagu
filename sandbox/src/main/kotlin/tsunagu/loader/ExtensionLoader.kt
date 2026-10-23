@@ -35,7 +35,10 @@ object ExtensionLoader {
 
     fun peekPackageName(file: File): String {
         if (file.extension == "js") {
-            throw ExtensionLoadException("peekPackageName does not support .js files")
+            // LNReader plugins declare their id in code, so the only way to read it is to load them.
+            val plugin = NovelPluginLoader.load(file)
+            (plugin.source as? AutoCloseable)?.close()
+            return plugin.packageName
         }
         if (file.extension == "jar") {
             ZipFile(file).use { zip ->
