@@ -3,6 +3,7 @@ package automation
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"os"
 	"path/filepath"
 	"slices"
@@ -479,5 +480,20 @@ func TestUpdateTargetsSkipLocalMedia(t *testing.T) {
 	}
 	if !slices.Equal(ids, []int64{1}) {
 		t.Fatalf("targets = %v, want [1]", ids)
+	}
+}
+
+// A chapter that is queued or already downloaded must not get a second job.
+func TestEnqueueDownloadSkipsActiveChapters(t *testing.T) {
+	f := newFixture(t, 1)
+	ctx := context.Background()
+	if _, err := f.q.EnqueueDownload(ctx, 1); !errors.Is(err, sql.ErrNoRows) {
+		t.Fatalf("downloaded chapter re-queued: %v", err)
+	}
+	if _, err := f.q.EnqueueDownload(ctx, 2); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.q.EnqueueDownload(ctx, 2); !errors.Is(err, sql.ErrNoRows) {
+		t.Fatalf("queued chapter queued twice: %v", err)
 	}
 }

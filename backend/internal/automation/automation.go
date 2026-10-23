@@ -264,7 +264,7 @@ func (m *Manager) enqueue(ctx context.Context, chapterIDs []int64) {
 		return
 	}
 	for _, id := range chapterIDs {
-		if _, err := m.q.EnqueueDownload(ctx, id); err != nil {
+		if _, err := m.q.EnqueueDownload(ctx, id); err != nil && !errors.Is(err, sql.ErrNoRows) {
 			log.Printf("automation: enqueue chapter %d: %v", id, err)
 		}
 	}

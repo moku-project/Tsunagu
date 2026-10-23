@@ -63,6 +63,8 @@ type Querier interface {
 	DeleteTrackerAccountByType(ctx context.Context, trackerType string) error
 	DeleteTrackerLink(ctx context.Context, id int64) error
 	DeleteUserContentFilterRules(ctx context.Context) error
+	// Returns no row when the chapter is already queued, downloading, or downloaded
+	// with its files present: a second job would race the first over the same folder.
 	EnqueueDownload(ctx context.Context, chapterID int64) (Download, error)
 	FailDownload(ctx context.Context, arg FailDownloadParams) error
 	GapFillMediaMetadata(ctx context.Context, arg GapFillMediaMetadataParams) (Medium, error)

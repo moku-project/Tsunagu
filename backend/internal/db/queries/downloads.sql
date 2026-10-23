@@ -1,6 +1,17 @@
 -- name: EnqueueDownload :one
+-- Returns no row when the chapter is already queued, downloading, or downloaded
+-- with its files present: a second job would race the first over the same folder.
 INSERT INTO downloads (chapter_id, status, position)
-VALUES (?, 'queued', COALESCE((SELECT MAX(position) FROM downloads WHERE status = 'queued'), 0) + 1)
+SELECT sqlc.arg(chapter_id), 'queued', COALESCE((SELECT MAX(position) FROM downloads WHERE status = 'queued'), 0) + 1
+WHERE NOT EXISTS (
+    SELECT 1 FROM downloads d
+    WHERE d.chapter_id = sqlc.arg(chapter_id)
+      AND (d.status IN ('queued', 'downloading') OR (d.status = 'done' AND (
+        EXISTS (SELECT 1 FROM manga_pages mp WHERE mp.chapter_id = d.chapter_id AND mp.local_path IS NOT NULL AND mp.local_path != '')
+        OR EXISTS (SELECT 1 FROM novel_chapter_content nc WHERE nc.chapter_id = d.chapter_id AND nc.local_path IS NOT NULL AND nc.local_path != '')
+        OR EXISTS (SELECT 1 FROM anime_episode_streams a WHERE a.chapter_id = d.chapter_id AND a.local_path IS NOT NULL AND a.local_path != '')
+      )))
+)
 RETURNING *;
 
 -- name: ListQueuedDownloads :many
@@ -32,7 +43,7 @@ UPDATE downloads SET status = 'queued', progress = 0 WHERE status = 'downloading
 UPDATE downloads SET status = ?, progress = ?, downloaded_bytes = ?, bytes_per_sec = ? WHERE id = ?;
 
 -- name: GetLatestDownloadForChapter :one
-SELECT * FROM downloads WHERE chapter_id = ? ORDER BY created_at DESC LIMIT 1;
+SELECT * FROM downloads WHERE chapter_id = ? ORDER BY created_at DESC, id DESC LIMIT 1;
 
 -- name: GetLatestDownloadsByChapterIDs :many
 
@@ -74,7 +85,7 @@ DELETE FROM downloads WHERE chapter_id IN (sqlc.slice('chapter_ids'));
 
 -- Requires actual current file presence, not just a job row that once said
 -- "done" -- otherwise deleted/relocated downloads stay counted forever.
-SELECT c.media_id AS media_id, COUNT(*) AS download_count
+SELECT c.media_id AS media_id, COUNT(DISTINCT c.id) AS download_count
 FROM downloads d
 JOIN chapters c ON c.id = d.chapter_id
 WHERE c.media_id IN (sqlc.slice('media_ids'))

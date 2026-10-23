@@ -823,6 +823,10 @@ func (r *mutationResolver) EnqueueDownload(ctx context.Context, mediaID string, 
 			return nil, err
 		}
 		d, err := r.Q.EnqueueDownload(ctx, id)
+		if err == sql.ErrNoRows {
+			// Already queued or downloaded; report the existing job.
+			d, err = r.Q.GetLatestDownloadForChapter(ctx, id)
+		}
 		if err != nil {
 			return nil, err
 		}

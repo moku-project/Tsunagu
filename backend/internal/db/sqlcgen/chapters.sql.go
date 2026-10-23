@@ -79,11 +79,17 @@ func (q *Queries) CountChaptersByMediaIDs(ctx context.Context, mediaIds []int64)
 
 const countDownloadedPagesByChapterIDs = `-- name: CountDownloadedPagesByChapterIDs :many
 
-SELECT chapter_id, COUNT(*) AS page_count
-FROM manga_pages
-WHERE chapter_id IN (/*SLICE:chapter_ids*/?)
-  AND local_path IS NOT NULL AND local_path != ''
-GROUP BY chapter_id
+SELECT mp.chapter_id, COUNT(*) AS page_count
+FROM manga_pages mp
+WHERE mp.chapter_id IN (/*SLICE:chapter_ids*/?)
+  AND mp.local_path IS NOT NULL AND mp.local_path != ''
+  -- Loose downloads write pages one by one; until the job finishes the chapter is
+  -- not downloaded, or the reader would get a cut-off page list.
+  AND NOT EXISTS (
+    SELECT 1 FROM downloads d
+    WHERE d.chapter_id = mp.chapter_id AND d.status IN ('queued', 'downloading')
+  )
+GROUP BY mp.chapter_id
 `
 
 type CountDownloadedPagesByChapterIDsRow struct {
