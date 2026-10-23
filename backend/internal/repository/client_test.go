@@ -3,6 +3,7 @@ package repository
 import (
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"testing"
 
 	"google.golang.org/protobuf/encoding/protowire"
@@ -114,5 +115,21 @@ func TestFetchIndexFallsBackWhenIndexV2IsDead(t *testing.T) {
 	exts, err := FetchIndex(srv.URL + "/repo/index.min.json")
 	if err != nil || len(exts) != 1 || exts[0].PackageName != "eu.kanade.tachiyomi.extension.all.mangadex" {
 		t.Fatalf("got %+v %v", exts, err)
+	}
+}
+
+// A repo's version string must not steer the download outside the cache.
+func TestDownloadExtensionFileStaysInCache(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte("jar"))
+	}))
+	defer srv.Close()
+	cache := filepath.Join(t.TempDir(), "cache")
+	path, err := DownloadExtensionFile(cache, "eu.kanade.tachiyomi.extension.en.x", "1/../../../escaped", srv.URL, "jar")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if filepath.Dir(path) != cache {
+		t.Fatalf("downloaded to %s, outside %s", path, cache)
 	}
 }

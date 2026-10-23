@@ -677,11 +677,13 @@ func (r *mutationResolver) UpdateExtension(ctx context.Context, packageName stri
 	if err != nil {
 		return nil, err
 	}
-	if _, err := c.UnloadExtension(ctx, packageName); err != nil {
-		return nil, err
-	}
+	// Download before unloading: a failed download (or a sideloaded extension,
+	// which has nothing to download) must leave the working version loaded.
 	ext, err := r.Sy.UpdateExtension(ctx, packageName)
 	if err != nil {
+		return nil, err
+	}
+	if _, err := c.UnloadExtension(ctx, packageName); err != nil {
 		return nil, err
 	}
 	loaded, err := c.LoadExtensions(ctx, []*sandboxv1.ExtensionToLoad{{

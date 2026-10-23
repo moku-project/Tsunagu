@@ -32,6 +32,8 @@ var validPackageName = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$`)
 
 func IsValidPackageName(s string) bool { return validPackageName.MatchString(s) }
 
+var unsafeFileChars = regexp.MustCompile(`[^A-Za-z0-9._-]`)
+
 func ClassifyContentType(packageName string) string {
 	switch {
 	case strings.HasPrefix(packageName, "eu.kanade.tachiyomi.animeextension."):
@@ -64,7 +66,8 @@ func DownloadExtensionFile(cacheDir, packageName, version, downloadURL, ext stri
 		return "", fmt.Errorf("create cache dir %s: %w", cacheDir, err)
 	}
 
-	dest := filepath.Join(cacheDir, fmt.Sprintf("%s-%s.%s", packageName, version, ext))
+	// version comes from the repo index; a "/" or ".." in it must not leave cacheDir.
+	dest := filepath.Join(cacheDir, fmt.Sprintf("%s-%s.%s", packageName, unsafeFileChars.ReplaceAllString(version, "_"), ext))
 	if _, err := os.Stat(dest); err == nil {
 		return dest, nil
 	}
