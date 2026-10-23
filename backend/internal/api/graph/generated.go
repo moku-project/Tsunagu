@@ -443,6 +443,7 @@ type ComplexityRoot struct {
 
 	RecentChapter struct {
 		Chapter func(childComplexity int) int
+		FoundAt func(childComplexity int) int
 		Media   func(childComplexity int) int
 	}
 
@@ -3171,6 +3172,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.RecentChapter.Chapter(childComplexity), true
+	case "RecentChapter.foundAt":
+		if e.ComplexityRoot.RecentChapter.FoundAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.RecentChapter.FoundAt(childComplexity), true
 	case "RecentChapter.media":
 		if e.ComplexityRoot.RecentChapter.Media == nil {
 			break
@@ -4621,6 +4628,8 @@ func (ec *executionContext) childFields_RecentChapter(ctx context.Context, field
 		return ec.fieldContext_RecentChapter_chapter(ctx, field)
 	case "media":
 		return ec.fieldContext_RecentChapter_media(ctx, field)
+	case "foundAt":
+		return ec.fieldContext_RecentChapter_foundAt(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type RecentChapter", field.Name)
 }
@@ -16483,6 +16492,29 @@ func (ec *executionContext) fieldContext_RecentChapter_media(_ context.Context, 
 	return fc, nil
 }
 
+func (ec *executionContext) _RecentChapter_foundAt(ctx context.Context, field graphql.CollectedField, obj *model.RecentChapter) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_RecentChapter_foundAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FoundAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *time.Time) graphql.Marshaler {
+			return ec.marshalOTime2ᚖtimeᚐTime(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_RecentChapter_foundAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("RecentChapter", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
 func (ec *executionContext) _RelocateDownloadsResult_newPath(ctx context.Context, field graphql.CollectedField, obj *model.RelocateDownloadsResult) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -25434,6 +25466,11 @@ func (ec *executionContext) _RecentChapter(ctx context.Context, sel ast.Selectio
 		case "media":
 			out.Values[i] = ec._RecentChapter_media(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "foundAt":
+			out.Values[i] = ec._RecentChapter_foundAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
 				out.Invalids++
 			}
 		default:

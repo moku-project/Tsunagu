@@ -334,6 +334,8 @@ type DownloaderStatus {
 type RecentChapter {
   chapter: Chapter!
   media: Media!
+  "When the server first saw this chapter. Set on chapterUpdates; many chapters have no upload date."
+  foundAt: Time
 }
 
 type SearchResponse {

@@ -371,6 +371,8 @@ type ReadingProgress struct {
 type RecentChapter struct {
 	Chapter *Chapter `json:"chapter"`
 	Media   *Media   `json:"media"`
+	// When the server first saw this chapter. Set on chapterUpdates; many chapters have no upload date.
+	FoundAt *time.Time `json:"foundAt,omitempty"`
 }
 
 type RelocateDownloadsResult struct {

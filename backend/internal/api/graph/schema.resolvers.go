@@ -2144,7 +2144,8 @@ func (r *queryResolver) ChapterUpdates(ctx context.Context, since *time.Time, li
 				SourceOrder: nullInt64Int32Ptr(row.SourceOrder),
 				UploadedAt:  epochToTimePtr(row.UploadedAt),
 			},
-			Media: toMedia(m, r.MediaDir),
+			Media:   toMedia(m, r.MediaDir),
+			FoundAt: nullTimePtr(row.FirstSeenAt),
 		})
 	}
 	return out, nil
