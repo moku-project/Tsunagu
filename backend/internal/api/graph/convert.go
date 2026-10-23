@@ -512,26 +512,35 @@ func toVideoStream(info *sandboxv1.StreamInfo, mediaID, chapterID string) *model
 	}
 
 	var subs []*sandboxv1.SubtitleTrack
-	seen := map[string]bool{}
-	for _, t := range info.GetSubtitles() {
-		if t.GetUrl() != "" && !seen[t.GetUrl()] {
-			seen[t.GetUrl()] = true
-			subs = append(subs, t)
+	// Subtitle hosts often check the same Referer as the video they belong to.
+	subHeaders := map[string]map[string]string{}
+	addSub := func(t *sandboxv1.SubtitleTrack, h map[string]string) {
+		if t.GetUrl() == "" {
+			return
 		}
+		if _, dup := subHeaders[t.GetUrl()]; dup {
+			return
+		}
+		subHeaders[t.GetUrl()] = h
+		subs = append(subs, t)
+	}
+	for _, t := range info.GetSubtitles() {
+		addSub(t, headers)
 	}
 	for _, s := range info.GetSources() {
+		h := s.GetHeaders()
+		if len(h) == 0 {
+			h = headers
+		}
 		for _, t := range s.GetSubtitles() {
-			if t.GetUrl() != "" && !seen[t.GetUrl()] {
-				seen[t.GetUrl()] = true
-				subs = append(subs, t)
-			}
+			addSub(t, h)
 		}
 	}
 	sortByPreferredLang(subs, preferredSubLangs, func(t *sandboxv1.SubtitleTrack) string { return t.GetLang() })
 	for _, t := range subs {
 		vs.Subtitles = append(vs.Subtitles, &model.SubtitleTrack{
 			Lang: t.GetLang(),
-			URL:  proxyResourceURL("subtitle", mediaID, chapterID, t.GetUrl(), nil),
+			URL:  proxyResourceURL("subtitle", mediaID, chapterID, t.GetUrl(), subHeaders[t.GetUrl()]),
 		})
 	}
 	audio := info.GetAudioTracks()

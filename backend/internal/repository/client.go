@@ -99,14 +99,18 @@ func DownloadExtensionFile(cacheDir, packageName, version, downloadURL, ext stri
 	return dest, nil
 }
 
-func filterValid(exts []ParsedExtension) []ParsedExtension {
+func filterValid(indexURL string, exts []ParsedExtension) []ParsedExtension {
 	out := make([]ParsedExtension, 0, len(exts))
+	var skipped []string
 	for _, ext := range exts {
 		if !IsValidPackageName(ext.PackageName) {
-			log.Printf("skipping repo entry with invalid package name %q", ext.PackageName)
+			skipped = append(skipped, fmt.Sprintf("%q (%s)", ext.PackageName, ext.Name))
 			continue
 		}
 		out = append(out, ext)
+	}
+	if len(skipped) > 0 {
+		log.Printf("repo %s: skipped %d entries without a valid package name, e.g. %s", indexURL, len(skipped), skipped[0])
 	}
 	return out
 }
@@ -145,9 +149,19 @@ func indexV2URL(indexURL string) string {
 }
 
 func FetchIndex(indexURL string) ([]ParsedExtension, error) {
-	if v2 := indexV2URL(indexURL); v2 != "" {
-		indexURL = v2
+	if v2 := indexV2URL(indexURL); v2 != "" && v2 != indexURL {
+		// Some repo.json files point at a moved or unreadable index; the one the
+		// user added still works then.
+		exts, err := fetchIndexAt(v2)
+		if err == nil {
+			return exts, nil
+		}
+		log.Printf("repo %s: index_v2 %s unusable (%v), using the index as given", indexURL, v2, err)
 	}
+	return fetchIndexAt(indexURL)
+}
+
+func fetchIndexAt(indexURL string) ([]ParsedExtension, error) {
 	resp, err := repoClient.Get(indexURL)
 	if err != nil {
 		return nil, fetchErrorf("failed to fetch %s: %v", indexURL, err)
@@ -204,12 +218,12 @@ func FetchIndex(indexURL string) ([]ParsedExtension, error) {
 			if hasID && hasURL && !hasPkg {
 				var novel []novelRepoEntry
 				if err := json.Unmarshal(data, &novel); err == nil {
-					return filterValid(novelToParsedExtensions(novel)), nil
+					return filterValid(indexURL, novelToParsedExtensions(novel)), nil
 				}
 			}
 			var legacy []legacyRepoExtension
 			if err := json.Unmarshal(data, &legacy); err == nil {
-				return filterValid(legacyToParsedExtensions(legacy, apkBaseURL)), nil
+				return filterValid(indexURL, legacyToParsedExtensions(legacy, apkBaseURL)), nil
 			}
 		}
 	}
@@ -226,5 +240,5 @@ func FetchIndex(indexURL string) ([]ParsedExtension, error) {
 		)
 	}
 
-	return filterValid(idx.toParsedExtensions(apkBaseURL)), nil
+	return filterValid(indexURL, idx.toParsedExtensions(apkBaseURL)), nil
 }

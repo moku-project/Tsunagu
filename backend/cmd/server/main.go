@@ -380,9 +380,12 @@ func reloadInstalledExtensions(ctx context.Context, sy *sync.Syncer, sc *sandbox
 	}
 
 	toLoad := make([]*sandboxv1.ExtensionToLoad, 0, len(installed))
+	sandboxOnly := 0
 	for _, ext := range installed {
+		// Sideloaded (and some older) installs have no backend copy; the sandbox keeps
+		// them in its own extensions dir and loads them from there on first use.
 		if !ext.JarPath.Valid || ext.JarPath.String == "" {
-			log.Printf("skipping reload of %s: no cached jar_path", ext.PackageName)
+			sandboxOnly++
 			continue
 		}
 		toLoad = append(toLoad, &sandboxv1.ExtensionToLoad{
@@ -391,6 +394,9 @@ func reloadInstalledExtensions(ctx context.Context, sy *sync.Syncer, sc *sandbox
 			ContentType: sandbox.ContentTypeToProto(ext.ContentType),
 			Lang:        ext.Lang,
 		})
+	}
+	if sandboxOnly > 0 {
+		log.Printf("%d extensions without a cached jar load from the sandbox extensions dir", sandboxOnly)
 	}
 	if len(toLoad) == 0 {
 		return nil

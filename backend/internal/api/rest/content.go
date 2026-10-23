@@ -998,13 +998,22 @@ func (h *ContentHandler) serveSubtitle(w http.ResponseWriter, r *http.Request, c
 		}
 	}
 
-	body, ok := h.fetchSubtitleViaSandbox(r.Context(), chapterID, tgt.String())
-	if !ok {
+	// With the video's headers a direct fetch usually works; without them the
+	// extension's own client (cookies, Cloudflare clearance) is the better bet.
+	var body []byte
+	ok = false
+	if len(headers) > 0 {
 		body, ok = h.fetchSubtitleDirect(r.Context(), tgt, headers)
-		if !ok {
-			http.Error(w, "subtitle fetch failed", http.StatusBadGateway)
-			return
-		}
+	}
+	if !ok {
+		body, ok = h.fetchSubtitleViaSandbox(r.Context(), chapterID, tgt.String())
+	}
+	if !ok && len(headers) == 0 {
+		body, ok = h.fetchSubtitleDirect(r.Context(), tgt, nil)
+	}
+	if !ok {
+		http.Error(w, "subtitle fetch failed", http.StatusBadGateway)
+		return
 	}
 
 	head := strings.ToLower(strings.TrimLeft(strings.TrimPrefix(string(body), "\ufeff"), " \t\r\n"))
@@ -1056,7 +1065,10 @@ func (h *ContentHandler) fetchSubtitleDirect(ctx context.Context, tgt *url.URL, 
 	attempts := []map[string]string{
 		{"User-Agent": defaultBrowserUA},
 		{"User-Agent": defaultBrowserUA, "Referer": origin + "/", "Origin": origin},
-		passthrough,
+	}
+	if len(passthrough) > 0 {
+		// The video's own headers are the likeliest to be accepted.
+		attempts = append([]map[string]string{passthrough}, attempts...)
 	}
 	for i, hdr := range attempts {
 		up, err := http.NewRequestWithContext(ctx, http.MethodGet, tgt.String(), nil)

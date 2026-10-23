@@ -71,3 +71,48 @@ func TestClassifyContentType(t *testing.T) {
 		}
 	}
 }
+
+// aniyomiIndexPB is shaped like Secozzi's: field 8 is a varint flag and the
+// sources sit in field 9.
+func aniyomiIndexPB() []byte {
+	res := bytesField(nil, 1, []byte("https://example.com/jellyfin.apk"))
+	src := bytesField(nil, 3, []byte("all"))
+	var ext []byte
+	ext = bytesField(ext, 1, []byte("Jellyfin"))
+	ext = bytesField(ext, 2, []byte("eu.kanade.tachiyomi.animeextension.all.jellyfin"))
+	ext = bytesField(ext, 3, res)
+	ext = bytesField(ext, 6, []byte("17.2"))
+	ext = protowire.AppendTag(ext, 8, protowire.VarintType)
+	ext = protowire.AppendVarint(ext, 1)
+	ext = bytesField(ext, 9, src)
+	idx := bytesField(nil, 1, []byte("Jellyfin, Stremio, and Torbox"))
+	return bytesField(idx, 101, bytesField(nil, 1, ext))
+}
+
+func TestFetchIndexAniyomiLayout(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.Write(aniyomiIndexPB()) }))
+	defer srv.Close()
+	exts, err := FetchIndex(srv.URL + "/index.pb")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(exts) != 1 || exts[0].PackageName != "eu.kanade.tachiyomi.animeextension.all.jellyfin" || exts[0].Lang != "all" {
+		t.Fatalf("got %+v", exts)
+	}
+}
+
+func TestFetchIndexFallsBackWhenIndexV2IsDead(t *testing.T) {
+	mux := http.NewServeMux()
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	mux.HandleFunc("/repo/repo.json", func(w http.ResponseWriter, _ *http.Request) {
+		w.Write([]byte(`{"index_v2":"` + srv.URL + `/moved/index.pb"}`))
+	})
+	mux.HandleFunc("/repo/index.min.json", func(w http.ResponseWriter, _ *http.Request) {
+		w.Write([]byte(`[{"name":"Tachiyomi: MangaDex","pkg":"eu.kanade.tachiyomi.extension.all.mangadex","apk":"x.apk","lang":"all","version":"1.4.1"}]`))
+	})
+	exts, err := FetchIndex(srv.URL + "/repo/index.min.json")
+	if err != nil || len(exts) != 1 || exts[0].PackageName != "eu.kanade.tachiyomi.extension.all.mangadex" {
+		t.Fatalf("got %+v %v", exts, err)
+	}
+}
