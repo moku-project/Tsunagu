@@ -137,8 +137,10 @@ func (s *Syncer) runLibraryUpdate(sc *sandbox.SupervisedClient, ids []int64) {
 		}
 	}()
 
-	c, err := sc.Ensure(ctx)
-	if err != nil {
+	release := sc.Hold()
+	defer release()
+
+	if _, err := sc.Ensure(ctx); err != nil {
 		s.updateMu.Lock()
 		s.updateProg.FailedTitles = append(s.updateProg.FailedTitles, "sandbox unavailable: "+err.Error())
 		s.updateMu.Unlock()
@@ -157,7 +159,12 @@ func (s *Syncer) runLibraryUpdate(sc *sandbox.SupervisedClient, ids []int64) {
 
 		before, _ := s.q.ListChapterExternalIDsByMedia(ctx, id)
 
-		after, err := s.SyncChapters(ctx, c, id)
+		// Ensure per title: it respawns a sandbox that crashed partway through.
+		var after []sqlcgen.Chapter
+		c, err := sc.Ensure(ctx)
+		if err == nil {
+			after, err = s.SyncChapters(ctx, c, id)
+		}
 		if err != nil {
 			s.updateMu.Lock()
 			s.updateProg.FailedTitles = append(s.updateProg.FailedTitles, m.Title)

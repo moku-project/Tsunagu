@@ -8,6 +8,7 @@ import (
 	sandboxv1 "tsunagu/backend/internal/sandbox/gen/sandbox/v1"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
 )
@@ -62,6 +63,13 @@ func NewClient(addr string) (*Client, error) {
 
 func (c *Client) Close() error {
 	return c.conn.Close()
+}
+
+// usable reports whether the connection can still reach the sandbox; an adopted
+// sandbox has no process handle, so this is the only liveness signal for it.
+func (c *Client) usable() bool {
+	s := c.conn.GetState()
+	return s != connectivity.Shutdown && s != connectivity.TransientFailure
 }
 
 func (c *Client) withTimeout(ctx context.Context) (context.Context, context.CancelFunc) {

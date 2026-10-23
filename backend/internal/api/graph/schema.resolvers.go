@@ -949,12 +949,14 @@ func (r *mutationResolver) RefreshFolder(ctx context.Context, folderID string) (
 	if err != nil {
 		return nil, fmt.Errorf("listing media in folder: %w", err)
 	}
-	c, err := r.Sc.Ensure(ctx)
-	if err != nil {
-		return nil, err
-	}
+	release := r.Sc.Hold()
+	defer release()
 	out := make([]*model.Media, 0, len(entries))
 	for _, e := range entries {
+		c, err := r.Sc.Ensure(ctx)
+		if err != nil {
+			return nil, err
+		}
 		refreshed, err := r.refreshMediaFull(ctx, c, e.ID, true)
 		if err != nil {
 			continue

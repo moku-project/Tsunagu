@@ -214,6 +214,13 @@ func main() {
 	}
 	store.OnChange("cloudflare_solver_mode", applyCloudflare)
 	store.OnChange("cloudflare_solver_url", applyCloudflare)
+	applySpawnOptions := func(context.Context) {
+		c := store.Config()
+		supervised.SetSpawnOptions(c.NovelEnabled, c.SandboxHeapMB)
+		supervised.Restart()
+	}
+	store.OnChange("novel_enabled", applySpawnOptions)
+	store.OnChange("sandbox_heap_mb", applySpawnOptions)
 
 	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)

@@ -35,7 +35,9 @@ type SupervisedClient struct {
 	cmd        *exec.Cmd
 	exited     chan struct{} // closed once cmd has been reaped
 	client     *Client
+	adopted    bool // client talks to a sandbox this process did not spawn
 	lastAccess time.Time
+	holds      int // long jobs that reuse one *Client; the reaper waits for them
 
 	stopReaper chan struct{}
 }
@@ -75,13 +77,18 @@ func (sc *SupervisedClient) Ensure(ctx context.Context) (*Client, error) {
 
 	sc.lastAccess = time.Now()
 
-	if sc.client != nil && sc.processAlive() {
+	if sc.client != nil && (sc.processAlive() || sc.adopted && sc.client.usable()) {
 		return sc.client, nil
 	}
 	if sc.cmd != nil {
 		log.Printf("sandbox: process exited unexpectedly, respawning")
 		sc.killLocked()
 	}
+	if sc.client != nil {
+		sc.client.Close()
+		sc.client = nil
+	}
+	sc.adopted = false
 
 	if sc.cmd == nil {
 		if client, err := NewClient(sc.addr); err == nil {
@@ -91,6 +98,7 @@ func (sc *SupervisedClient) Ensure(ctx context.Context) (*Client, error) {
 			if pingErr == nil {
 				log.Printf("sandbox: adopting existing process at %s", sc.addr)
 				sc.client = client
+				sc.adopted = true
 				return sc.client, nil
 			}
 			client.Close()
@@ -255,7 +263,7 @@ func (sc *SupervisedClient) maybeReap() {
 	}
 	sc.mu.Lock()
 	defer sc.mu.Unlock()
-	if sc.cmd == nil || sc.client == nil {
+	if sc.cmd == nil || sc.client == nil || sc.holds > 0 {
 		return
 	}
 	if time.Since(sc.lastAccess) < sc.idleTimeout {
@@ -277,6 +285,33 @@ func (sc *SupervisedClient) killLocked() {
 	sc.cmd = nil
 	sc.exited = nil
 	_ = os.Remove(sc.pidFile())
+}
+
+// Hold keeps the sandbox from being reaped as idle until release is called.
+// Jobs that call Ensure once and then reuse the client for a long time need it,
+// since only Ensure counts as activity.
+func (sc *SupervisedClient) Hold() (release func()) {
+	sc.mu.Lock()
+	sc.holds++
+	sc.lastAccess = time.Now()
+	sc.mu.Unlock()
+	var once sync.Once
+	return func() {
+		once.Do(func() {
+			sc.mu.Lock()
+			sc.holds--
+			sc.lastAccess = time.Now()
+			sc.mu.Unlock()
+		})
+	}
+}
+
+// SetSpawnOptions changes settings the sandbox only reads at startup; call Restart to apply them.
+func (sc *SupervisedClient) SetSpawnOptions(novelEnabled bool, heapMB int) {
+	sc.mu.Lock()
+	defer sc.mu.Unlock()
+	sc.novelEnabled = novelEnabled
+	sc.heapMB = heapMB
 }
 
 // Restart kills the running process so the next Ensure respawns it with fresh env vars.

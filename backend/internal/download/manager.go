@@ -188,6 +188,9 @@ func (m *Manager) runJob(ctx context.Context, jobID, chapterID int64) error {
 	if err != nil {
 		return fmt.Errorf("sandbox unavailable: %w", err)
 	}
+	// Jobs reuse one client for minutes (an episode remux), so keep the sandbox from idling out.
+	release := m.sc.Hold()
+	defer release()
 
 	switch dctx.ContentType {
 	case "manga":
@@ -541,10 +544,6 @@ func (m *Manager) downloadAnime(ctx context.Context, jobID int64, client *sandbo
 	}
 	outputPath := filepath.Join(chapterDir, "episode.mp4")
 
-	keepaliveCtx, stopKeepalive := context.WithCancel(ctx)
-	defer stopKeepalive()
-	go m.keepSandboxAlive(keepaliveCtx)
-
 	if err := m.q.UpdateDownloadProgress(ctx, sqlcgen.UpdateDownloadProgressParams{
 		Status:   "downloading",
 		Progress: 0.1,
@@ -787,21 +786,6 @@ func (m *Manager) muxViaSegments(ctx context.Context, jobID int64, playlistURL s
 		_ = os.Remove(outputPath)
 	}
 	return fmt.Errorf("ffmpeg could not mux %d concatenated segments", len(segs))
-}
-
-func (m *Manager) keepSandboxAlive(ctx context.Context) {
-	ticker := time.NewTicker(2 * time.Minute)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			if _, err := m.sc.Ensure(ctx); err != nil {
-				log.Printf("download: sandbox keepalive failed: %v", err)
-			}
-		}
-	}
 }
 
 func truncateForError(s string) string {
