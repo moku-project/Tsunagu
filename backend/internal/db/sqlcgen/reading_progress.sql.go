@@ -217,6 +217,52 @@ func (q *Queries) MaxReadChapterNumber(ctx context.Context, mediaID int64) (floa
 	return max_number, err
 }
 
+const recordReadingProgress = `-- name: RecordReadingProgress :one
+INSERT INTO reading_progress (media_id, chapter_id, progress, completed, position_seconds, duration_seconds)
+VALUES (?, ?, ?, ?, ?, ?)
+ON CONFLICT(media_id, chapter_id) DO UPDATE SET
+    progress = excluded.progress,
+    completed = reading_progress.completed OR excluded.completed,
+    position_seconds = excluded.position_seconds,
+    duration_seconds = excluded.duration_seconds,
+    updated_at = CURRENT_TIMESTAMP
+RETURNING id, media_id, chapter_id, progress, completed, position_seconds, duration_seconds, updated_at
+`
+
+type RecordReadingProgressParams struct {
+	MediaID         int64           `json:"media_id"`
+	ChapterID       int64           `json:"chapter_id"`
+	Progress        float64         `json:"progress"`
+	Completed       bool            `json:"completed"`
+	PositionSeconds sql.NullFloat64 `json:"position_seconds"`
+	DurationSeconds sql.NullFloat64 `json:"duration_seconds"`
+}
+
+// Position updates from a reader or player. Unlike UpsertReadingProgress this never
+// clears completed: re-reading a finished chapter must not mark it unread.
+func (q *Queries) RecordReadingProgress(ctx context.Context, arg RecordReadingProgressParams) (ReadingProgress, error) {
+	row := q.db.QueryRowContext(ctx, recordReadingProgress,
+		arg.MediaID,
+		arg.ChapterID,
+		arg.Progress,
+		arg.Completed,
+		arg.PositionSeconds,
+		arg.DurationSeconds,
+	)
+	var i ReadingProgress
+	err := row.Scan(
+		&i.ID,
+		&i.MediaID,
+		&i.ChapterID,
+		&i.Progress,
+		&i.Completed,
+		&i.PositionSeconds,
+		&i.DurationSeconds,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const upsertReadingProgress = `-- name: UpsertReadingProgress :one
 INSERT INTO reading_progress (media_id, chapter_id, progress, completed, position_seconds, duration_seconds)
 VALUES (?, ?, ?, ?, ?, ?)

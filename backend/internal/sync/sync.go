@@ -1507,7 +1507,7 @@ func (s *Syncer) SyncChapters(ctx context.Context, c *sandbox.Client, libraryEnt
 }
 
 func (s *Syncer) RecordProgress(ctx context.Context, libraryEntryID, chapterID int64, progress float64, completed bool, positionSeconds, durationSeconds *float64) (sqlcgen.ReadingProgress, error) {
-	params := sqlcgen.UpsertReadingProgressParams{
+	params := sqlcgen.RecordReadingProgressParams{
 		MediaID:   libraryEntryID,
 		ChapterID: chapterID,
 		Progress:  progress,
@@ -1519,7 +1519,7 @@ func (s *Syncer) RecordProgress(ctx context.Context, libraryEntryID, chapterID i
 	if durationSeconds != nil {
 		params.DurationSeconds = sql.NullFloat64{Float64: *durationSeconds, Valid: true}
 	}
-	return s.q.UpsertReadingProgress(ctx, params)
+	return s.q.RecordReadingProgress(ctx, params)
 }
 
 func (s *Syncer) MarkChapterRead(ctx context.Context, libraryEntryID, chapterID int64) (sqlcgen.ReadingProgress, error) {

@@ -163,6 +163,9 @@ type Querier interface {
 	MediaInAutoDownloadFolder(ctx context.Context, mediaID int64) (bool, error)
 	NextUnreadChapterByMediaIDs(ctx context.Context, mediaIds []int64) ([]Chapter, error)
 	QueryExtensions(ctx context.Context, arg QueryExtensionsParams) ([]Extension, error)
+	// Position updates from a reader or player. Unlike UpsertReadingProgress this never
+	// clears completed: re-reading a finished chapter must not mark it unread.
+	RecordReadingProgress(ctx context.Context, arg RecordReadingProgressParams) (ReadingProgress, error)
 	RemoveGenreFromMedia(ctx context.Context, arg RemoveGenreFromMediaParams) error
 	RemoveMediaFromAllFolders(ctx context.Context, mediaID int64) error
 	RemoveMediaFromFolder(ctx context.Context, arg RemoveMediaFromFolderParams) error

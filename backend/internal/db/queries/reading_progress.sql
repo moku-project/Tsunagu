@@ -12,6 +12,19 @@ ON CONFLICT(media_id, chapter_id) DO UPDATE SET
     updated_at = CURRENT_TIMESTAMP
 RETURNING *;
 
+-- name: RecordReadingProgress :one
+-- Position updates from a reader or player. Unlike UpsertReadingProgress this never
+-- clears completed: re-reading a finished chapter must not mark it unread.
+INSERT INTO reading_progress (media_id, chapter_id, progress, completed, position_seconds, duration_seconds)
+VALUES (?, ?, ?, ?, ?, ?)
+ON CONFLICT(media_id, chapter_id) DO UPDATE SET
+    progress = excluded.progress,
+    completed = reading_progress.completed OR excluded.completed,
+    position_seconds = excluded.position_seconds,
+    duration_seconds = excluded.duration_seconds,
+    updated_at = CURRENT_TIMESTAMP
+RETURNING *;
+
 -- name: ListReadingProgressByChapterIDs :many
 
 SELECT * FROM reading_progress
