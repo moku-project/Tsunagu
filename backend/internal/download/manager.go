@@ -9,6 +9,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"fmt"
+	"hash/fnv"
 	"io"
 	"log"
 	"math"
@@ -259,12 +260,19 @@ func (m *Manager) SetImageFormat(format string) {
 }
 
 func (m *Manager) buildChapterDir(dctx sqlcgen.GetChapterDownloadContextRow) string {
+	name := chapterFolderName(dctx.ContentType, dctx.ChapterTitle, dctx.ChapterNumber, dctx.SourceChapterID)
+	if dctx.NameClash {
+		// Two groups' "Chapter 5" would otherwise share files, and one's cleanup would wipe the other.
+		h := fnv.New32a()
+		h.Write([]byte(dctx.SourceChapterID))
+		name = fmt.Sprintf("%s [%08x]", name, h.Sum32())
+	}
 	return filepath.Join(
 		m.DownloadsDir(),
 		contentTypeDir(dctx.ContentType),
 		extensionFolderName(dctx.ExtensionPackageName),
 		titleFolderName(dctx.LibraryTitle, dctx.SourceEntryID),
-		chapterFolderName(dctx.ContentType, dctx.ChapterTitle, dctx.ChapterNumber, dctx.SourceChapterID),
+		name,
 	)
 }
 

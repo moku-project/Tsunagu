@@ -180,7 +180,13 @@ SELECT
     m.external_id AS source_entry_id,
     m.title AS library_title,
     m.content_type AS content_type,
-    e.package_name AS extension_package_name
+    e.package_name AS extension_package_name,
+    -- Another chapter would get the same folder (same number and title, e.g. a second
+    -- scanlation group), so this one needs a distinguishing suffix.
+    CAST(EXISTS (
+        SELECT 1 FROM chapters o
+        WHERE o.media_id = c.media_id AND o.id != c.id AND o.number IS c.number AND o.title IS c.title
+    ) AS BOOLEAN) AS name_clash
 FROM chapters c
 JOIN media m ON m.id = c.media_id
 JOIN extensions e ON e.id = m.extension_id
