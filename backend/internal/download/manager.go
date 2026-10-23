@@ -44,6 +44,8 @@ type Manager struct {
 	workers      int
 
 	wakeCh    chan struct{}
+	baseCtx   context.Context // cancelled by Shutdown, ending running jobs
+	stopJobs  context.CancelFunc
 	stopCh    chan struct{}
 	wg        sync.WaitGroup
 	runningMu sync.Mutex
@@ -60,7 +62,10 @@ func New(q *sqlcgen.Queries, sc *sandbox.SupervisedClient, mediaDir, downloadsDi
 	if imageFormat != "cbz" {
 		imageFormat = "loose"
 	}
+	baseCtx, stopJobs := context.WithCancel(context.Background())
 	return &Manager{
+		baseCtx:      baseCtx,
+		stopJobs:     stopJobs,
 		q:            q,
 		sc:           sc,
 		mediaDir:     mediaDir,
@@ -87,6 +92,9 @@ func (m *Manager) Start() {
 
 func (m *Manager) Shutdown() {
 	close(m.stopCh)
+	// Without this an episode remux in progress holds up exit until it finishes,
+	// and the service manager kills the process mid-write.
+	m.stopJobs()
 	m.wg.Wait()
 }
 
@@ -141,7 +149,7 @@ func (m *Manager) processOne() {
 		return
 	}
 
-	jobCtx, cancel := context.WithCancel(ctx)
+	jobCtx, cancel := context.WithCancel(m.baseCtx)
 	run := &runningJob{cancel: cancel, done: make(chan struct{})}
 	m.runningMu.Lock()
 	m.running[job.ChapterID] = run
@@ -158,9 +166,13 @@ func (m *Manager) processOne() {
 
 	err = m.runJob(jobCtx, job.ID, job.ChapterID)
 	if jobCtx.Err() != nil {
-
-		log.Printf("download: job %d (chapter %d) cancelled; discarding partial output", job.ID, job.ChapterID)
 		m.discardPartial(job.ChapterID)
+		if m.baseCtx.Err() != nil {
+			// Shutting down: leave the job as downloading so the next start requeues it.
+			log.Printf("download: job %d (chapter %d) interrupted by shutdown; will resume on next start", job.ID, job.ChapterID)
+			return
+		}
+		log.Printf("download: job %d (chapter %d) cancelled; discarded partial output", job.ID, job.ChapterID)
 		_ = m.q.DeleteDownload(context.Background(), job.ID)
 		return
 	}
