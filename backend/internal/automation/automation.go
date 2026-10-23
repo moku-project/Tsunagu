@@ -9,6 +9,7 @@ import (
 	"database/sql"
 	"errors"
 	"log"
+	"slices"
 	"sync"
 	"time"
 
@@ -222,16 +223,39 @@ func (m *Manager) ChaptersRead(ctx context.Context, mediaID int64, chapterIDs []
 	}
 
 	if rules.MaxKeepChapters > 0 {
-		var kept []int64
+		// Unread chapters (on disk or about to be queued) have priority, nearest
+		// first, so the cap never deletes what download-ahead just fetched. Read
+		// chapters fill whatever room is left, newest first.
+		queued := make(map[int64]bool, len(toQueue))
+		for _, id := range toQueue {
+			queued[id] = true
+		}
+		var ahead, read []sqlcgen.ListChapterAutomationStateRow
 		for _, ch := range state {
-			if ch.IsDownloaded != 0 && !toDelete[ch.ID] {
-				kept = append(kept, ch.ID)
+			onDisk := ch.IsDownloaded != 0 && !toDelete[ch.ID]
+			switch {
+			case onDisk && (ch.IsRead != 0 || justRead[ch.ID]):
+				read = append(read, ch)
+			case onDisk || queued[ch.ID]:
+				ahead = append(ahead, ch)
 			}
 		}
-		// Oldest in reading order go first.
-		for i := 0; i < len(kept)-rules.MaxKeepChapters; i++ {
-			toDelete[kept[i]] = true
+		room := rules.MaxKeepChapters
+		for _, ch := range ahead {
+			if room > 0 {
+				room--
+				continue
+			}
+			if queued[ch.ID] {
+				delete(queued, ch.ID)
+			} else {
+				toDelete[ch.ID] = true
+			}
 		}
+		for i := 0; i < len(read)-room; i++ {
+			toDelete[read[i].ID] = true
+		}
+		toQueue = slices.DeleteFunc(toQueue, func(id int64) bool { return !queued[id] })
 	}
 
 	if len(toDelete) > 0 {

@@ -194,15 +194,31 @@ func TestUnreadCancelsDelayedDelete(t *testing.T) {
 	}
 }
 
-func TestMaxKeepDeletesOldest(t *testing.T) {
+// The cap drops read chapters first and keeps the next ones to read.
+func TestMaxKeepKeepsNextUnread(t *testing.T) {
 	f := newFixture(t, 1, 2, 3)
 	f.exec(`UPDATE automation_settings SET max_keep_chapters = 1`)
 	f.markRead(1)
 
 	f.m.ChaptersRead(context.Background(), 1, []int64{1})
 
-	if downloaded, _ := f.state(); !slices.Equal(downloaded, []int64{3}) {
-		t.Fatalf("downloaded = %v, want [3]", downloaded)
+	if downloaded, _ := f.state(); !slices.Equal(downloaded, []int64{2}) {
+		t.Fatalf("downloaded = %v, want [2]", downloaded)
+	}
+}
+
+// Download-ahead must not queue past the cap only for the cap to delete it again.
+func TestMaxKeepLimitsDownloadAhead(t *testing.T) {
+	f := newFixture(t, 1)
+	f.exec(`UPDATE automation_settings SET max_keep_chapters = 2, download_ahead = 4`)
+	f.markRead(1)
+
+	f.m.ChaptersRead(context.Background(), 1, []int64{1})
+
+	downloaded, pending := f.state()
+	// The read chapter makes room for the two queued ones.
+	if len(downloaded) != 0 || !slices.Equal(pending, []int64{2, 3}) {
+		t.Fatalf("downloaded=%v pending=%v, want [] and [2 3]", downloaded, pending)
 	}
 }
 
