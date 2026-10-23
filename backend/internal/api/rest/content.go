@@ -346,15 +346,16 @@ func (h *ContentHandler) serveVideo(w http.ResponseWriter, r *http.Request, chap
 	}
 	defer resp.Body.Close()
 
-	base, _ := url.Parse(streamURL)
+	// Relative playlist and manifest entries resolve against where redirects ended up.
+	base := resp.Request.URL
 	switch ct := strings.ToLower(resp.Header.Get("Content-Type")); {
-	case strings.Contains(ct, "mpegurl") && base != nil:
+	case strings.Contains(ct, "mpegurl"):
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 8<<20))
 		w.Header().Set("Content-Type", "application/vnd.apple.mpegurl")
 		w.Header().Set("Cache-Control", "no-store")
 		_, _ = w.Write(rewriteHLSPlaylist(body, base, encodeHeaderParam(headers)))
 		return
-	case strings.Contains(ct, "dash+xml") && base != nil:
+	case strings.Contains(ct, "dash+xml"):
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 8<<20))
 		w.Header().Set("Content-Type", "application/dash+xml")
 		w.Header().Set("Cache-Control", "no-store")
@@ -607,7 +608,7 @@ func hlsContentCheck(ctx context.Context, rawURL string, headers map[string]stri
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
-		abs := resolveMaybeRelative(u, line)
+		abs := resolveMaybeRelative(resp.Request.URL, line)
 		if strings.Contains(strings.ToLower(abs), ".m3u8") {
 			nested = append(nested, abs)
 			continue
@@ -688,10 +689,14 @@ func (h *ContentHandler) streamHLS(w http.ResponseWriter, r *http.Request, targe
 
 	ct := strings.ToLower(resp.Header.Get("Content-Type"))
 	if strings.Contains(ct, "mpegurl") || strings.Contains(strings.ToLower(target.Path), ".m3u8") {
+		if resp.StatusCode >= 400 {
+			http.Error(w, fmt.Sprintf("hls upstream returned %d", resp.StatusCode), http.StatusBadGateway)
+			return
+		}
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 8<<20))
 		w.Header().Set("Content-Type", "application/vnd.apple.mpegurl")
 		w.Header().Set("Cache-Control", "no-store")
-		_, _ = w.Write(rewriteHLSPlaylist(body, target, encodeHeaderParam(headers)))
+		_, _ = w.Write(rewriteHLSPlaylist(body, resp.Request.URL, encodeHeaderParam(headers)))
 		return
 	}
 
@@ -1174,6 +1179,8 @@ func (h *ContentHandler) serveDASH(w http.ResponseWriter, r *http.Request, rest 
 		http.Error(w, "bad dash segment", http.StatusBadRequest)
 		return
 	}
+	// Signed segment URLs carry their token in the query, which the browser sent to us.
+	seg.RawQuery = r.URL.RawQuery
 	tgt, ok := streamHTTPURL(baseURL.ResolveReference(seg).String())
 	if !ok {
 		http.Error(w, "dash target rejected", http.StatusBadRequest)
@@ -1222,10 +1229,14 @@ func (h *ContentHandler) streamDASHManifest(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode >= 400 {
+		http.Error(w, fmt.Sprintf("dash manifest upstream returned %d", resp.StatusCode), http.StatusBadGateway)
+		return
+	}
 	body, _ := io.ReadAll(io.LimitReader(resp.Body, 8<<20))
 	w.Header().Set("Content-Type", "application/dash+xml")
 	w.Header().Set("Cache-Control", "no-store")
-	_, _ = w.Write(rewriteDASHManifest(body, target, headers))
+	_, _ = w.Write(rewriteDASHManifest(body, resp.Request.URL, headers))
 }
 
 func decodeB64Any(s string) ([]byte, error) {

@@ -474,15 +474,23 @@ func authMiddleware(token string, am *auth.Manager, next http.Handler) http.Hand
 			return
 		}
 		got := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
+		fromQuery := false
 		if got == "" {
 			got = r.URL.Query().Get("token")
+			fromQuery = got != ""
 		}
 		if got != "" {
-			if token != "" && subtle.ConstantTimeCompare([]byte(got), []byte(token)) == 1 {
-				next.ServeHTTP(w, r)
-				return
+			ok := token != "" && subtle.ConstantTimeCompare([]byte(got), []byte(token)) == 1
+			if !ok && passwordSet {
+				ok = am.VerifySession(r.Context(), got)
 			}
-			if passwordSet && am.VerifySession(r.Context(), got) {
+			if ok {
+				if fromQuery {
+					// Proxied stream requests forward their query upstream; the credential must not go with it.
+					q := r.URL.Query()
+					q.Del("token")
+					r.URL.RawQuery = q.Encode()
+				}
 				next.ServeHTTP(w, r)
 				return
 			}
