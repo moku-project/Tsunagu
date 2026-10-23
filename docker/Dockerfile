@@ -32,6 +32,7 @@ RUN mkdir -p /app/sandbox/extensions /app/jar-cache /app/data \
     && chown -R tsunagu:tsunagu /app \
     && chmod +x /app/docker-entrypoint.sh
 
+ENV TSUNAGU_ADDR=":6007"
 EXPOSE 6007
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:6007/healthz || exit 1

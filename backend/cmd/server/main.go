@@ -329,12 +329,14 @@ func main() {
 
 	srv := &http.Server{
 		Addr:              cfg.HTTPAddr,
-		Handler:           corsMiddleware(authMiddleware(cfg.APIToken, authMgr, logRequests(mux))),
+		Handler:           corsMiddleware(cfg.AllowedOrigins, authMiddleware(cfg.APIToken, authMgr, logRequests(mux))),
 		ReadHeaderTimeout: 10 * time.Second,
 		IdleTimeout:       120 * time.Second,
 	}
 	if cfg.APIToken != "" {
 		log.Print("API token required (Authorization: Bearer … or ?token=…)")
+	} else if ip := net.ParseIP(readyHostOf(boundAddr)); (ip == nil || !ip.IsLoopback()) && !authMgr.PasswordSet(context.Background()) {
+		log.Printf("WARNING: listening on %s with no password or API token; anyone on the network can use this server", boundAddr)
 	}
 
 	if cfg.PprofAddr != "" {
@@ -479,19 +481,6 @@ func authMiddleware(token string, am *auth.Manager, next http.Handler) http.Hand
 			}
 		}
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
-	})
-}
-
-func corsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
-		next.ServeHTTP(w, r)
 	})
 }
 

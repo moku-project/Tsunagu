@@ -4,6 +4,8 @@ import eu.kanade.tachiyomi.network.NetworkHelper
 import eu.kanade.tachiyomi.network.installConscrypt
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder
 import io.grpc.protobuf.services.ProtoReflectionService
+import java.net.InetAddress
+import java.net.InetSocketAddress
 import java.net.URLConnection
 import java.util.concurrent.TimeUnit
 import kotlinx.serialization.json.Json
@@ -46,13 +48,14 @@ fun main() {
     GetSource.bind(registry)
     registry.loadAll()
     val server = NettyServerBuilder
-        .forPort(port)
+        // Loopback only: the backend is the sole client, and loading a jar runs its code.
+        .forAddress(InetSocketAddress(InetAddress.getLoopbackAddress(), port))
         .addService(ExtensionServiceImpl(registry))
         .addService(ProtoReflectionService.newInstance())
         .permitKeepAliveTime(15, TimeUnit.SECONDS)
         .permitKeepAliveWithoutCalls(true)
         .build()
         .start()
-    println("tsunagu sandbox listening on :$port")
+    println("tsunagu sandbox listening on ${InetAddress.getLoopbackAddress().hostAddress}:$port")
     server.awaitTermination()
 }

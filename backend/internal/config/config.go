@@ -24,6 +24,7 @@ type Config struct {
 	SandboxStorageDir string
 	SandboxHeapMB     int
 	APIToken          string
+	AllowedOrigins    string
 	PprofAddr         string
 
 	NovelEnabled         bool
@@ -51,7 +52,7 @@ func (c *Config) IdleTimeout() time.Duration {
 
 func Defaults() Config {
 	return Config{
-		HTTPAddr:             ":6007",
+		HTTPAddr:             "127.0.0.1:6007",
 		DBPath:               "tsunagu.db",
 		JarCacheDir:          "jar-cache",
 		MediaDir:             "media",
@@ -118,6 +119,11 @@ func Load(opts Options) (*Config, string, map[string]bool, error) {
 
 	default:
 		return nil, "", nil, err
+	}
+
+	// Launchers (the desktop app, Docker) pick the bind address without editing the file.
+	if addr := os.Getenv("TSUNAGU_ADDR"); addr != "" {
+		c.HTTPAddr = addr
 	}
 
 	c.applyDataDir(active)
