@@ -175,6 +175,8 @@ type Querier interface {
 	MoveChapterNovelContent(ctx context.Context, arg MoveChapterNovelContentParams) error
 	MoveChapterPages(ctx context.Context, arg MoveChapterPagesParams) error
 	MoveChapterProgress(ctx context.Context, arg MoveChapterProgressParams) error
+	// Installed extensions outlive the repo they came from.
+	MoveInstalledExtensions(ctx context.Context, arg MoveInstalledExtensionsParams) error
 	NextUnreadChapterByMediaIDs(ctx context.Context, mediaIds []int64) ([]Chapter, error)
 	QueryExtensions(ctx context.Context, arg QueryExtensionsParams) ([]Extension, error)
 	// Position updates from a reader or player. Unlike UpsertReadingProgress this never
@@ -220,6 +222,9 @@ type Querier interface {
 	UpdateRepositoryName(ctx context.Context, arg UpdateRepositoryNameParams) (Repository, error)
 	UpdateSourcelessMedia(ctx context.Context, arg UpdateSourcelessMediaParams) (Medium, error)
 	UpsertAnimeEpisodeStream(ctx context.Context, arg UpsertAnimeEpisodeStreamParams) error
+	// Two repos (a source and its mirror) can list the same package. The row
+	// belongs to the repo that added it, so another repo's sync doesn't overwrite
+	// it (no row is returned then); a sideloaded copy is handed back to a repo.
 	UpsertExtension(ctx context.Context, arg UpsertExtensionParams) (Extension, error)
 	UpsertMangaPage(ctx context.Context, arg UpsertMangaPageParams) error
 	UpsertMediaAutomation(ctx context.Context, arg UpsertMediaAutomationParams) (MediaAutomation, error)
@@ -228,6 +233,8 @@ type Querier interface {
 	UpsertMetadataLink(ctx context.Context, arg UpsertMetadataLinkParams) (MetadataLink, error)
 	UpsertNovelChapterContent(ctx context.Context, arg UpsertNovelChapterContentParams) error
 	UpsertReadingProgress(ctx context.Context, arg UpsertReadingProgressParams) (ReadingProgress, error)
+	// A sideload replaces whatever version a repo provided.
+	UpsertSideloadedExtension(ctx context.Context, arg UpsertSideloadedExtensionParams) (Extension, error)
 	UpsertTrackerAccount(ctx context.Context, arg UpsertTrackerAccountParams) (TrackerAccount, error)
 	UpsertTrackerLink(ctx context.Context, arg UpsertTrackerLinkParams) (TrackerLink, error)
 }

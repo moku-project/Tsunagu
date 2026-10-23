@@ -1,9 +1,13 @@
 -- name: UpsertExtension :one
+-- Two repos (a source and its mirror) can list the same package. The row
+-- belongs to the repo that added it, so another repo's sync doesn't overwrite
+-- it (no row is returned then); a sideloaded copy is handed back to a repo.
 INSERT INTO extensions (
     repository_id, package_name, name, version, content_type, lang,
     icon_url, apk_url, jar_url, is_nsfw
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 ON CONFLICT(package_name) DO UPDATE SET
+    repository_id = excluded.repository_id,
     name = excluded.name,
     version = excluded.version,
     content_type = excluded.content_type,
@@ -12,7 +16,28 @@ ON CONFLICT(package_name) DO UPDATE SET
     apk_url = excluded.apk_url,
     jar_url = excluded.jar_url,
     is_nsfw = excluded.is_nsfw
+WHERE extensions.repository_id = excluded.repository_id
+   OR extensions.repository_id IN (SELECT id FROM repositories WHERE index_url = 'local:sideload')
 RETURNING *;
+
+-- name: UpsertSideloadedExtension :one
+-- A sideload replaces whatever version a repo provided.
+INSERT INTO extensions (
+    repository_id, package_name, name, version, content_type, lang, apk_url
+) VALUES (?, ?, ?, ?, ?, ?, '')
+ON CONFLICT(package_name) DO UPDATE SET
+    repository_id = excluded.repository_id,
+    name = excluded.name,
+    version = excluded.version,
+    content_type = excluded.content_type,
+    lang = excluded.lang,
+    apk_url = '',
+    jar_url = NULL
+RETURNING *;
+
+-- name: MoveInstalledExtensions :exec
+-- Installed extensions outlive the repo they came from.
+UPDATE extensions SET repository_id = sqlc.arg(to_repo) WHERE repository_id = sqlc.arg(from_repo) AND installed;
 
 -- name: GetExtension :one
 SELECT * FROM extensions WHERE id = ?;

@@ -3,6 +3,7 @@ package sync
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -345,7 +346,7 @@ func (s *Syncer) applyRepoIndex(ctx context.Context, repoID int64, parsed []repo
 			ApkUrl:       ext.ApkURL,
 			JarUrl:       nullString(ext.JarURL),
 			IsNsfw:       ext.IsNsfw,
-		}); err != nil {
+		}); err != nil && !errors.Is(err, sql.ErrNoRows) { // ErrNoRows: another repo owns this package
 			return fmt.Errorf("upsert extension %s: %w", ext.PackageName, err)
 		}
 	}
@@ -445,14 +446,13 @@ func (s *Syncer) InstallExternalExtension(ctx context.Context, c *sandbox.Client
 
 	contentType := strings.ToLower(meta.ContentType.String())
 
-	saved, err := s.q.UpsertExtension(ctx, sqlcgen.UpsertExtensionParams{
+	saved, err := s.q.UpsertSideloadedExtension(ctx, sqlcgen.UpsertSideloadedExtensionParams{
 		RepositoryID: repo.ID,
 		PackageName:  meta.PackageName,
 		Name:         meta.Name,
-
-		Version:     "unknown",
-		ContentType: contentType,
-		Lang:        strings.ToLower(strings.TrimSpace(meta.Lang)),
+		Version:      "unknown",
+		ContentType:  contentType,
+		Lang:         strings.ToLower(strings.TrimSpace(meta.Lang)),
 	})
 	if err != nil {
 		return sqlcgen.Extension{}, fmt.Errorf("upsert extension: %w", err)
@@ -490,6 +490,15 @@ func (s *Syncer) RenameRepository(ctx context.Context, id int64, name string) (s
 }
 
 func (s *Syncer) DeleteRepository(ctx context.Context, id int64) error {
+	// Installed extensions keep working (and keep their series) as sideloads;
+	// deleting the repo only drops what it offered but was never installed.
+	if sideload, err := s.getOrCreateSideloadRepo(ctx); err != nil {
+		return fmt.Errorf("getting sideload repository: %w", err)
+	} else if sideload.ID != id {
+		if err := s.q.MoveInstalledExtensions(ctx, sqlcgen.MoveInstalledExtensionsParams{FromRepo: id, ToRepo: sideload.ID}); err != nil {
+			return fmt.Errorf("keep installed extensions of repository %d: %w", id, err)
+		}
+	}
 	exts, err := s.q.ListExtensionsByRepository(ctx, id)
 	if err != nil {
 		return fmt.Errorf("list extensions for repository %d: %w", id, err)

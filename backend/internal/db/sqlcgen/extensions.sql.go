@@ -522,6 +522,21 @@ func (q *Queries) MarkExtensionUpdated(ctx context.Context, arg MarkExtensionUpd
 	return i, err
 }
 
+const moveInstalledExtensions = `-- name: MoveInstalledExtensions :exec
+UPDATE extensions SET repository_id = ?1 WHERE repository_id = ?2 AND installed
+`
+
+type MoveInstalledExtensionsParams struct {
+	ToRepo   int64 `json:"to_repo"`
+	FromRepo int64 `json:"from_repo"`
+}
+
+// Installed extensions outlive the repo they came from.
+func (q *Queries) MoveInstalledExtensions(ctx context.Context, arg MoveInstalledExtensionsParams) error {
+	_, err := q.db.ExecContext(ctx, moveInstalledExtensions, arg.ToRepo, arg.FromRepo)
+	return err
+}
+
 const queryExtensions = `-- name: QueryExtensions :many
 SELECT id, repository_id, package_name, name, version, content_type, lang, icon_url, icon_local_path, apk_url, jar_url, jar_path, installed, enabled, discovered_at, installed_at, installed_version, needs_update, is_nsfw, supports_latest, source_id FROM extensions
 WHERE (CAST(?1 AS INTEGER) IS NULL OR repository_id = ?1)
@@ -735,6 +750,7 @@ INSERT INTO extensions (
     icon_url, apk_url, jar_url, is_nsfw
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 ON CONFLICT(package_name) DO UPDATE SET
+    repository_id = excluded.repository_id,
     name = excluded.name,
     version = excluded.version,
     content_type = excluded.content_type,
@@ -743,6 +759,8 @@ ON CONFLICT(package_name) DO UPDATE SET
     apk_url = excluded.apk_url,
     jar_url = excluded.jar_url,
     is_nsfw = excluded.is_nsfw
+WHERE extensions.repository_id = excluded.repository_id
+   OR extensions.repository_id IN (SELECT id FROM repositories WHERE index_url = 'local:sideload')
 RETURNING id, repository_id, package_name, name, version, content_type, lang, icon_url, icon_local_path, apk_url, jar_url, jar_path, installed, enabled, discovered_at, installed_at, installed_version, needs_update, is_nsfw, supports_latest, source_id
 `
 
@@ -759,6 +777,9 @@ type UpsertExtensionParams struct {
 	IsNsfw       bool           `json:"is_nsfw"`
 }
 
+// Two repos (a source and its mirror) can list the same package. The row
+// belongs to the repo that added it, so another repo's sync doesn't overwrite
+// it (no row is returned then); a sideloaded copy is handed back to a repo.
 func (q *Queries) UpsertExtension(ctx context.Context, arg UpsertExtensionParams) (Extension, error) {
 	row := q.db.QueryRowContext(ctx, upsertExtension,
 		arg.RepositoryID,
@@ -771,6 +792,67 @@ func (q *Queries) UpsertExtension(ctx context.Context, arg UpsertExtensionParams
 		arg.ApkUrl,
 		arg.JarUrl,
 		arg.IsNsfw,
+	)
+	var i Extension
+	err := row.Scan(
+		&i.ID,
+		&i.RepositoryID,
+		&i.PackageName,
+		&i.Name,
+		&i.Version,
+		&i.ContentType,
+		&i.Lang,
+		&i.IconUrl,
+		&i.IconLocalPath,
+		&i.ApkUrl,
+		&i.JarUrl,
+		&i.JarPath,
+		&i.Installed,
+		&i.Enabled,
+		&i.DiscoveredAt,
+		&i.InstalledAt,
+		&i.InstalledVersion,
+		&i.NeedsUpdate,
+		&i.IsNsfw,
+		&i.SupportsLatest,
+		&i.SourceID,
+	)
+	return i, err
+}
+
+const upsertSideloadedExtension = `-- name: UpsertSideloadedExtension :one
+INSERT INTO extensions (
+    repository_id, package_name, name, version, content_type, lang, apk_url
+) VALUES (?, ?, ?, ?, ?, ?, '')
+ON CONFLICT(package_name) DO UPDATE SET
+    repository_id = excluded.repository_id,
+    name = excluded.name,
+    version = excluded.version,
+    content_type = excluded.content_type,
+    lang = excluded.lang,
+    apk_url = '',
+    jar_url = NULL
+RETURNING id, repository_id, package_name, name, version, content_type, lang, icon_url, icon_local_path, apk_url, jar_url, jar_path, installed, enabled, discovered_at, installed_at, installed_version, needs_update, is_nsfw, supports_latest, source_id
+`
+
+type UpsertSideloadedExtensionParams struct {
+	RepositoryID int64  `json:"repository_id"`
+	PackageName  string `json:"package_name"`
+	Name         string `json:"name"`
+	Version      string `json:"version"`
+	ContentType  string `json:"content_type"`
+	Lang         string `json:"lang"`
+}
+
+// A sideload replaces whatever version a repo provided.
+func (q *Queries) UpsertSideloadedExtension(ctx context.Context, arg UpsertSideloadedExtensionParams) (Extension, error) {
+	row := q.db.QueryRowContext(ctx, upsertSideloadedExtension,
+		arg.RepositoryID,
+		arg.PackageName,
+		arg.Name,
+		arg.Version,
+		arg.ContentType,
+		arg.Lang,
 	)
 	var i Extension
 	err := row.Scan(
