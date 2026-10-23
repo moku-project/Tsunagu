@@ -34,7 +34,9 @@ func newFixture(t *testing.T, downloaded ...int64) *fixture {
 	}
 	t.Cleanup(func() { conn.Close() })
 	if _, err := conn.Exec(`
-		INSERT INTO media (id, external_id, content_type, title, added_at) VALUES (1, 'm', 'manga', 'Title', CURRENT_TIMESTAMP);
+		INSERT INTO repositories (id, index_url) VALUES (1, 'https://repo.example/index.min.json');
+		INSERT INTO extensions (id, repository_id, package_name, name, version, content_type, lang, apk_url) VALUES (1, 1, 'ext', 'Ext', '1', 'manga', 'en', '');
+		INSERT INTO media (id, extension_id, external_id, content_type, title, added_at) VALUES (1, 1, 'm', 'manga', 'Title', CURRENT_TIMESTAMP);
 		INSERT INTO chapters (id, media_id, external_id, source_order) VALUES
 			(1, 1, 'c1', 1), (2, 1, 'c2', 2), (3, 1, 'c3', 3), (4, 1, 'c4', 4), (5, 1, 'c5', 5);
 	`); err != nil {
@@ -245,10 +247,10 @@ func TestAutoDownloadNewChapters(t *testing.T) {
 
 func TestFilterTargets(t *testing.T) {
 	f := newFixture(t)
-	f.exec(`INSERT INTO media (id, external_id, content_type, title, added_at) VALUES
-		(2, 'paused', 'manga', 'Paused', CURRENT_TIMESTAMP),
-		(3, 'manual', 'manga', 'Manual', CURRENT_TIMESTAMP),
-		(4, 'weekly', 'manga', 'Weekly', CURRENT_TIMESTAMP)`)
+	f.exec(`INSERT INTO media (id, extension_id, external_id, content_type, title, added_at) VALUES
+		(2, 1, 'paused', 'manga', 'Paused', CURRENT_TIMESTAMP),
+		(3, 1, 'manual', 'manga', 'Manual', CURRENT_TIMESTAMP),
+		(4, 1, 'weekly', 'manga', 'Weekly', CURRENT_TIMESTAMP)`)
 	f.exec(`INSERT INTO media_automation (media_id, pause_updates) VALUES (2, 1)`)
 	f.exec(`INSERT INTO media_automation (media_id, refresh_interval) VALUES (3, 'manual'), (4, 'weekly')`)
 	now := time.Now().UTC()
@@ -289,8 +291,8 @@ func (f *fixture) stubUpdates() *[][]int64 {
 func TestAppOpenUpdate(t *testing.T) {
 	ctx := context.Background()
 	f := newFixture(t)
-	f.exec(`INSERT INTO media (id, external_id, content_type, title, added_at) VALUES
-		(2, 'paused', 'manga', 'Paused', CURRENT_TIMESTAMP)`)
+	f.exec(`INSERT INTO media (id, extension_id, external_id, content_type, title, added_at) VALUES
+		(2, 1, 'paused', 'manga', 'Paused', CURRENT_TIMESTAMP)`)
 	f.exec(`INSERT INTO media_automation (media_id, pause_updates) VALUES (2, 1)`)
 	started := f.stubUpdates()
 
@@ -447,10 +449,10 @@ func TestAutoDownloadOffWhenAutomationDisabled(t *testing.T) {
 	}
 }
 
-// The fixture series has no extension, like a series whose extension was
-// uninstalled; its downloads must still be deletable.
+// A series whose extension was uninstalled must still have deletable downloads.
 func TestDeleteDownloadsOfOrphanedSeries(t *testing.T) {
 	f := newFixture(t, 1, 2)
+	f.exec(`UPDATE media SET extension_id = NULL WHERE id = 1`)
 	var ext sql.NullInt64
 	if err := f.conn.QueryRow(`SELECT extension_id FROM media WHERE id = 1`).Scan(&ext); err != nil || ext.Valid {
 		t.Fatalf("fixture series should have no extension: %v %v", ext, err)
@@ -463,5 +465,19 @@ func TestDeleteDownloadsOfOrphanedSeries(t *testing.T) {
 	}
 	if downloaded, _ := f.state(); len(downloaded) != 0 {
 		t.Fatalf("still downloaded: %v", downloaded)
+	}
+}
+
+// Local series have no source to sync; including them made every scheduled tick
+// fail them and respawn the sandbox.
+func TestUpdateTargetsSkipLocalMedia(t *testing.T) {
+	f := newFixture(t)
+	f.exec(`INSERT INTO media (id, external_id, content_type, title, added_at) VALUES (6, 'local', 'manga', 'Local', CURRENT_TIMESTAMP)`)
+	ids, err := f.q.ListUpdateTargetMediaIDs(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(ids, []int64{1}) {
+		t.Fatalf("targets = %v, want [1]", ids)
 	}
 }

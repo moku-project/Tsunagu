@@ -170,6 +170,11 @@ func (s *Syncer) runLibraryUpdate(sc *sandbox.SupervisedClient, ids []int64) {
 			s.updateProg.FailedTitles = append(s.updateProg.FailedTitles, m.Title)
 			s.updateProg.Done++
 			s.updateMu.Unlock()
+			// Count a failed check too, so a source that keeps erroring waits for its
+			// interval instead of being retried (and the sandbox respawned) every tick.
+			if s.onChecked != nil {
+				s.onChecked(ctx, id, nil)
+			}
 			continue
 		}
 		newIDs := newChapterIDs(before, after)

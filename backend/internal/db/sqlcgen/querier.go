@@ -151,6 +151,7 @@ type Querier interface {
 	ListTrackerAccounts(ctx context.Context) ([]TrackerAccount, error)
 	ListTrackerLinksByMedia(ctx context.Context, mediaID int64) ([]TrackerLink, error)
 	ListTrackerLinksByMediaIDs(ctx context.Context, mediaIds []int64) ([]TrackerLink, error)
+	// Local media (no extension) are rescanned from disk, not synced from a source.
 	ListUpdateTargetMediaIDs(ctx context.Context) ([]int64, error)
 	ListUpdateTargetsWithCheckedAt(ctx context.Context, mediaIds []int64) ([]ListUpdateTargetsWithCheckedAtRow, error)
 	MarkChaptersReadUpToNumber(ctx context.Context, arg MarkChaptersReadUpToNumberParams) error

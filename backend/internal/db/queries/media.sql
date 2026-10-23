@@ -70,6 +70,7 @@ UPDATE media SET cover_local_path = NULL;
 UPDATE media SET cover_override = ?, cover_local_path = NULL WHERE id = ? RETURNING *;
 
 -- name: ListUpdateTargetMediaIDs :many
+-- Local media (no extension) are rescanned from disk, not synced from a source.
 
 SELECT m.id FROM media m
 WHERE (
@@ -88,6 +89,7 @@ WHERE (
     JOIN folders fx ON fx.id = mfx.folder_id
     WHERE mfx.media_id = m.id AND fx.include_in_update = 0
   )
+  AND m.extension_id IS NOT NULL
 ORDER BY m.title;
 
 -- name: GetLocalMediaByExternalID :one

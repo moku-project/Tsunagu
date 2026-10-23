@@ -458,9 +458,11 @@ WHERE (
     JOIN folders fx ON fx.id = mfx.folder_id
     WHERE mfx.media_id = m.id AND fx.include_in_update = 0
   )
+  AND m.extension_id IS NOT NULL
 ORDER BY m.title
 `
 
+// Local media (no extension) are rescanned from disk, not synced from a source.
 func (q *Queries) ListUpdateTargetMediaIDs(ctx context.Context) ([]int64, error) {
 	rows, err := q.db.QueryContext(ctx, listUpdateTargetMediaIDs)
 	if err != nil {
