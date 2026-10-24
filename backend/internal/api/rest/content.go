@@ -384,43 +384,39 @@ func classifyStream(rawURL string) string {
 	}
 }
 
-func verifyStreamURL(ctx context.Context, rawURL string, headers map[string]string) (int, error) {
+// verifyStreamURL returns the stream's status and Content-Type. It uses a GET:
+// some hosts answer HEAD with a body, which poisons the pooled connection.
+func verifyStreamURL(ctx context.Context, rawURL string, headers map[string]string) (int, string, error) {
 	u, ok := streamHTTPURL(rawURL)
 	if !ok {
-		return 0, fmt.Errorf("stream url rejected: %q", rawURL)
+		return 0, "", fmt.Errorf("stream url rejected: %q", rawURL)
 	}
 
 	lower := strings.ToLower(u.Path)
 	isManifest := strings.Contains(lower, ".m3u8") || strings.Contains(lower, ".mpd")
 
-	var lastErr error
-	for _, method := range []string{http.MethodHead, http.MethodGet} {
-		req, err := http.NewRequestWithContext(ctx, method, u.String(), nil)
-		if err != nil {
-			return 0, err
-		}
-		applyUpstreamHeaders(req, headers)
-		if method == http.MethodGet && !isManifest {
-			req.Header.Set("Range", "bytes=0-0")
-		}
-		resp, err := proxyClient.Do(req)
-		if err != nil {
-			lastErr = err
-			continue
-		}
-		resp.Body.Close()
-		if resp.StatusCode < 400 {
-			return resp.StatusCode, nil
-		}
-		if (resp.StatusCode == http.StatusMethodNotAllowed || resp.StatusCode == http.StatusForbidden) && method == http.MethodHead {
-			continue
-		}
-		return resp.StatusCode, fmt.Errorf("stream URL returned HTTP %d", resp.StatusCode)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	if err != nil {
+		return 0, "", err
 	}
-	if lastErr == nil {
-		lastErr = fmt.Errorf("stream unreachable")
+	applyUpstreamHeaders(req, headers)
+	if !isManifest {
+		req.Header.Set("Range", "bytes=0-0")
 	}
-	return 0, lastErr
+	resp, err := proxyClient.Do(req)
+	if err != nil {
+		return 0, "", err
+	}
+	resp.Body.Close()
+	if resp.StatusCode >= 400 {
+		return resp.StatusCode, "", fmt.Errorf("stream URL returned HTTP %d", resp.StatusCode)
+	}
+	return resp.StatusCode, resp.Header.Get("Content-Type"), nil
+}
+
+func isHLSContentType(ct string) bool {
+	ct = strings.ToLower(ct)
+	return strings.Contains(ct, "mpegurl")
 }
 
 type probeResult struct {
@@ -553,12 +549,15 @@ func (h *ContentHandler) runProbe(ctx context.Context, chapterID int64, onStage 
 		streamURL, headers := unwrapLocalProxyURL(c.url, c.headers)
 		streamType := classifyStream(streamURL)
 
-		status, verr := verifyStreamURL(ctx, streamURL, headers)
+		status, ct, verr := verifyStreamURL(ctx, streamURL, headers)
 		if verr != nil {
 			lastErr, lastStatus = verr, status
 			log.Printf("probeVideo chapter=%d: candidate %d/%d (%s) verify failed: status=%d %v url=%q",
 				chapterID, i+1, len(candidates), streamType, status, verr, streamURL)
 			continue
+		}
+		if streamType == "progressive" && isHLSContentType(ct) {
+			streamType = "hls"
 		}
 		if streamType == "hls" {
 			if cerr := hlsContentCheck(ctx, streamURL, headers, 2); cerr != nil {
