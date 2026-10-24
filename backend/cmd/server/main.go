@@ -391,8 +391,7 @@ func reloadInstalledExtensions(ctx context.Context, sy *sync.Syncer, sc *sandbox
 	toLoad := make([]*sandboxv1.ExtensionToLoad, 0, len(installed))
 	sandboxOnly := 0
 	for _, ext := range installed {
-		// Sideloaded (and some older) installs have no backend copy; the sandbox keeps
-		// them in its own extensions dir and loads them from there on first use.
+		// Sideloads live only in the sandbox's extensions dir.
 		if !ext.JarPath.Valid || ext.JarPath.String == "" {
 			sandboxOnly++
 			continue
@@ -486,7 +485,7 @@ func authMiddleware(token string, am *auth.Manager, next http.Handler) http.Hand
 			}
 			if ok {
 				if fromQuery {
-					// Proxied stream requests forward their query upstream; the credential must not go with it.
+					// Proxied streams forward their query upstream.
 					q := r.URL.Query()
 					q.Del("token")
 					r.URL.RawQuery = q.Encode()

@@ -158,7 +158,7 @@ func (h *RemoteCoverProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// Hashed: base64 of a long URL passes the 255-byte file name limit.
+	// Hashed to stay under the 255-byte file name limit.
 	sum := sha256.Sum256([]byte(upstreamURL))
 	destName := hex.EncodeToString(sum[:])
 	localPath, err := image.DownloadToFileWith(publicImageClient, upstreamURL, h.CoverCacheDir, destName)

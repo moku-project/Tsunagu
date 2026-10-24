@@ -48,7 +48,7 @@ fun main() {
     GetSource.bind(registry)
     registry.loadAll()
     val server = NettyServerBuilder
-        // Loopback only: the backend is the sole client, and loading a jar runs its code.
+        // Loopback only: loading a jar runs its code.
         .forAddress(InetSocketAddress(InetAddress.getLoopbackAddress(), port))
         .addService(ExtensionServiceImpl(registry))
         .addService(ProtoReflectionService.newInstance())

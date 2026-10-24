@@ -777,9 +777,7 @@ type UpsertExtensionParams struct {
 	IsNsfw       bool           `json:"is_nsfw"`
 }
 
-// Two repos (a source and its mirror) can list the same package. The row
-// belongs to the repo that added it, so another repo's sync doesn't overwrite
-// it (no row is returned then); a sideloaded copy is handed back to a repo.
+// Another repo's sync doesn't take over a row; a sideloaded row is handed back.
 func (q *Queries) UpsertExtension(ctx context.Context, arg UpsertExtensionParams) (Extension, error) {
 	row := q.db.QueryRowContext(ctx, upsertExtension,
 		arg.RepositoryID,

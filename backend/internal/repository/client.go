@@ -66,7 +66,6 @@ func DownloadExtensionFile(cacheDir, packageName, version, downloadURL, ext stri
 		return "", fmt.Errorf("create cache dir %s: %w", cacheDir, err)
 	}
 
-	// version comes from the repo index; a "/" or ".." in it must not leave cacheDir.
 	dest := filepath.Join(cacheDir, fmt.Sprintf("%s-%s.%s", packageName, unsafeFileChars.ReplaceAllString(version, "_"), ext))
 	if _, err := os.Stat(dest); err == nil {
 		return dest, nil

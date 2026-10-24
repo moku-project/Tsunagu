@@ -121,7 +121,6 @@ func Load(opts Options) (*Config, string, map[string]bool, error) {
 		return nil, "", nil, err
 	}
 
-	// Launchers (the desktop app, Docker) pick the bind address without editing the file.
 	if addr := os.Getenv("TSUNAGU_ADDR"); addr != "" {
 		c.HTTPAddr = addr
 	}

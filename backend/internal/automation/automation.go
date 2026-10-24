@@ -223,9 +223,7 @@ func (m *Manager) ChaptersRead(ctx context.Context, mediaID int64, chapterIDs []
 	}
 
 	if rules.MaxKeepChapters > 0 {
-		// Unread chapters (on disk or about to be queued) have priority, nearest
-		// first, so the cap never deletes what download-ahead just fetched. Read
-		// chapters fill whatever room is left, newest first.
+		// Keep unread chapters first (nearest first), then the newest read ones.
 		queued := make(map[int64]bool, len(toQueue))
 		for _, id := range toQueue {
 			queued[id] = true

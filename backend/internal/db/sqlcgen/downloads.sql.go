@@ -201,8 +201,7 @@ WHERE NOT EXISTS (
 RETURNING id, chapter_id, status, progress, downloaded_bytes, bytes_per_sec, position, error, created_at, completed_at
 `
 
-// Returns no row when the chapter is already queued, downloading, or downloaded
-// with its files present: a second job would race the first over the same folder.
+// No row when the chapter is already queued, downloading, or downloaded.
 func (q *Queries) EnqueueDownload(ctx context.Context, chapterID int64) (Download, error) {
 	row := q.db.QueryRowContext(ctx, enqueueDownload, chapterID)
 	var i Download

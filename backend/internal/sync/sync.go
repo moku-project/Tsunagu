@@ -160,7 +160,6 @@ func (s *Syncer) runLibraryUpdate(sc *sandbox.SupervisedClient, ids []int64) {
 
 		before, _ := s.q.ListChaptersByMedia(ctx, id)
 
-		// Ensure per title: it respawns a sandbox that crashed partway through.
 		var after []sqlcgen.Chapter
 		c, err := sc.Ensure(ctx)
 		if err == nil {
@@ -171,8 +170,7 @@ func (s *Syncer) runLibraryUpdate(sc *sandbox.SupervisedClient, ids []int64) {
 			s.updateProg.FailedTitles = append(s.updateProg.FailedTitles, m.Title)
 			s.updateProg.Done++
 			s.updateMu.Unlock()
-			// Count a failed check too, so a source that keeps erroring waits for its
-			// interval instead of being retried (and the sandbox respawned) every tick.
+			// A failing source waits for its interval too.
 			if s.onChecked != nil {
 				s.onChecked(ctx, id, nil)
 			}
@@ -215,8 +213,7 @@ func newChapterIDs(before, after []sqlcgen.Chapter) []int64 {
 	return ids
 }
 
-// diffChapters splits a sync into chapters the source newly lists (fresh) and
-// known chapters it no longer lists (stale).
+// diffChapters returns newly listed chapters and known ones no longer listed.
 func diffChapters(before, after []sqlcgen.Chapter) (fresh, stale []sqlcgen.Chapter) {
 	known := make(map[string]bool, len(before))
 	for _, ch := range before {
@@ -237,13 +234,10 @@ func diffChapters(before, after []sqlcgen.Chapter) (fresh, stale []sqlcgen.Chapt
 	return fresh, stale
 }
 
-// pruneStaleChapters handles chapters the source stopped listing. One that came
-// back under a new ID (a source changing its URL scheme) hands its progress and
-// downloads to the replacement; the rest are dropped unless downloaded, so a
-// copy the user kept stays readable.
+// pruneStaleChapters moves state from replaced chapters and drops the rest unless downloaded.
 func pruneStaleChapters(ctx context.Context, q *sqlcgen.Queries, before, after []sqlcgen.Chapter) error {
 	fresh, stale := diffChapters(before, after)
-	// A source suddenly listing far fewer chapters is more likely failing than pruning.
+	// Far fewer chapters means the source is more likely failing.
 	partial := len(after) < len(before)/2
 	match := chapterMatcher(fresh)
 	for _, old := range stale {
@@ -490,8 +484,7 @@ func (s *Syncer) RenameRepository(ctx context.Context, id int64, name string) (s
 }
 
 func (s *Syncer) DeleteRepository(ctx context.Context, id int64) error {
-	// Installed extensions keep working (and keep their series) as sideloads;
-	// deleting the repo only drops what it offered but was never installed.
+	// Installed extensions stay as sideloads.
 	if sideload, err := s.getOrCreateSideloadRepo(ctx); err != nil {
 		return fmt.Errorf("getting sideload repository: %w", err)
 	} else if sideload.ID != id {

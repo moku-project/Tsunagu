@@ -238,8 +238,7 @@ type RecordReadingProgressParams struct {
 	DurationSeconds sql.NullFloat64 `json:"duration_seconds"`
 }
 
-// Position updates from a reader or player. Unlike UpsertReadingProgress this never
-// clears completed: re-reading a finished chapter must not mark it unread.
+// Like UpsertReadingProgress, but never clears completed.
 func (q *Queries) RecordReadingProgress(ctx context.Context, arg RecordReadingProgressParams) (ReadingProgress, error) {
 	row := q.db.QueryRowContext(ctx, recordReadingProgress,
 		arg.MediaID,

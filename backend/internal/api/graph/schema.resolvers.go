@@ -677,8 +677,7 @@ func (r *mutationResolver) UpdateExtension(ctx context.Context, packageName stri
 	if err != nil {
 		return nil, err
 	}
-	// Download before unloading: a failed download (or a sideloaded extension,
-	// which has nothing to download) must leave the working version loaded.
+	// Download first so a failure leaves the working version loaded.
 	ext, err := r.Sy.UpdateExtension(ctx, packageName)
 	if err != nil {
 		return nil, err
@@ -833,7 +832,6 @@ func (r *mutationResolver) EnqueueDownload(ctx context.Context, mediaID string, 
 		}
 		d, err := r.Q.EnqueueDownload(ctx, id)
 		if err == sql.ErrNoRows {
-			// Already queued or downloaded; report the existing job.
 			d, err = r.Q.GetLatestDownloadForChapter(ctx, id)
 		}
 		if err != nil {

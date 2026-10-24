@@ -1,6 +1,5 @@
 -- name: EnqueueDownload :one
--- Returns no row when the chapter is already queued, downloading, or downloaded
--- with its files present: a second job would race the first over the same folder.
+-- No row when the chapter is already queued, downloading, or downloaded.
 INSERT INTO downloads (chapter_id, status, position)
 SELECT sqlc.arg(chapter_id), 'queued', COALESCE((SELECT MAX(position) FROM downloads WHERE status = 'queued'), 0) + 1
 WHERE NOT EXISTS (

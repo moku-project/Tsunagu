@@ -526,8 +526,7 @@ func chapterByIDFn(q *sqlcgen.Queries) func(context.Context, []int64) ([]*sqlcge
 	}
 }
 
-// pdfByChapterFn reports which chapters are a downloaded or local PDF, judged by
-// their first page's path.
+// pdfByChapterFn reports which chapters are PDFs, by their first page's path.
 func pdfByChapterFn(q *sqlcgen.Queries) func(context.Context, []int64) ([]bool, []error) {
 	return func(ctx context.Context, keys []int64) ([]bool, []error) {
 		rows, err := q.ListFirstMangaPagePathsByChapterIDs(ctx, keys)

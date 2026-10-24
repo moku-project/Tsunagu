@@ -8,8 +8,7 @@ import (
 )
 
 // originAllowed reports whether a browser page at origin may talk to this server.
-// Without this check any website the user visits could drive the API, e.g.
-// install an extension jar, since browsers send form POSTs cross-site without a preflight.
+// Form POSTs skip the CORS preflight, so the origin is checked here.
 func originAllowed(origin, host string, extra []string) bool {
 	switch origin {
 	case "tauri://localhost", "http://tauri.localhost", "https://tauri.localhost":
@@ -49,7 +48,6 @@ func corsMiddleware(extraOrigins string, next http.Handler) http.Handler {
 		origin := r.Header.Get("Origin")
 		if origin != "" {
 			if !originAllowed(origin, r.Host, extra) {
-				// Plain GETs (images, video) stay usable; anything that can change state is refused.
 				if r.Method != http.MethodGet && r.Method != http.MethodHead {
 					http.Error(w, "origin not allowed", http.StatusForbidden)
 					return

@@ -26,7 +26,7 @@ const clearChapterFirstSeen = `-- name: ClearChapterFirstSeen :exec
 UPDATE chapters SET first_seen_at = NULL WHERE media_id = ?
 `
 
-// A series' first sync is its backlog, not new releases; keep it off the Updates feed.
+// A series' first sync is backlog, not new releases.
 func (q *Queries) ClearChapterFirstSeen(ctx context.Context, mediaID int64) error {
 	_, err := q.db.ExecContext(ctx, clearChapterFirstSeen, mediaID)
 	return err
@@ -83,8 +83,7 @@ SELECT mp.chapter_id, COUNT(*) AS page_count
 FROM manga_pages mp
 WHERE mp.chapter_id IN (/*SLICE:chapter_ids*/?)
   AND mp.local_path IS NOT NULL AND mp.local_path != ''
-  -- Loose downloads write pages one by one; until the job finishes the chapter is
-  -- not downloaded, or the reader would get a cut-off page list.
+  -- Pages are written one by one; the chapter isn't downloaded until the job finishes.
   AND NOT EXISTS (
     SELECT 1 FROM downloads d
     WHERE d.chapter_id = mp.chapter_id AND d.status IN ('queued', 'downloading')
@@ -358,8 +357,7 @@ SELECT
     m.title AS library_title,
     m.content_type AS content_type,
     e.package_name AS extension_package_name,
-    -- Another chapter would get the same folder (same number and title, e.g. a second
-    -- scanlation group), so this one needs a distinguishing suffix.
+    -- Another chapter would get the same folder name.
     CAST(EXISTS (
         SELECT 1 FROM chapters o
         WHERE o.media_id = c.media_id AND o.id != c.id AND o.number IS c.number AND o.title IS c.title

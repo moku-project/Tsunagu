@@ -92,8 +92,6 @@ func (m *Manager) Start() {
 
 func (m *Manager) Shutdown() {
 	close(m.stopCh)
-	// Without this an episode remux in progress holds up exit until it finishes,
-	// and the service manager kills the process mid-write.
 	m.stopJobs()
 	m.wg.Wait()
 }
@@ -168,7 +166,7 @@ func (m *Manager) processOne() {
 	if jobCtx.Err() != nil {
 		m.discardPartial(job.ChapterID)
 		if m.baseCtx.Err() != nil {
-			// Shutting down: leave the job as downloading so the next start requeues it.
+			// Shutting down: the next start requeues it.
 			log.Printf("download: job %d (chapter %d) interrupted by shutdown; will resume on next start", job.ID, job.ChapterID)
 			return
 		}
@@ -201,7 +199,6 @@ func (m *Manager) runJob(ctx context.Context, jobID, chapterID int64) error {
 	if err != nil {
 		return fmt.Errorf("sandbox unavailable: %w", err)
 	}
-	// Jobs reuse one client for minutes (an episode remux), so keep the sandbox from idling out.
 	release := m.sc.Hold()
 	defer release()
 
@@ -274,7 +271,6 @@ func (m *Manager) SetImageFormat(format string) {
 func (m *Manager) buildChapterDir(dctx sqlcgen.GetChapterDownloadContextRow) string {
 	name := chapterFolderName(dctx.ContentType, dctx.ChapterTitle, dctx.ChapterNumber, dctx.SourceChapterID)
 	if dctx.NameClash {
-		// Two groups' "Chapter 5" would otherwise share files, and one's cleanup would wipe the other.
 		h := fnv.New32a()
 		h.Write([]byte(dctx.SourceChapterID))
 		name = fmt.Sprintf("%s [%08x]", name, h.Sum32())

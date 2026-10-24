@@ -59,8 +59,7 @@ class ExtensionRegistry(
         }
     }
 
-    // Older builds stored sideloaded plugins as sideload-<nanos>.js, which nothing
-    // looks up by; move them to <plugin id>.js.
+    // Rename legacy sideload-<nanos>.js files to <plugin id>.js.
     private fun renameSideload(file: File): File {
         if (!file.name.startsWith("sideload-")) return file
         return runCatching {

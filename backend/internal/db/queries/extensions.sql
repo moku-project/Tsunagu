@@ -1,7 +1,5 @@
 -- name: UpsertExtension :one
--- Two repos (a source and its mirror) can list the same package. The row
--- belongs to the repo that added it, so another repo's sync doesn't overwrite
--- it (no row is returned then); a sideloaded copy is handed back to a repo.
+-- Another repo's sync doesn't take over a row; a sideloaded row is handed back.
 INSERT INTO extensions (
     repository_id, package_name, name, version, content_type, lang,
     icon_url, apk_url, jar_url, is_nsfw

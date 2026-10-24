@@ -1,7 +1,5 @@
-// Package netguard keeps the server's URL proxies from being pointed at the
-// machine or network it runs on. Checking a URL's host is not enough: a public
-// hostname can resolve to a private address, and a public server can redirect
-// to one, so the check runs again on every address actually dialed.
+// Package netguard keeps URL proxies away from local and private addresses,
+// checked on every dial since DNS and redirects can point anywhere.
 package netguard
 
 import (
@@ -21,8 +19,7 @@ func Internal(ip net.IP) bool {
 	return ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() || ip.IsUnspecified()
 }
 
-// proxyPorts are the ports of HTTP proxies configured through the environment;
-// a proxy on localhost must stay reachable.
+// proxyPorts are the ports of HTTP proxies set in the environment.
 var proxyPorts = func() map[string]bool {
 	ports := map[string]bool{}
 	for _, k := range []string{"HTTP_PROXY", "http_proxy", "HTTPS_PROXY", "https_proxy", "ALL_PROXY", "all_proxy"} {

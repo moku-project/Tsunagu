@@ -13,8 +13,7 @@ ON CONFLICT(media_id, chapter_id) DO UPDATE SET
 RETURNING *;
 
 -- name: RecordReadingProgress :one
--- Position updates from a reader or player. Unlike UpsertReadingProgress this never
--- clears completed: re-reading a finished chapter must not mark it unread.
+-- Like UpsertReadingProgress, but never clears completed.
 INSERT INTO reading_progress (media_id, chapter_id, progress, completed, position_seconds, duration_seconds)
 VALUES (?, ?, ?, ?, ?, ?)
 ON CONFLICT(media_id, chapter_id) DO UPDATE SET

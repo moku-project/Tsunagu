@@ -288,8 +288,6 @@ func (sc *SupervisedClient) killLocked() {
 }
 
 // Hold keeps the sandbox from being reaped as idle until release is called.
-// Jobs that call Ensure once and then reuse the client for a long time need it,
-// since only Ensure counts as activity.
 func (sc *SupervisedClient) Hold() (release func()) {
 	sc.mu.Lock()
 	sc.holds++

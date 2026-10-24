@@ -346,7 +346,7 @@ func (h *ContentHandler) serveVideo(w http.ResponseWriter, r *http.Request, chap
 	}
 	defer resp.Body.Close()
 
-	// Relative playlist and manifest entries resolve against where redirects ended up.
+	// Resolve relative entries against the post-redirect URL.
 	base := resp.Request.URL
 	switch ct := strings.ToLower(resp.Header.Get("Content-Type")); {
 	case strings.Contains(ct, "mpegurl"):
@@ -829,7 +829,7 @@ func applyUpstreamHeaders(req *http.Request, headers map[string]string) {
 
 var streamSegments = newSegCache(256 << 20)
 
-// proxyClient fetches client-named URLs, so every dial is re-checked: see netguard.
+// proxyClient fetches client-named URLs; see netguard.
 var proxyClient = &http.Client{Transport: netguard.Transport(streamLoopbackPort)}
 
 var hlsURIAttr = regexp.MustCompile(`URI="([^"]*)"`)
@@ -993,8 +993,7 @@ func (h *ContentHandler) serveSubtitle(w http.ResponseWriter, r *http.Request, c
 		}
 	}
 
-	// With the video's headers a direct fetch usually works; without them the
-	// extension's own client (cookies, Cloudflare clearance) is the better bet.
+	// Without the video's headers, the extension's client is the better bet.
 	var body []byte
 	ok = false
 	if len(headers) > 0 {
@@ -1062,7 +1061,6 @@ func (h *ContentHandler) fetchSubtitleDirect(ctx context.Context, tgt *url.URL, 
 		{"User-Agent": defaultBrowserUA, "Referer": origin + "/", "Origin": origin},
 	}
 	if len(passthrough) > 0 {
-		// The video's own headers are the likeliest to be accepted.
 		attempts = append([]map[string]string{passthrough}, attempts...)
 	}
 	for i, hdr := range attempts {
@@ -1179,7 +1177,7 @@ func (h *ContentHandler) serveDASH(w http.ResponseWriter, r *http.Request, rest 
 		http.Error(w, "bad dash segment", http.StatusBadRequest)
 		return
 	}
-	// Signed segment URLs carry their token in the query, which the browser sent to us.
+	// Signed segment URLs keep their token in the query.
 	seg.RawQuery = r.URL.RawQuery
 	tgt, ok := streamHTTPURL(baseURL.ResolveReference(seg).String())
 	if !ok {
@@ -1336,8 +1334,7 @@ func publicHTTPURL(raw string) (*url.URL, bool) {
 
 var reservedLoopbackPorts = map[string]bool{"6007": true, "50051": true, "8191": true}
 
-// streamLoopbackPort admits the ephemeral loopback ports anime extensions run
-// their in-sandbox HLS proxies on, never our own services or privileged ports.
+// streamLoopbackPort admits the ephemeral ports of in-sandbox HLS proxies.
 func streamLoopbackPort(port string) bool {
 	n, err := strconv.Atoi(port)
 	return err == nil && n >= 1024 && !reservedLoopbackPorts[port]

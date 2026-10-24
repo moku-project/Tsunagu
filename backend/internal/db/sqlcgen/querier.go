@@ -19,7 +19,7 @@ type Querier interface {
 	CancelChapterDeletions(ctx context.Context, chapterIds []int64) error
 	ChapterHasDownload(ctx context.Context, chapterID int64) (bool, error)
 	ClaimQueuedDownload(ctx context.Context, id int64) (int64, error)
-	// A series' first sync is its backlog, not new releases; keep it off the Updates feed.
+	// A series' first sync is backlog, not new releases.
 	ClearChapterFirstSeen(ctx context.Context, mediaID int64) error
 	ClearDownloads(ctx context.Context) error
 	ClearDownloadsByStatus(ctx context.Context, statuses []string) error
@@ -63,8 +63,7 @@ type Querier interface {
 	DeleteTrackerAccountByType(ctx context.Context, trackerType string) error
 	DeleteTrackerLink(ctx context.Context, id int64) error
 	DeleteUserContentFilterRules(ctx context.Context) error
-	// Returns no row when the chapter is already queued, downloading, or downloaded
-	// with its files present: a second job would race the first over the same folder.
+	// No row when the chapter is already queued, downloading, or downloaded.
 	EnqueueDownload(ctx context.Context, chapterID int64) (Download, error)
 	FailDownload(ctx context.Context, arg FailDownloadParams) error
 	GapFillMediaMetadata(ctx context.Context, arg GapFillMediaMetadataParams) (Medium, error)
@@ -179,8 +178,7 @@ type Querier interface {
 	MoveInstalledExtensions(ctx context.Context, arg MoveInstalledExtensionsParams) error
 	NextUnreadChapterByMediaIDs(ctx context.Context, mediaIds []int64) ([]Chapter, error)
 	QueryExtensions(ctx context.Context, arg QueryExtensionsParams) ([]Extension, error)
-	// Position updates from a reader or player. Unlike UpsertReadingProgress this never
-	// clears completed: re-reading a finished chapter must not mark it unread.
+	// Like UpsertReadingProgress, but never clears completed.
 	RecordReadingProgress(ctx context.Context, arg RecordReadingProgressParams) (ReadingProgress, error)
 	RemoveGenreFromMedia(ctx context.Context, arg RemoveGenreFromMediaParams) error
 	RemoveMediaFromAllFolders(ctx context.Context, mediaID int64) error
@@ -222,9 +220,7 @@ type Querier interface {
 	UpdateRepositoryName(ctx context.Context, arg UpdateRepositoryNameParams) (Repository, error)
 	UpdateSourcelessMedia(ctx context.Context, arg UpdateSourcelessMediaParams) (Medium, error)
 	UpsertAnimeEpisodeStream(ctx context.Context, arg UpsertAnimeEpisodeStreamParams) error
-	// Two repos (a source and its mirror) can list the same package. The row
-	// belongs to the repo that added it, so another repo's sync doesn't overwrite
-	// it (no row is returned then); a sideloaded copy is handed back to a repo.
+	// Another repo's sync doesn't take over a row; a sideloaded row is handed back.
 	UpsertExtension(ctx context.Context, arg UpsertExtensionParams) (Extension, error)
 	UpsertMangaPage(ctx context.Context, arg UpsertMangaPageParams) error
 	UpsertMediaAutomation(ctx context.Context, arg UpsertMediaAutomationParams) (MediaAutomation, error)
