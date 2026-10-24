@@ -37,9 +37,8 @@ type Client struct {
 	callTimeout time.Duration
 }
 
-func NewClient(addr string) (*Client, error) {
-	conn, err := grpc.NewClient(
-		addr,
+func NewClient(addr, token string) (*Client, error) {
+	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithKeepaliveParams(keepalive.ClientParameters{
 			Time:                20 * time.Second,
@@ -50,7 +49,11 @@ func NewClient(addr string) (*Client, error) {
 		// Page images and covers arrive whole in one message; long-strip pages
 		// routinely exceed gRPC's 4MB default.
 		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(maxImageBytes)),
-	)
+	}
+	if token != "" {
+		opts = append(opts, grpc.WithPerRPCCredentials(bearerToken(token)))
+	}
+	conn, err := grpc.NewClient(addr, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("dial sandbox at %s: %w", addr, err)
 	}
@@ -194,3 +197,13 @@ func (c *Client) GetImageBytes(ctx context.Context, extensionID, imageURL string
 		ImageUrl:    imageURL,
 	})
 }
+
+// bearerToken authenticates calls to an embedder's extension host. Loopback is
+// the only transport, so it is sent without TLS.
+type bearerToken string
+
+func (t bearerToken) GetRequestMetadata(context.Context, ...string) (map[string]string, error) {
+	return map[string]string{"authorization": "Bearer " + string(t)}, nil
+}
+
+func (bearerToken) RequireTransportSecurity() bool { return false }

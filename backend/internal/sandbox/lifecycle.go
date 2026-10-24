@@ -27,6 +27,8 @@ type SupervisedClient struct {
 	storageDir        string
 	novelEnabled      bool
 	addr              string
+	token             string
+	external          bool
 	idleTimeout       time.Duration
 	heapMB            int
 	flaresolverrURLFn func() string
@@ -43,12 +45,16 @@ type SupervisedClient struct {
 }
 
 type SupervisedConfig struct {
-	JarPath             string
-	Port                int
-	ExtensionsDir       string
-	StorageDir          string
-	NovelEnabled        bool
-	Addr                string
+	JarPath       string
+	Port          int
+	ExtensionsDir string
+	StorageDir    string
+	NovelEnabled  bool
+	Addr          string
+	// Token is sent with every call; an embedder's host checks it.
+	Token string
+	// External means the embedder runs the sandbox at Addr; it is never spawned.
+	External            bool
 	IdleTimeout         time.Duration
 	HeapMB              int
 	FlareSolverrURLFunc func() string
@@ -62,6 +68,8 @@ func NewSupervised(cfg SupervisedConfig) *SupervisedClient {
 		storageDir:        cfg.StorageDir,
 		novelEnabled:      cfg.NovelEnabled,
 		addr:              cfg.Addr,
+		token:             cfg.Token,
+		external:          cfg.External,
 		idleTimeout:       cfg.IdleTimeout,
 		heapMB:            cfg.HeapMB,
 		flaresolverrURLFn: cfg.FlareSolverrURLFunc,
@@ -90,8 +98,16 @@ func (sc *SupervisedClient) Ensure(ctx context.Context) (*Client, error) {
 	}
 	sc.adopted = false
 
+	if sc.external {
+		if err := sc.waitReadyLocked(ctx); err != nil {
+			return nil, fmt.Errorf("extension host at %s: %w", sc.addr, err)
+		}
+		sc.adopted = true
+		return sc.client, nil
+	}
+
 	if sc.cmd == nil {
-		if client, err := NewClient(sc.addr); err == nil {
+		if client, err := NewClient(sc.addr, sc.token); err == nil {
 			checkCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
 			_, pingErr := client.ListLoadedExtensions(checkCtx)
 			cancel()
@@ -217,7 +233,7 @@ func (sc *SupervisedClient) waitReadyLocked(ctx context.Context) error {
 	deadline := time.Now().Add(30 * time.Second)
 	backoff := 200 * time.Millisecond
 	for time.Now().Before(deadline) {
-		client, err := NewClient(sc.addr)
+		client, err := NewClient(sc.addr, sc.token)
 		if err == nil {
 			checkCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
 			_, pingErr := client.ListLoadedExtensions(checkCtx)
