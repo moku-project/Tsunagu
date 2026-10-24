@@ -1,7 +1,7 @@
 { pkgs, lib }:
 
 let
-  version = "0.5.0";
+  version = "0.6.0";
   jdk = pkgs.jdk21;
 
   repoSrc = fileset: lib.fileset.toSource {

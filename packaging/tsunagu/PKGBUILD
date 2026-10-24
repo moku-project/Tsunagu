@@ -4,7 +4,7 @@
 # latest tagged release.
 
 pkgname=tsunagu
-pkgver=0.5.0
+pkgver=0.6.0
 pkgrel=1
 pkgdesc='Self-hosted backend for manga, light novels, and anime (Moku backend)'
 arch=('x86_64' 'aarch64')
