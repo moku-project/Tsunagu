@@ -2,11 +2,15 @@ package config
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
+	"syscall"
 
 	"tsunagu/backend/internal/db/sqlcgen"
 )
@@ -34,12 +38,13 @@ type EffectiveSetting struct {
 func (e EffectiveSetting) RestartRequired() bool { return e.Scope != ScopeLive }
 
 type Store struct {
-	mu     sync.RWMutex
-	cfg    *Config
-	q      *sqlcgen.Queries
-	path   string
-	active map[string]bool
-	hooks  map[string]func(context.Context)
+	mu       sync.RWMutex
+	cfg      *Config
+	q        *sqlcgen.Queries
+	path     string
+	active   map[string]bool
+	hooks    map[string]func(context.Context)
+	readOnly bool
 }
 
 func NewStore(cfg *Config, q *sqlcgen.Queries, tomlPath string, active map[string]bool) *Store {
@@ -218,16 +223,35 @@ func (s *Store) regenerateLocked() error {
 		writeLine(&b, st, s.cfg, activeLine)
 	}
 
-	tmp := s.path + ".tmp"
+	return s.writeFileLocked([]byte(b.String()))
+}
+
+// A bind-mounted file can't be renamed over, so fall back to writing in place.
+func (s *Store) writeFileLocked(data []byte) error {
 	if dir := filepath.Dir(s.path); dir != "" {
 		if err := os.MkdirAll(dir, 0o755); err != nil {
 			return err
 		}
 	}
-	if err := os.WriteFile(tmp, []byte(b.String()), 0o644); err != nil {
-		return err
+	tmp := s.path + ".tmp"
+	err := os.WriteFile(tmp, data, 0o644)
+	if err == nil {
+		if err = os.Rename(tmp, s.path); err == nil {
+			return nil
+		}
+		os.Remove(tmp)
 	}
-	return os.Rename(tmp, s.path)
+	if err = os.WriteFile(s.path, data, 0o644); err == nil {
+		return nil
+	}
+	if errors.Is(err, syscall.EROFS) || errors.Is(err, fs.ErrPermission) {
+		if !s.readOnly {
+			log.Printf("config: %s is read-only, not rewriting it", s.path)
+			s.readOnly = true
+		}
+		return nil
+	}
+	return err
 }
 
 func writeLine(b *strings.Builder, st Setting, c *Config, active bool) {
