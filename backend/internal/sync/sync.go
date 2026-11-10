@@ -43,6 +43,8 @@ type Syncer struct {
 	// chapters that were new; onFinished runs once the whole update is done.
 	onChecked  func(ctx context.Context, mediaID int64, newChapterIDs []int64)
 	onFinished func(ctx context.Context)
+
+	preferAPK bool
 }
 
 type Enricher interface {
@@ -55,6 +57,8 @@ type Recomputer interface {
 
 func (s *Syncer) SetEnricher(e Enricher)     { s.enricher = e }
 func (s *Syncer) SetRecomputer(r Recomputer) { s.recompute = r }
+
+func (s *Syncer) SetPreferAPK(v bool) { s.preferAPK = v }
 
 // SetLibraryUpdateHooks registers callbacks for library update progress.
 func (s *Syncer) SetLibraryUpdateHooks(
@@ -607,11 +611,14 @@ func (s *Syncer) ExtensionLanguages(ctx context.Context, q ExtensionQuery) ([]st
 	})
 }
 
-func extensionDownloadTarget(ext sqlcgen.Extension) (url string, fileExt string, err error) {
+func extensionDownloadTarget(ext sqlcgen.Extension, preferAPK bool) (url string, fileExt string, err error) {
 	// LNReader plugins keep their .js source in jar_url; Tsundoku-format novel
 	// extensions are ordinary jars and fall through.
 	if ext.ContentType == "novel" && strings.HasSuffix(ext.JarUrl.String, ".js") {
 		return ext.JarUrl.String, "js", nil
+	}
+	if preferAPK && ext.ApkUrl != "" {
+		return ext.ApkUrl, "apk", nil
 	}
 	if ext.JarUrl.Valid && ext.JarUrl.String != "" {
 		return ext.JarUrl.String, "jar", nil
@@ -636,7 +643,7 @@ func (s *Syncer) InstallExtension(ctx context.Context, packageName string) (sqlc
 		return sqlcgen.Extension{}, fmt.Errorf("lookup extension %s: %w", packageName, err)
 	}
 
-	downloadURL, fileExt, err := extensionDownloadTarget(ext)
+	downloadURL, fileExt, err := extensionDownloadTarget(ext, s.preferAPK)
 	if err != nil {
 		return sqlcgen.Extension{}, err
 	}
@@ -739,7 +746,7 @@ func (s *Syncer) UpdateExtension(ctx context.Context, packageName string) (sqlcg
 		return sqlcgen.Extension{}, fmt.Errorf("lookup extension %s: %w", packageName, err)
 	}
 
-	downloadURL, fileExt, err := extensionDownloadTarget(ext)
+	downloadURL, fileExt, err := extensionDownloadTarget(ext, s.preferAPK)
 	if err != nil {
 		return sqlcgen.Extension{}, err
 	}

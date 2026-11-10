@@ -51,6 +51,7 @@ func Start(dataDir, sandboxAddr, sandboxToken string) error {
 		ExternalSandbox: true,
 		SandboxAddr:     sandboxAddr,
 		SandboxToken:    sandboxToken,
+		PreferAPK:       true,
 	})
 	if err != nil {
 		return err

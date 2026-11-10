@@ -51,6 +51,9 @@ type Options struct {
 	ExternalSandbox bool
 	SandboxAddr     string
 	SandboxToken    string
+
+	// For hosts that load extension APKs natively.
+	PreferAPK bool
 }
 
 type Server struct {
@@ -157,6 +160,7 @@ func Start(opts Options) (*Server, error) {
 	}
 
 	syncer := sync.New(conn, q, cfg.JarCacheDir, absMediaDir)
+	syncer.SetPreferAPK(opts.PreferAPK)
 	if n, err := syncer.BackfillChapterNumbers(context.Background()); err != nil {
 		log.Printf("chapter-number backfill: %v", err)
 	} else if n > 0 {
