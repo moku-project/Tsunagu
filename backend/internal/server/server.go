@@ -304,6 +304,7 @@ func Start(opts Options) (*Server, error) {
 	mux.Handle("/proxy/icon/", &rest.IconProxyHandler{Q: q, IconCacheDir: filepath.Join(absMediaDir, "icons")})
 	mux.Handle("/internal/flaresolverr/", fsMgr.SolveHandler("/internal/flaresolverr"))
 	mux.Handle("/api/backups/import-file", &rest.BackupImportHandler{Q: q, Cfg: store})
+	mux.Handle("/api/extensions/install-file", &rest.ExtensionUploadHandler{Sy: syncer, Sc: supervised})
 	mux.HandleFunc("/api/tracker/mal/callback", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		info, err := trackerMgr.OAuthCallback(r.Context(), "mal", r.URL.Query())

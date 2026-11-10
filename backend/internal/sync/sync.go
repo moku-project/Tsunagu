@@ -417,18 +417,28 @@ func (s *Syncer) InstallExternalExtension(ctx context.Context, c *sandbox.Client
 		ext = "js"
 	}
 
-	tempDir := filepath.Join(s.cacheDir, "sideload-tmp")
-	if err := os.MkdirAll(tempDir, 0o755); err != nil {
-		return sqlcgen.Extension{}, fmt.Errorf("creating temp dir: %w", err)
+	tempPath, err := s.SideloadTempPath(ext)
+	if err != nil {
+		return sqlcgen.Extension{}, err
 	}
-	tempPath := filepath.Join(tempDir, fmt.Sprintf("sideload-%d.%s", time.Now().UnixNano(), ext))
-
 	if err := downloadFile(url, tempPath); err != nil {
 		return sqlcgen.Extension{}, fmt.Errorf("downloading %s: %w", url, err)
 	}
 	defer os.Remove(tempPath)
+	return s.InstallExtensionFile(ctx, c, tempPath)
+}
 
-	meta, err := c.PeekExtension(ctx, tempPath)
+func (s *Syncer) SideloadTempPath(ext string) (string, error) {
+	tempDir := filepath.Join(s.cacheDir, "sideload-tmp")
+	if err := os.MkdirAll(tempDir, 0o755); err != nil {
+		return "", fmt.Errorf("creating temp dir: %w", err)
+	}
+	return filepath.Join(tempDir, fmt.Sprintf("sideload-%d.%s", time.Now().UnixNano(), ext)), nil
+}
+
+// The sandbox keeps its own copy, so path can be deleted afterwards.
+func (s *Syncer) InstallExtensionFile(ctx context.Context, c *sandbox.Client, path string) (sqlcgen.Extension, error) {
+	meta, err := c.PeekExtension(ctx, path)
 	if err != nil {
 		return sqlcgen.Extension{}, fmt.Errorf("inspecting extension: %w", err)
 	}
