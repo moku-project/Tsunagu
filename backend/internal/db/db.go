@@ -8,18 +8,7 @@ import (
 	"path/filepath"
 	"sort"
 	"time"
-
-	_ "modernc.org/sqlite"
 )
-
-const dsnPragmas = "?_pragma=foreign_keys(1)" +
-	"&_pragma=journal_mode(WAL)" +
-	"&_pragma=synchronous(NORMAL)" +
-	"&_pragma=busy_timeout(5000)" +
-	"&_pragma=cache_size(-20000)" +
-	"&_pragma=temp_store(MEMORY)" +
-	// Take the write lock at BEGIN; upgrading a read transaction fails with SQLITE_BUSY without waiting.
-	"&_txlock=immediate"
 
 //go:embed migrations/0001_init.sql
 var migration0001 string
@@ -114,7 +103,7 @@ func Open(path string) (*sql.DB, error) {
 		}
 	}
 
-	conn, err := sql.Open("sqlite", path+dsnPragmas)
+	conn, err := sql.Open(driverName, path+dsnPragmas)
 	if err != nil {
 		return nil, fmt.Errorf("open sqlite: %w", err)
 	}

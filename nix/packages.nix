@@ -41,7 +41,7 @@ let
 
     src = repoSrc (lib.fileset.unions [ ../backend ]);
     modRoot = "backend";
-    vendorHash = "sha256-Ddf+UiX3eU/LaUDc9wE8mrZObm8JXbelRFjVvE4CT/s=";
+    vendorHash = "sha256-v4FlhUvrE6T6OTwVAfufTlS1GDLkCV/XvJGBAr7jfJs=";
 
     subPackages = [ "cmd/server" ];
     env.CGO_ENABLED = "0";
