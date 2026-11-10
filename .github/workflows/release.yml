@@ -49,6 +49,30 @@ jobs:
       - uses: actions/upload-artifact@v4
         with: { name: jar, path: out/sandbox.jar }
 
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version-file: backend/go.mod, cache-dependency-path: mobile/go.sum }
+      - name: gomobile bind
+        run: |
+          set -eu
+          export ANDROID_NDK_HOME="$ANDROID_NDK_LATEST_HOME"
+          mkdir -p out bin
+          cd mobile
+          go build -o ../bin/gobind golang.org/x/mobile/cmd/gobind
+          PATH="$PWD/../bin:$PATH" go tool gomobile bind \
+            -target=android/arm64,android/amd64 \
+            -androidapi 26 \
+            -javapkg dev.moku.tsunagu \
+            -ldflags "-s -w -X tsunagu/backend/embedded.Version=${{ inputs.version }}" \
+            -o ../out/tsunagu-android.aar \
+            tsunagu/backend/embedded
+          cp ../proto/sandbox/v1/sandbox.proto ../out/sandbox.proto
+      - uses: actions/upload-artifact@v4
+        with: { name: android, path: out/* }
+
   runtime:
     strategy:
       fail-fast: false
@@ -153,13 +177,15 @@ jobs:
             "$IMG@$(cat digests/amd64)" "$IMG@$(cat digests/arm64)"
 
   publish:
-    needs: [binaries, jar, runtime, docker-manifest]
+    needs: [binaries, jar, android, runtime, docker-manifest]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
         with: { name: binaries, path: dl }
       - uses: actions/download-artifact@v4
         with: { name: jar, path: dl }
+      - uses: actions/download-artifact@v4
+        with: { name: android, path: dl }
       - uses: actions/download-artifact@v4
         with: { name: runtime-linux-amd64, path: dl }
       - uses: actions/download-artifact@v4
@@ -178,6 +204,7 @@ jobs:
           mkdir rel
           cp dl/tsunagu-* rel/
           cp dl/sandbox.jar rel/
+          cp dl/tsunagu-android.aar dl/sandbox.proto rel/
           cp dl/runtime-* rel/
           for t in linux-amd64 linux-arm64 darwin-amd64 darwin-arm64 windows-amd64 windows-arm64; do
             case "$t" in
@@ -201,7 +228,7 @@ jobs:
             rm -rf "$root"
           done
           cd rel
-          sha256sum -- tsunagu-* sandbox.jar runtime-* > sha256sums.txt
+          sha256sum -- tsunagu-* sandbox.jar sandbox.proto runtime-* > sha256sums.txt
           VER="${{ inputs.version }}"
           IMG="ghcr.io/${{ github.repository_owner }}/tsunagu"
           {
@@ -209,6 +236,7 @@ jobs:
             echo "  \"version\": \"$VER\","
             echo "  \"image\": \"$IMG:$VER\","
             echo "  \"jar\": \"sandbox.jar\","
+            echo "  \"android\": { \"aar\": \"tsunagu-android.aar\", \"proto\": \"sandbox.proto\" },"
             echo "  \"binaries\": {"
             echo "    \"windows-amd64\": \"tsunagu-windows-amd64.exe\","
             echo "    \"windows-arm64\": \"tsunagu-windows-arm64.exe\","
