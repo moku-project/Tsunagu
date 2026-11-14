@@ -1533,7 +1533,11 @@ func (r *queryResolver) MediaAutomationOverrides(ctx context.Context) ([]*model.
 }
 
 func (r *queryResolver) About(ctx context.Context) (*model.AboutServer, error) {
-	return &model.AboutServer{Name: r.Name, Version: r.Version, BuildTime: r.BuildTime}, nil
+	id, err := r.instanceID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &model.AboutServer{Name: r.Name, Version: r.Version, BuildTime: r.BuildTime, InstanceID: id}, nil
 }
 
 func (r *queryResolver) Folders(ctx context.Context) ([]*model.Folder, error) {

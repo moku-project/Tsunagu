@@ -413,6 +413,8 @@ type AboutServer {
   name: String!
   version: String!
   buildTime: String!
+  "Created once and never changed, so clients can tell servers apart even when their address changes."
+  instanceId: String!
 }
 
 type Folder {

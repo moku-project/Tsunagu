@@ -18,6 +18,8 @@ type AboutServer struct {
 	Name      string `json:"name"`
 	Version   string `json:"version"`
 	BuildTime string `json:"buildTime"`
+	// Created once and never changed, so clients can tell servers apart even when their address changes.
+	InstanceID string `json:"instanceId"`
 }
 
 type AudioTrack struct {

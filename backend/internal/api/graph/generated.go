@@ -43,9 +43,10 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	AboutServer struct {
-		BuildTime func(childComplexity int) int
-		Name      func(childComplexity int) int
-		Version   func(childComplexity int) int
+		BuildTime  func(childComplexity int) int
+		InstanceID func(childComplexity int) int
+		Name       func(childComplexity int) int
+		Version    func(childComplexity int) int
 	}
 
 	AudioTrack struct {
@@ -828,6 +829,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AboutServer.BuildTime(childComplexity), true
+	case "AboutServer.instanceId":
+		if e.ComplexityRoot.AboutServer.InstanceID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AboutServer.InstanceID(childComplexity), true
 	case "AboutServer.name":
 		if e.ComplexityRoot.AboutServer.Name == nil {
 			break
@@ -4098,6 +4105,8 @@ func (ec *executionContext) childFields_AboutServer(ctx context.Context, field g
 		return ec.fieldContext_AboutServer_version(ctx, field)
 	case "buildTime":
 		return ec.fieldContext_AboutServer_buildTime(ctx, field)
+	case "instanceId":
+		return ec.fieldContext_AboutServer_instanceId(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AboutServer", field.Name)
 }
@@ -7064,6 +7073,29 @@ func (ec *executionContext) _AboutServer_buildTime(ctx context.Context, field gr
 	)
 }
 func (ec *executionContext) fieldContext_AboutServer_buildTime(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AboutServer", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AboutServer_instanceId(ctx context.Context, field graphql.CollectedField, obj *model.AboutServer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AboutServer_instanceId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.InstanceID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AboutServer_instanceId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("AboutServer", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
@@ -21242,6 +21274,11 @@ func (ec *executionContext) _AboutServer(ctx context.Context, sel ast.SelectionS
 			}
 		case "buildTime":
 			out.Values[i] = ec._AboutServer_buildTime(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "instanceId":
+			out.Values[i] = ec._AboutServer_instanceId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
