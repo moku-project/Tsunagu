@@ -73,6 +73,30 @@ jobs:
       - uses: actions/upload-artifact@v4
         with: { name: android, path: out/* }
 
+  ios:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version-file: backend/go.mod, cache-dependency-path: mobile/go.sum }
+      - name: gomobile bind
+        run: |
+          set -eu
+          mkdir -p out bin
+          cd mobile
+          go build -o ../bin/gobind golang.org/x/mobile/cmd/gobind
+          # macos/arm64 lets the app's tests and SwiftUI previews run on the Mac.
+          PATH="$PWD/../bin:$PATH" go tool gomobile bind \
+            -target=ios/arm64,iossimulator/arm64,macos/arm64 \
+            -iosversion=18.0 \
+            -ldflags "-s -w -X tsunagu/backend/embedded.Version=${{ inputs.version }}" \
+            -o ../out/Tsunagu.xcframework \
+            tsunagu/backend/embedded
+          cd ../out
+          ditto -c -k --sequesterRsrc --keepParent Tsunagu.xcframework tsunagu-ios.xcframework.zip
+      - uses: actions/upload-artifact@v4
+        with: { name: ios, path: out/tsunagu-ios.xcframework.zip }
+
   runtime:
     strategy:
       fail-fast: false
@@ -177,7 +201,7 @@ jobs:
             "$IMG@$(cat digests/amd64)" "$IMG@$(cat digests/arm64)"
 
   publish:
-    needs: [binaries, jar, android, runtime, docker-manifest]
+    needs: [binaries, jar, android, ios, runtime, docker-manifest]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
@@ -186,6 +210,8 @@ jobs:
         with: { name: jar, path: dl }
       - uses: actions/download-artifact@v4
         with: { name: android, path: dl }
+      - uses: actions/download-artifact@v4
+        with: { name: ios, path: dl }
       - uses: actions/download-artifact@v4
         with: { name: runtime-linux-amd64, path: dl }
       - uses: actions/download-artifact@v4
@@ -237,6 +263,7 @@ jobs:
             echo "  \"image\": \"$IMG:$VER\","
             echo "  \"jar\": \"sandbox.jar\","
             echo "  \"android\": { \"aar\": \"tsunagu-android.aar\", \"proto\": \"sandbox.proto\" },"
+            echo "  \"ios\": { \"xcframework\": \"tsunagu-ios.xcframework.zip\", \"jar\": \"sandbox.jar\", \"proto\": \"sandbox.proto\" },"
             echo "  \"binaries\": {"
             echo "    \"windows-amd64\": \"tsunagu-windows-amd64.exe\","
             echo "    \"windows-arm64\": \"tsunagu-windows-arm64.exe\","
