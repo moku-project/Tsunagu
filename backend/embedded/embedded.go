@@ -73,14 +73,17 @@ func Start(dataDir, sandboxAddr, sandboxToken string) error {
 }
 
 // AttachSandbox connects the running server to the app's extension host, or
-// moves it to a new address after the host restarts.
+// moves it to a new address after the host restarts. It returns once the host
+// answers, or with an error if it does not within 10 seconds.
 func AttachSandbox(sandboxAddr, sandboxToken string) error {
 	mu.Lock()
 	defer mu.Unlock()
 	if running == nil {
 		return errors.New("tsunagu is not running")
 	}
-	return running.AttachSandbox(sandboxAddr, sandboxToken)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	return running.AttachSandbox(ctx, sandboxAddr, sandboxToken)
 }
 
 // Stop shuts the server down; Start may be called again afterwards.

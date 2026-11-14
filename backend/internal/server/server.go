@@ -66,9 +66,15 @@ type Server struct {
 	cleanups []func()
 }
 
-// AttachSandbox points an external sandbox at the embedder's extension host.
-func (s *Server) AttachSandbox(addr, token string) error {
-	return s.sandbox.Attach(addr, token)
+// AttachSandbox points an external sandbox at the embedder's extension host
+// and waits until the host answers, so the embedder learns about a host that
+// failed to come up when it attaches rather than on the first extension call.
+func (s *Server) AttachSandbox(ctx context.Context, addr, token string) error {
+	if err := s.sandbox.Attach(addr, token); err != nil {
+		return err
+	}
+	_, err := s.sandbox.Ensure(ctx)
+	return err
 }
 
 func Start(opts Options) (*Server, error) {

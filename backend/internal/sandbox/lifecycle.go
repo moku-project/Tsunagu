@@ -237,6 +237,9 @@ func (sc *SupervisedClient) waitReadyLocked(ctx context.Context) error {
 	deadline := time.Now().Add(30 * time.Second)
 	backoff := 200 * time.Millisecond
 	for time.Now().Before(deadline) {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		client, err := NewClient(sc.addr, sc.token)
 		if err == nil {
 			checkCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
@@ -249,7 +252,11 @@ func (sc *SupervisedClient) waitReadyLocked(ctx context.Context) error {
 			}
 			client.Close()
 		}
-		time.Sleep(backoff)
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(backoff):
+		}
 		if backoff < 2*time.Second {
 			backoff *= 2
 		}

@@ -98,4 +98,15 @@ func TestStartDeferredThenAttach(t *testing.T) {
 	if err := AttachSandbox(lis.Addr().String(), "host-token"); err != nil {
 		t.Fatal(err)
 	}
+
+	// A host that is not listening is reported at attach time.
+	dead, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	deadAddr := dead.Addr().String()
+	dead.Close()
+	if err := AttachSandbox(deadAddr, "host-token"); err == nil {
+		t.Fatal("AttachSandbox succeeded with no host listening")
+	}
 }
