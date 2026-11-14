@@ -300,9 +300,7 @@ func (m *Manager) SyncMediaProgress(ctx context.Context, mediaID int64) {
 
 		if maxRead > t.LastChapterRead {
 			t.LastChapterRead = maxRead
-			if t.Status == StatusPlanToRead || t.Status == 0 {
-				t.Status = StatusReading
-			}
+			advanceStatus(&t)
 			pushed, err := svc.Push(ctx, auth, t)
 			if err != nil {
 				log.Printf("tracker sync: push media %d on %s: %v", mediaID, acct.TrackerType, err)
@@ -340,9 +338,7 @@ func (m *Manager) pushLocalProgress(ctx context.Context, svc Service, auth Auth,
 		return t
 	}
 	t.LastChapterRead = maxRead
-	if t.Status == StatusPlanToRead || t.Status == 0 {
-		t.Status = StatusReading
-	}
+	advanceStatus(&t)
 	if pushed, err := svc.Push(ctx, auth, t); err != nil {
 		log.Printf("tracker bind: push media %d on %s: %v", mediaID, acct.TrackerType, err)
 	} else {

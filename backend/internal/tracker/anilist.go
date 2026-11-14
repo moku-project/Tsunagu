@@ -169,6 +169,10 @@ type alFuzzyDate struct {
 	Day   *int `json:"day"`
 }
 
+func fuzzyDate(t time.Time) map[string]int {
+	return map[string]int{"year": t.Year(), "month": int(t.Month()), "day": t.Day()}
+}
+
 func (d alFuzzyDate) time() *time.Time {
 	if d.Year == nil || d.Month == nil || d.Day == nil {
 		return nil
@@ -520,11 +524,18 @@ func (a *AniList) Push(ctx context.Context, auth Auth, t Track) (Track, error) {
 		"score":    t.Score,
 		"private":  t.Private,
 	}
+	// Unset dates stay out of the mutation; a null would clear what AniList already has.
+	if t.StartedAt != nil {
+		vars["startedAt"] = fuzzyDate(*t.StartedAt)
+	}
+	if t.FinishedAt != nil {
+		vars["completedAt"] = fuzzyDate(*t.FinishedAt)
+	}
 	var out struct {
 		SaveMediaListEntry alListEntry `json:"SaveMediaListEntry"`
 	}
-	doc := `mutation($mediaId: Int, $status: MediaListStatus, $progress: Int, $score: Float, $private: Boolean) {
-      SaveMediaListEntry(mediaId: $mediaId, status: $status, progress: $progress, score: $score, private: $private) {
+	doc := `mutation($mediaId: Int, $status: MediaListStatus, $progress: Int, $score: Float, $private: Boolean, $startedAt: FuzzyDateInput, $completedAt: FuzzyDateInput) {
+      SaveMediaListEntry(mediaId: $mediaId, status: $status, progress: $progress, score: $score, private: $private, startedAt: $startedAt, completedAt: $completedAt) {
         id status score progress private
         startedAt { year month day }
         completedAt { year month day }
