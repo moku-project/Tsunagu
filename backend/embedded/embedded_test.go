@@ -65,3 +65,37 @@ func TestStartRequiresToken(t *testing.T) {
 		t.Fatal("BaseURL set after Stop")
 	}
 }
+
+func TestStartDeferredThenAttach(t *testing.T) {
+	if err := AttachSandbox("127.0.0.1:1", "x"); err == nil {
+		t.Fatal("AttachSandbox succeeded while stopped")
+	}
+	if err := Start(t.TempDir(), "", ""); err != nil {
+		t.Fatal(err)
+	}
+	defer Stop()
+
+	req, _ := http.NewRequest(http.MethodPost, BaseURL()+"/api/graphql", strings.NewReader(`{"query":"{ __typename }"}`))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+APIToken())
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("API before attach: %d", resp.StatusCode)
+	}
+
+	lis, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	g := grpc.NewServer()
+	sandboxv1.RegisterExtensionServiceServer(g, host{})
+	go g.Serve(lis)
+	defer g.Stop()
+	if err := AttachSandbox(lis.Addr().String(), "host-token"); err != nil {
+		t.Fatal(err)
+	}
+}

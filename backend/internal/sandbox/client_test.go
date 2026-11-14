@@ -2,8 +2,10 @@ package sandbox
 
 import (
 	"context"
+	"errors"
 	"net"
 	"testing"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -74,5 +76,44 @@ func TestExternalSandboxGetsToken(t *testing.T) {
 	}
 	if got := <-ts.got; len(got) != 1 || got[0] != "Bearer s3cret" {
 		t.Fatalf("authorization = %v", got)
+	}
+}
+
+func TestExternalSandboxAttachesLater(t *testing.T) {
+	sc := NewSupervised(SupervisedConfig{External: true})
+	defer sc.Shutdown()
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	if _, err := sc.Ensure(ctx); !errors.Is(err, ErrHostNotAttached) {
+		t.Fatalf("Ensure before Attach = %v, want ErrHostNotAttached", err)
+	}
+
+	lis, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	ts := &tokenServer{got: make(chan []string, 4)}
+	srv := grpc.NewServer()
+	sandboxv1.RegisterExtensionServiceServer(srv, ts)
+	go srv.Serve(lis)
+	defer srv.Stop()
+
+	if err := sc.Attach(lis.Addr().String(), "later"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := sc.Ensure(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if got := <-ts.got; len(got) != 1 || got[0] != "Bearer later" {
+		t.Fatalf("authorization = %v", got)
+	}
+}
+
+func TestAttachRejectsSpawnedSandbox(t *testing.T) {
+	sc := NewSupervised(SupervisedConfig{Addr: "127.0.0.1:1"})
+	defer sc.Shutdown()
+	if err := sc.Attach("127.0.0.1:2", "x"); err == nil {
+		t.Fatal("Attach succeeded on a sandbox this process spawns")
 	}
 }

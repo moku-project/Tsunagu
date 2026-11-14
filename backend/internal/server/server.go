@@ -47,7 +47,8 @@ type Options struct {
 	APIToken string
 
 	// ExternalSandbox means the embedder runs the extension host at SandboxAddr;
-	// the server connects to it and never spawns one.
+	// the server connects to it and never spawns one. An empty SandboxAddr
+	// defers the host until AttachSandbox.
 	ExternalSandbox bool
 	SandboxAddr     string
 	SandboxToken    string
@@ -61,7 +62,13 @@ type Server struct {
 	URL string
 
 	http     *http.Server
+	sandbox  *sandbox.SupervisedClient
 	cleanups []func()
+}
+
+// AttachSandbox points an external sandbox at the embedder's extension host.
+func (s *Server) AttachSandbox(addr, token string) error {
+	return s.sandbox.Attach(addr, token)
 }
 
 func Start(opts Options) (*Server, error) {
@@ -176,13 +183,19 @@ func Start(opts Options) (*Server, error) {
 	metadataMgr.SetRecomputer(cfMgr)
 	syncer.SetRecomputer(cfMgr)
 
+	sandboxAddr := cfg.SandboxAddr
+	if opts.ExternalSandbox {
+		// Never fall back to the configured port: that would dial whatever
+		// else is listening there instead of waiting for AttachSandbox.
+		sandboxAddr = opts.SandboxAddr
+	}
 	supervised := sandbox.NewSupervised(sandbox.SupervisedConfig{
 		JarPath:       cfg.SandboxJarPath,
 		Port:          cfg.SandboxPort,
 		ExtensionsDir: cfg.SandboxExtDir,
 		StorageDir:    cfg.SandboxStorageDir,
 		NovelEnabled:  cfg.NovelEnabled,
-		Addr:          cfg.SandboxAddr,
+		Addr:          sandboxAddr,
 		Token:         opts.SandboxToken,
 		External:      opts.ExternalSandbox,
 		IdleTimeout:   cfg.IdleTimeout(),
@@ -194,6 +207,7 @@ func Start(opts Options) (*Server, error) {
 			return strings.TrimRight(cfg.PublicURL, "/") + "/internal/flaresolverr"
 		},
 	})
+	s.sandbox = supervised
 	s.cleanups = append(s.cleanups, supervised.Shutdown)
 
 	applyCloudflare := func(ctx context.Context) {

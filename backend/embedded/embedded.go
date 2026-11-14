@@ -21,16 +21,28 @@ import (
 )
 
 var (
-	mu       sync.Mutex
-	running  *server.Server
-	apiToken string
+	mu        sync.Mutex
+	running   *server.Server
+	apiToken  string
+	preferAPK = true
 )
+
+// SetPreferAPK chooses which extension build the host is sent: APKs for hosts
+// that load them natively (Android, the default), JARs otherwise (iOS).
+// Takes effect on the next Start.
+func SetPreferAPK(v bool) {
+	mu.Lock()
+	defer mu.Unlock()
+	preferAPK = v
+}
 
 // Version is set at build time with -ldflags.
 var Version = "dev"
 
 // Start runs the server on a random loopback port. The app's extension host
-// must be listening at sandboxAddr and accept sandboxToken.
+// must be listening at sandboxAddr and accept sandboxToken. Pass an empty
+// sandboxAddr to start before the host is up, then call AttachSandbox; until
+// then, calls that need extensions fail and everything else works.
 func Start(dataDir, sandboxAddr, sandboxToken string) error {
 	mu.Lock()
 	defer mu.Unlock()
@@ -51,13 +63,24 @@ func Start(dataDir, sandboxAddr, sandboxToken string) error {
 		ExternalSandbox: true,
 		SandboxAddr:     sandboxAddr,
 		SandboxToken:    sandboxToken,
-		PreferAPK:       true,
+		PreferAPK:       preferAPK,
 	})
 	if err != nil {
 		return err
 	}
 	running, apiToken = srv, token
 	return nil
+}
+
+// AttachSandbox connects the running server to the app's extension host, or
+// moves it to a new address after the host restarts.
+func AttachSandbox(sandboxAddr, sandboxToken string) error {
+	mu.Lock()
+	defer mu.Unlock()
+	if running == nil {
+		return errors.New("tsunagu is not running")
+	}
+	return running.AttachSandbox(sandboxAddr, sandboxToken)
 }
 
 // Stop shuts the server down; Start may be called again afterwards.

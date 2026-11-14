@@ -2,6 +2,7 @@ package sandbox
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -99,6 +100,9 @@ func (sc *SupervisedClient) Ensure(ctx context.Context) (*Client, error) {
 	sc.adopted = false
 
 	if sc.external {
+		if sc.addr == "" {
+			return nil, ErrHostNotAttached
+		}
 		if err := sc.waitReadyLocked(ctx); err != nil {
 			return nil, fmt.Errorf("extension host at %s: %w", sc.addr, err)
 		}
@@ -337,6 +341,30 @@ func (sc *SupervisedClient) Restart() {
 	}
 	log.Printf("sandbox: restarting to pick up new config")
 	sc.killLocked()
+}
+
+// ErrHostNotAttached is returned while an external sandbox has no address yet.
+var ErrHostNotAttached = errors.New("extension host not attached yet")
+
+// Attach points an external sandbox at the embedder's extension host. It lets
+// an embedder start the core before its host is up (iOS boots its JVM later),
+// and re-attach after the host restarts on a new port.
+func (sc *SupervisedClient) Attach(addr, token string) error {
+	if !sc.external {
+		return errors.New("sandbox is not external")
+	}
+	if addr == "" {
+		return errors.New("extension host address is required")
+	}
+	sc.mu.Lock()
+	defer sc.mu.Unlock()
+	if sc.client != nil {
+		sc.client.Close()
+		sc.client = nil
+	}
+	sc.adopted = false
+	sc.addr, sc.token = addr, token
+	return nil
 }
 
 func (sc *SupervisedClient) Shutdown() {
