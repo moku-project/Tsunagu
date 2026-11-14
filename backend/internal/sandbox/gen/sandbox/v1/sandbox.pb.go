@@ -2687,6 +2687,113 @@ func (x *SortFilter) GetAscending() bool {
 	return false
 }
 
+// state_json: {"userAgent": "...", "cookies": [{"name", "value", "domain",
+// "path", "expiresAt" (epoch ms), "secure", "httpOnly", "hostOnly",
+// "persistent"}]}. Only cookies for url's host are accepted or returned.
+type BrowserCookiesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	StateJson     string                 `protobuf:"bytes,2,opt,name=state_json,json=stateJson,proto3" json:"state_json,omitempty"`
+	Apply         bool                   `protobuf:"varint,3,opt,name=apply,proto3" json:"apply,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BrowserCookiesRequest) Reset() {
+	*x = BrowserCookiesRequest{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[44]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BrowserCookiesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BrowserCookiesRequest) ProtoMessage() {}
+
+func (x *BrowserCookiesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[44]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BrowserCookiesRequest.ProtoReflect.Descriptor instead.
+func (*BrowserCookiesRequest) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{44}
+}
+
+func (x *BrowserCookiesRequest) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *BrowserCookiesRequest) GetStateJson() string {
+	if x != nil {
+		return x.StateJson
+	}
+	return ""
+}
+
+func (x *BrowserCookiesRequest) GetApply() bool {
+	if x != nil {
+		return x.Apply
+	}
+	return false
+}
+
+type BrowserCookiesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	StateJson     string                 `protobuf:"bytes,1,opt,name=state_json,json=stateJson,proto3" json:"state_json,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BrowserCookiesResponse) Reset() {
+	*x = BrowserCookiesResponse{}
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[45]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BrowserCookiesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BrowserCookiesResponse) ProtoMessage() {}
+
+func (x *BrowserCookiesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_sandbox_v1_sandbox_proto_msgTypes[45]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BrowserCookiesResponse.ProtoReflect.Descriptor instead.
+func (*BrowserCookiesResponse) Descriptor() ([]byte, []int) {
+	return file_sandbox_v1_sandbox_proto_rawDescGZIP(), []int{45}
+}
+
+func (x *BrowserCookiesResponse) GetStateJson() string {
+	if x != nil {
+		return x.StateJson
+	}
+	return ""
+}
+
 var File_sandbox_v1_sandbox_proto protoreflect.FileDescriptor
 
 const file_sandbox_v1_sandbox_proto_rawDesc = "" +
@@ -2876,12 +2983,21 @@ const file_sandbox_v1_sandbox_proto_rawDesc = "" +
 	"\x06values\x18\x01 \x03(\tR\x06values\x12\x1b\n" +
 	"\thas_state\x18\x02 \x01(\bR\bhasState\x12\x14\n" +
 	"\x05index\x18\x03 \x01(\x05R\x05index\x12\x1c\n" +
-	"\tascending\x18\x04 \x01(\bR\tascending*L\n" +
+	"\tascending\x18\x04 \x01(\bR\tascending\"^\n" +
+	"\x15BrowserCookiesRequest\x12\x10\n" +
+	"\x03url\x18\x01 \x01(\tR\x03url\x12\x1d\n" +
+	"\n" +
+	"state_json\x18\x02 \x01(\tR\tstateJson\x12\x14\n" +
+	"\x05apply\x18\x03 \x01(\bR\x05apply\"7\n" +
+	"\x16BrowserCookiesResponse\x12\x1d\n" +
+	"\n" +
+	"state_json\x18\x01 \x01(\tR\tstateJson*L\n" +
 	"\vContentType\x12\x1c\n" +
 	"\x18CONTENT_TYPE_UNSPECIFIED\x10\x00\x12\t\n" +
 	"\x05MANGA\x10\x01\x12\t\n" +
 	"\x05NOVEL\x10\x02\x12\t\n" +
-	"\x05ANIME\x10\x032\xfa\t\n" +
+	"\x05ANIME\x10\x032\xd3\n" +
+	"\n" +
 	"\x10ExtensionService\x12N\n" +
 	"\x0eLoadExtensions\x12!.sandbox.v1.LoadExtensionsRequest\x1a\x19.sandbox.v1.ExtensionList\x12D\n" +
 	"\x14ListLoadedExtensions\x12\x11.sandbox.v1.Empty\x1a\x19.sandbox.v1.ExtensionList\x12B\n" +
@@ -2900,7 +3016,8 @@ const file_sandbox_v1_sandbox_proto_rawDesc = "" +
 	"\x0fGetPopularManga\x12\x19.sandbox.v1.BrowseRequest\x1a\x1a.sandbox.v1.SearchResponse\x12I\n" +
 	"\x10GetLatestUpdates\x12\x19.sandbox.v1.BrowseRequest\x1a\x1a.sandbox.v1.SearchResponse\x12i\n" +
 	"\x14GetSourcePreferences\x12'.sandbox.v1.GetSourcePreferencesRequest\x1a(.sandbox.v1.GetSourcePreferencesResponse\x12P\n" +
-	"\x13SetSourcePreference\x12&.sandbox.v1.SetSourcePreferenceRequest\x1a\x11.sandbox.v1.EmptyB0Z.tsunagu/backend/internal/sandbox/gen;sandboxv1b\x06proto3"
+	"\x13SetSourcePreference\x12&.sandbox.v1.SetSourcePreferenceRequest\x1a\x11.sandbox.v1.Empty\x12W\n" +
+	"\x0eBrowserCookies\x12!.sandbox.v1.BrowserCookiesRequest\x1a\".sandbox.v1.BrowserCookiesResponseB0Z.tsunagu/backend/internal/sandbox/gen;sandboxv1b\x06proto3"
 
 var (
 	file_sandbox_v1_sandbox_proto_rawDescOnce sync.Once
@@ -2915,7 +3032,7 @@ func file_sandbox_v1_sandbox_proto_rawDescGZIP() []byte {
 }
 
 var file_sandbox_v1_sandbox_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_sandbox_v1_sandbox_proto_msgTypes = make([]protoimpl.MessageInfo, 46)
+var file_sandbox_v1_sandbox_proto_msgTypes = make([]protoimpl.MessageInfo, 48)
 var file_sandbox_v1_sandbox_proto_goTypes = []any{
 	(ContentType)(0),                     // 0: sandbox.v1.ContentType
 	(*Empty)(nil),                        // 1: sandbox.v1.Empty
@@ -2962,8 +3079,10 @@ var file_sandbox_v1_sandbox_proto_goTypes = []any{
 	(*TriStateFilter)(nil),               // 42: sandbox.v1.TriStateFilter
 	(*GroupFilter)(nil),                  // 43: sandbox.v1.GroupFilter
 	(*SortFilter)(nil),                   // 44: sandbox.v1.SortFilter
-	nil,                                  // 45: sandbox.v1.StreamInfo.HeadersEntry
-	nil,                                  // 46: sandbox.v1.VideoSource.HeadersEntry
+	(*BrowserCookiesRequest)(nil),        // 45: sandbox.v1.BrowserCookiesRequest
+	(*BrowserCookiesResponse)(nil),       // 46: sandbox.v1.BrowserCookiesResponse
+	nil,                                  // 47: sandbox.v1.StreamInfo.HeadersEntry
+	nil,                                  // 48: sandbox.v1.VideoSource.HeadersEntry
 }
 var file_sandbox_v1_sandbox_proto_depIdxs = []int32{
 	3,  // 0: sandbox.v1.LoadExtensionsRequest.extensions:type_name -> sandbox.v1.ExtensionToLoad
@@ -2975,11 +3094,11 @@ var file_sandbox_v1_sandbox_proto_depIdxs = []int32{
 	14, // 6: sandbox.v1.ChapterList.chapters:type_name -> sandbox.v1.ChapterSummary
 	19, // 7: sandbox.v1.EpisodeList.episodes:type_name -> sandbox.v1.EpisodeSummary
 	25, // 8: sandbox.v1.StreamInfo.subtitles:type_name -> sandbox.v1.SubtitleTrack
-	45, // 9: sandbox.v1.StreamInfo.headers:type_name -> sandbox.v1.StreamInfo.HeadersEntry
+	47, // 9: sandbox.v1.StreamInfo.headers:type_name -> sandbox.v1.StreamInfo.HeadersEntry
 	22, // 10: sandbox.v1.StreamInfo.sources:type_name -> sandbox.v1.VideoSource
 	23, // 11: sandbox.v1.StreamInfo.audio_tracks:type_name -> sandbox.v1.AudioTrack
 	24, // 12: sandbox.v1.StreamInfo.timestamps:type_name -> sandbox.v1.SkipTimestamp
-	46, // 13: sandbox.v1.VideoSource.headers:type_name -> sandbox.v1.VideoSource.HeadersEntry
+	48, // 13: sandbox.v1.VideoSource.headers:type_name -> sandbox.v1.VideoSource.HeadersEntry
 	25, // 14: sandbox.v1.VideoSource.subtitles:type_name -> sandbox.v1.SubtitleTrack
 	0,  // 15: sandbox.v1.ExtensionMetadata.content_type:type_name -> sandbox.v1.ContentType
 	31, // 16: sandbox.v1.GetSourcePreferencesResponse.preferences:type_name -> sandbox.v1.SourcePreference
@@ -3010,25 +3129,27 @@ var file_sandbox_v1_sandbox_proto_depIdxs = []int32{
 	8,  // 41: sandbox.v1.ExtensionService.GetLatestUpdates:input_type -> sandbox.v1.BrowseRequest
 	30, // 42: sandbox.v1.ExtensionService.GetSourcePreferences:input_type -> sandbox.v1.GetSourcePreferencesRequest
 	33, // 43: sandbox.v1.ExtensionService.SetSourcePreference:input_type -> sandbox.v1.SetSourcePreferenceRequest
-	6,  // 44: sandbox.v1.ExtensionService.LoadExtensions:output_type -> sandbox.v1.ExtensionList
-	6,  // 45: sandbox.v1.ExtensionService.ListLoadedExtensions:output_type -> sandbox.v1.ExtensionList
-	1,  // 46: sandbox.v1.ExtensionService.UnloadExtension:output_type -> sandbox.v1.Empty
-	9,  // 47: sandbox.v1.ExtensionService.Search:output_type -> sandbox.v1.SearchResponse
-	12, // 48: sandbox.v1.ExtensionService.GetDetails:output_type -> sandbox.v1.EntryDetails
-	13, // 49: sandbox.v1.ExtensionService.GetChapters:output_type -> sandbox.v1.ChapterList
-	16, // 50: sandbox.v1.ExtensionService.GetPages:output_type -> sandbox.v1.PageList
-	17, // 51: sandbox.v1.ExtensionService.GetChapterText:output_type -> sandbox.v1.TextContent
-	18, // 52: sandbox.v1.ExtensionService.GetEpisodes:output_type -> sandbox.v1.EpisodeList
-	21, // 53: sandbox.v1.ExtensionService.GetVideoStream:output_type -> sandbox.v1.StreamInfo
-	27, // 54: sandbox.v1.ExtensionService.GetImageBytes:output_type -> sandbox.v1.ImageData
-	29, // 55: sandbox.v1.ExtensionService.PeekExtension:output_type -> sandbox.v1.ExtensionMetadata
-	35, // 56: sandbox.v1.ExtensionService.GetFilterList:output_type -> sandbox.v1.GetFilterListResponse
-	9,  // 57: sandbox.v1.ExtensionService.GetPopularManga:output_type -> sandbox.v1.SearchResponse
-	9,  // 58: sandbox.v1.ExtensionService.GetLatestUpdates:output_type -> sandbox.v1.SearchResponse
-	32, // 59: sandbox.v1.ExtensionService.GetSourcePreferences:output_type -> sandbox.v1.GetSourcePreferencesResponse
-	1,  // 60: sandbox.v1.ExtensionService.SetSourcePreference:output_type -> sandbox.v1.Empty
-	44, // [44:61] is the sub-list for method output_type
-	27, // [27:44] is the sub-list for method input_type
+	45, // 44: sandbox.v1.ExtensionService.BrowserCookies:input_type -> sandbox.v1.BrowserCookiesRequest
+	6,  // 45: sandbox.v1.ExtensionService.LoadExtensions:output_type -> sandbox.v1.ExtensionList
+	6,  // 46: sandbox.v1.ExtensionService.ListLoadedExtensions:output_type -> sandbox.v1.ExtensionList
+	1,  // 47: sandbox.v1.ExtensionService.UnloadExtension:output_type -> sandbox.v1.Empty
+	9,  // 48: sandbox.v1.ExtensionService.Search:output_type -> sandbox.v1.SearchResponse
+	12, // 49: sandbox.v1.ExtensionService.GetDetails:output_type -> sandbox.v1.EntryDetails
+	13, // 50: sandbox.v1.ExtensionService.GetChapters:output_type -> sandbox.v1.ChapterList
+	16, // 51: sandbox.v1.ExtensionService.GetPages:output_type -> sandbox.v1.PageList
+	17, // 52: sandbox.v1.ExtensionService.GetChapterText:output_type -> sandbox.v1.TextContent
+	18, // 53: sandbox.v1.ExtensionService.GetEpisodes:output_type -> sandbox.v1.EpisodeList
+	21, // 54: sandbox.v1.ExtensionService.GetVideoStream:output_type -> sandbox.v1.StreamInfo
+	27, // 55: sandbox.v1.ExtensionService.GetImageBytes:output_type -> sandbox.v1.ImageData
+	29, // 56: sandbox.v1.ExtensionService.PeekExtension:output_type -> sandbox.v1.ExtensionMetadata
+	35, // 57: sandbox.v1.ExtensionService.GetFilterList:output_type -> sandbox.v1.GetFilterListResponse
+	9,  // 58: sandbox.v1.ExtensionService.GetPopularManga:output_type -> sandbox.v1.SearchResponse
+	9,  // 59: sandbox.v1.ExtensionService.GetLatestUpdates:output_type -> sandbox.v1.SearchResponse
+	32, // 60: sandbox.v1.ExtensionService.GetSourcePreferences:output_type -> sandbox.v1.GetSourcePreferencesResponse
+	1,  // 61: sandbox.v1.ExtensionService.SetSourcePreference:output_type -> sandbox.v1.Empty
+	46, // 62: sandbox.v1.ExtensionService.BrowserCookies:output_type -> sandbox.v1.BrowserCookiesResponse
+	45, // [45:63] is the sub-list for method output_type
+	27, // [27:45] is the sub-list for method input_type
 	27, // [27:27] is the sub-list for extension type_name
 	27, // [27:27] is the sub-list for extension extendee
 	0,  // [0:27] is the sub-list for field type_name
@@ -3055,7 +3176,7 @@ func file_sandbox_v1_sandbox_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_sandbox_v1_sandbox_proto_rawDesc), len(file_sandbox_v1_sandbox_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   46,
+			NumMessages:   48,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

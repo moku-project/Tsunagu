@@ -19,11 +19,13 @@ import okhttp3.ConnectionSpec
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import tsunagu.source.GetSource
+import java.io.File
 import java.nio.file.Files
 import java.util.concurrent.TimeUnit
 
-class NetworkHelper {
-    val cookieStore = PersistentCookieStore()
+/** [cookiesFile] keeps source cookies and solved User-Agents across restarts. */
+class NetworkHelper(cookiesFile: File? = null) {
+    val cookieStore = PersistentCookieStore(cookiesFile)
 
     private val userAgent =
         MutableStateFlow(
@@ -78,6 +80,15 @@ class NetworkHelper {
                     )
                     .addInterceptor(UncaughtExceptionInterceptor())
                     .addInterceptor(UserAgentInterceptor(::defaultUserAgentProvider))
+                    // A challenge clearance only works with the User-Agent that earned it,
+                    // so it overrides whatever the extension set.
+                    .addNetworkInterceptor { chain ->
+                        val agent = cookieStore.userAgent(chain.request().url)
+                        chain.proceed(
+                            if (agent.isNullOrEmpty()) chain.request()
+                            else chain.request().newBuilder().header("User-Agent", agent).build(),
+                        )
+                    }
 
             val httpLoggingInterceptor =
                 HttpLoggingInterceptor(

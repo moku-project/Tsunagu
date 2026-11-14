@@ -226,6 +226,24 @@ class ExtensionServiceImpl(
         }
     }
 
+    override fun browserCookies(
+        request: Sandbox.BrowserCookiesRequest,
+        responseObserver: StreamObserver<Sandbox.BrowserCookiesResponse>,
+    ) {
+        try {
+            val store = org.koin.core.context.GlobalContext.get().get<eu.kanade.tachiyomi.network.NetworkHelper>().cookieStore
+            val state = BrowserSessions.exchange(store, request.url, request.stateJson, request.apply)
+            responseObserver.onNext(Sandbox.BrowserCookiesResponse.newBuilder().setStateJson(state).build())
+            responseObserver.onCompleted()
+        } catch (e: kotlinx.serialization.SerializationException) {
+            responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("invalid browser state").asRuntimeException())
+        } catch (e: IllegalArgumentException) {
+            responseObserver.onError(Status.INVALID_ARGUMENT.withDescription(e.message).asRuntimeException())
+        } catch (e: Throwable) {
+            responseObserver.onError(internal(e))
+        }
+    }
+
     override fun getFilterList(
         request: Sandbox.GetFilterListRequest,
         responseObserver: StreamObserver<Sandbox.GetFilterListResponse>,

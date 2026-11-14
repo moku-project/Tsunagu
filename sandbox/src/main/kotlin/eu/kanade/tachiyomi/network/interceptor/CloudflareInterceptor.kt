@@ -99,6 +99,7 @@ class CloudflareInterceptor(
         val solved = solve(request.url.toString())
             ?: throw IOException("FlareSolverr could not solve the Cloudflare challenge on ${request.url.host}")
         cookieStore.addAll(request.url, solved.cookies)
+        if (solved.userAgent.isNotBlank()) cookieStore.setUserAgent(request.url, solved.userAgent)
         return solved
     }
 

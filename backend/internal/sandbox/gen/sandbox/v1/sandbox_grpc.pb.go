@@ -36,6 +36,7 @@ const (
 	ExtensionService_GetLatestUpdates_FullMethodName     = "/sandbox.v1.ExtensionService/GetLatestUpdates"
 	ExtensionService_GetSourcePreferences_FullMethodName = "/sandbox.v1.ExtensionService/GetSourcePreferences"
 	ExtensionService_SetSourcePreference_FullMethodName  = "/sandbox.v1.ExtensionService/SetSourcePreference"
+	ExtensionService_BrowserCookies_FullMethodName       = "/sandbox.v1.ExtensionService/BrowserCookies"
 )
 
 // ExtensionServiceClient is the client API for ExtensionService service.
@@ -59,6 +60,10 @@ type ExtensionServiceClient interface {
 	GetLatestUpdates(ctx context.Context, in *BrowseRequest, opts ...grpc.CallOption) (*SearchResponse, error)
 	GetSourcePreferences(ctx context.Context, in *GetSourcePreferencesRequest, opts ...grpc.CallOption) (*GetSourcePreferencesResponse, error)
 	SetSourcePreference(ctx context.Context, in *SetSourcePreferenceRequest, opts ...grpc.CallOption) (*Empty, error)
+	// Reads, or with apply=true first stores, the browser session (cookies and
+	// User-Agent) sources use for url's host. Embedders call it after the user
+	// passes a challenge (e.g. Cloudflare) in a real browser.
+	BrowserCookies(ctx context.Context, in *BrowserCookiesRequest, opts ...grpc.CallOption) (*BrowserCookiesResponse, error)
 }
 
 type extensionServiceClient struct {
@@ -239,6 +244,16 @@ func (c *extensionServiceClient) SetSourcePreference(ctx context.Context, in *Se
 	return out, nil
 }
 
+func (c *extensionServiceClient) BrowserCookies(ctx context.Context, in *BrowserCookiesRequest, opts ...grpc.CallOption) (*BrowserCookiesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(BrowserCookiesResponse)
+	err := c.cc.Invoke(ctx, ExtensionService_BrowserCookies_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ExtensionServiceServer is the server API for ExtensionService service.
 // All implementations must embed UnimplementedExtensionServiceServer
 // for forward compatibility.
@@ -260,6 +275,10 @@ type ExtensionServiceServer interface {
 	GetLatestUpdates(context.Context, *BrowseRequest) (*SearchResponse, error)
 	GetSourcePreferences(context.Context, *GetSourcePreferencesRequest) (*GetSourcePreferencesResponse, error)
 	SetSourcePreference(context.Context, *SetSourcePreferenceRequest) (*Empty, error)
+	// Reads, or with apply=true first stores, the browser session (cookies and
+	// User-Agent) sources use for url's host. Embedders call it after the user
+	// passes a challenge (e.g. Cloudflare) in a real browser.
+	BrowserCookies(context.Context, *BrowserCookiesRequest) (*BrowserCookiesResponse, error)
 	mustEmbedUnimplementedExtensionServiceServer()
 }
 
@@ -320,6 +339,9 @@ func (UnimplementedExtensionServiceServer) GetSourcePreferences(context.Context,
 }
 func (UnimplementedExtensionServiceServer) SetSourcePreference(context.Context, *SetSourcePreferenceRequest) (*Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method SetSourcePreference not implemented")
+}
+func (UnimplementedExtensionServiceServer) BrowserCookies(context.Context, *BrowserCookiesRequest) (*BrowserCookiesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method BrowserCookies not implemented")
 }
 func (UnimplementedExtensionServiceServer) mustEmbedUnimplementedExtensionServiceServer() {}
 func (UnimplementedExtensionServiceServer) testEmbeddedByValue()                          {}
@@ -648,6 +670,24 @@ func _ExtensionService_SetSourcePreference_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ExtensionService_BrowserCookies_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BrowserCookiesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ExtensionServiceServer).BrowserCookies(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ExtensionService_BrowserCookies_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ExtensionServiceServer).BrowserCookies(ctx, req.(*BrowserCookiesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ExtensionService_ServiceDesc is the grpc.ServiceDesc for ExtensionService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -722,6 +762,10 @@ var ExtensionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SetSourcePreference",
 			Handler:    _ExtensionService_SetSourcePreference_Handler,
+		},
+		{
+			MethodName: "BrowserCookies",
+			Handler:    _ExtensionService_BrowserCookies_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

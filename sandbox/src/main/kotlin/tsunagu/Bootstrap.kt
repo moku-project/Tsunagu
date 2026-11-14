@@ -25,7 +25,7 @@ internal fun bootstrap(extensionsDir: File, storageDir: File, novelEnabled: Bool
                 // MissingFieldException when its key is absent from the JSON unless
                 // this is set — several extensions (e.g. Flame Comics) rely on that.
                 single { Json { ignoreUnknownKeys = true; explicitNulls = false } }
-                single { NetworkHelper() }
+                single { NetworkHelper(File(storageDir, "cookies.json")) }
                 single { android.app.Application() }
             }
         )
