@@ -1,6 +1,7 @@
 package image
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"net/http"
@@ -41,6 +42,11 @@ func DownloadToFileWith(client *http.Client, url, destDir, destName string) (str
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("fetching %s: status %d", url, resp.StatusCode)
 	}
+	// Bot checks such as DDoS-Guard answer 200 with an HTML page; caching that would serve it as the cover forever.
+	body := bufio.NewReader(resp.Body)
+	if head, _ := body.Peek(512); IsWebPage(head) {
+		return "", fmt.Errorf("fetching %s: got a web page, not an image", url)
+	}
 
 	if err := os.MkdirAll(destDir, 0o755); err != nil {
 		return "", fmt.Errorf("creating dir %s: %w", destDir, err)
@@ -55,10 +61,15 @@ func DownloadToFileWith(client *http.Client, url, destDir, destName string) (str
 	}
 	defer f.Close()
 
-	if _, err := io.Copy(f, resp.Body); err != nil {
+	if _, err := io.Copy(f, body); err != nil {
 		return "", fmt.Errorf("writing file %s: %w", path, err)
 	}
 	return path, nil
+}
+
+// IsWebPage reports whether b sniffs as HTML. Only HTML: SVG covers sniff as XML or plain text and are real images.
+func IsWebPage(b []byte) bool {
+	return len(b) > 0 && strings.HasPrefix(http.DetectContentType(b), "text/html")
 }
 
 func SaveBytesToFile(data []byte, contentType, destDir, destName string) (string, error) {

@@ -182,6 +182,9 @@ func readCachedCover(path string) ([]byte, string, bool) {
 	if err != nil {
 		return nil, "", false
 	}
+	if image.IsWebPage(b) {
+		return nil, "", false
+	}
 	var contentType string
 	switch strings.ToLower(filepath.Ext(path)) {
 	case ".png":
