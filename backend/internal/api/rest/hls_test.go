@@ -150,12 +150,12 @@ func TestUnwrapLocalProxyURL(t *testing.T) {
 	}
 
 	m3u8 := "http://127.0.0.1:12345/m3u8?url=" + url.QueryEscape("https://cdn.example.com/ep/index.m3u8") +
-		"&referer=https://animepahe.ru/&useragent=Mozilla/5.0"
+		"&referer=https://video.example.com/&useragent=Mozilla/5.0"
 	got, h = unwrapLocalProxyURL(m3u8, map[string]string{"X": "y"})
 	if got != "https://cdn.example.com/ep/index.m3u8" {
 		t.Fatalf("m3u8 url = %q", got)
 	}
-	if h["Referer"] != "https://animepahe.ru/" || h["User-Agent"] != "Mozilla/5.0" || h["X"] != "y" {
+	if h["Referer"] != "https://video.example.com/" || h["User-Agent"] != "Mozilla/5.0" || h["X"] != "y" {
 		t.Fatalf("m3u8 headers = %#v", h)
 	}
 

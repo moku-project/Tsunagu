@@ -14,24 +14,24 @@ func bytesField(b []byte, num protowire.Number, v []byte) []byte {
 	return protowire.AppendBytes(b, v)
 }
 
-// novelIndexPB is a one-extension index_v2 shaped like NovelSourcery's.
+// novelIndexPB is a one-extension index_v2 shaped like Example Novels's.
 func novelIndexPB() []byte {
 	var res []byte
-	res = bytesField(res, 501, []byte("https://example.com/boxnovel.jar"))
+	res = bytesField(res, 501, []byte("https://example.com/novel.jar"))
 	var src []byte
 	src = bytesField(src, 3, []byte("en"))
 	var ext []byte
-	ext = bytesField(ext, 1, []byte("BoxNovel"))
-	ext = bytesField(ext, 2, []byte("eu.kanade.tachiyomi.novelextension.en.boxnovel"))
+	ext = bytesField(ext, 1, []byte("Example Novel"))
+	ext = bytesField(ext, 2, []byte("eu.kanade.tachiyomi.novelextension.en.example"))
 	ext = bytesField(ext, 3, res)
 	ext = bytesField(ext, 6, []byte("1.6.12"))
 	ext = bytesField(ext, 8, src)
 	list := bytesField(nil, 1, ext)
-	idx := bytesField(nil, 1, []byte("NovelSourcery"))
+	idx := bytesField(nil, 1, []byte("Example Novels"))
 	return bytesField(idx, 101, list)
 }
 
-const decoyIndex = `[{"name":"Outdated App","pkg":"eu.kanade.tachiyomi.extension.all.keiyoushi","apk":"x.apk","lang":"all","version":"1.4.1"}]`
+const decoyIndex = `[{"name":"Outdated App","pkg":"eu.kanade.tachiyomi.extension.all.outdated","apk":"x.apk","lang":"all","version":"1.4.1"}]`
 
 func TestFetchIndexFollowsIndexV2(t *testing.T) {
 	mux := http.NewServeMux()
@@ -39,7 +39,7 @@ func TestFetchIndexFollowsIndexV2(t *testing.T) {
 	defer srv.Close()
 	mux.HandleFunc("/repo/index.min.json", func(w http.ResponseWriter, _ *http.Request) { w.Write([]byte(decoyIndex)) })
 	mux.HandleFunc("/repo/repo.json", func(w http.ResponseWriter, _ *http.Request) {
-		w.Write([]byte(`{"index_v2":"` + srv.URL + `/repo/index.pb","meta":{"name":"NovelSourcery"}}`))
+		w.Write([]byte(`{"index_v2":"` + srv.URL + `/repo/index.pb","meta":{"name":"Example Novels"}}`))
 	})
 	mux.HandleFunc("/repo/index.pb", func(w http.ResponseWriter, _ *http.Request) { w.Write(novelIndexPB()) })
 	mux.HandleFunc("/plain/index.min.json", func(w http.ResponseWriter, _ *http.Request) { w.Write([]byte(decoyIndex)) })
@@ -49,8 +49,8 @@ func TestFetchIndexFollowsIndexV2(t *testing.T) {
 		if err != nil {
 			t.Fatalf("%s: %v", u, err)
 		}
-		if len(exts) != 1 || exts[0].Name != "BoxNovel" || exts[0].JarURL != "https://example.com/boxnovel.jar" || exts[0].Lang != "en" {
-			t.Fatalf("%s: got %+v, want the BoxNovel entry from index_v2", u, exts)
+		if len(exts) != 1 || exts[0].Name != "Example Novel" || exts[0].JarURL != "https://example.com/novel.jar" || exts[0].Lang != "en" {
+			t.Fatalf("%s: got %+v, want the Example Novel entry from index_v2", u, exts)
 		}
 	}
 
@@ -63,9 +63,9 @@ func TestFetchIndexFollowsIndexV2(t *testing.T) {
 
 func TestClassifyContentType(t *testing.T) {
 	for pkg, want := range map[string]string{
-		"eu.kanade.tachiyomi.extension.en.mangadex":      "manga",
-		"eu.kanade.tachiyomi.animeextension.en.anikoto":  "anime",
-		"eu.kanade.tachiyomi.novelextension.en.boxnovel": "novel",
+		"eu.kanade.tachiyomi.extension.en.example":      "manga",
+		"eu.kanade.tachiyomi.animeextension.en.example": "anime",
+		"eu.kanade.tachiyomi.novelextension.en.example": "novel",
 	} {
 		if got := ClassifyContentType(pkg); got != want {
 			t.Errorf("ClassifyContentType(%q) = %q, want %q", pkg, got, want)
@@ -76,17 +76,17 @@ func TestClassifyContentType(t *testing.T) {
 // aniyomiIndexPB is shaped like Secozzi's: field 8 is a varint flag and the
 // sources sit in field 9.
 func aniyomiIndexPB() []byte {
-	res := bytesField(nil, 1, []byte("https://example.com/jellyfin.apk"))
+	res := bytesField(nil, 1, []byte("https://example.com/anime.apk"))
 	src := bytesField(nil, 3, []byte("all"))
 	var ext []byte
-	ext = bytesField(ext, 1, []byte("Jellyfin"))
-	ext = bytesField(ext, 2, []byte("eu.kanade.tachiyomi.animeextension.all.jellyfin"))
+	ext = bytesField(ext, 1, []byte("Example Anime"))
+	ext = bytesField(ext, 2, []byte("eu.kanade.tachiyomi.animeextension.all.example"))
 	ext = bytesField(ext, 3, res)
 	ext = bytesField(ext, 6, []byte("17.2"))
 	ext = protowire.AppendTag(ext, 8, protowire.VarintType)
 	ext = protowire.AppendVarint(ext, 1)
 	ext = bytesField(ext, 9, src)
-	idx := bytesField(nil, 1, []byte("Jellyfin, Stremio, and Torbox"))
+	idx := bytesField(nil, 1, []byte("Example Anime Repo"))
 	return bytesField(idx, 101, bytesField(nil, 1, ext))
 }
 
@@ -97,7 +97,7 @@ func TestFetchIndexAniyomiLayout(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(exts) != 1 || exts[0].PackageName != "eu.kanade.tachiyomi.animeextension.all.jellyfin" || exts[0].Lang != "all" {
+	if len(exts) != 1 || exts[0].PackageName != "eu.kanade.tachiyomi.animeextension.all.example" || exts[0].Lang != "all" {
 		t.Fatalf("got %+v", exts)
 	}
 }
@@ -110,10 +110,10 @@ func TestFetchIndexFallsBackWhenIndexV2IsDead(t *testing.T) {
 		w.Write([]byte(`{"index_v2":"` + srv.URL + `/moved/index.pb"}`))
 	})
 	mux.HandleFunc("/repo/index.min.json", func(w http.ResponseWriter, _ *http.Request) {
-		w.Write([]byte(`[{"name":"Tachiyomi: MangaDex","pkg":"eu.kanade.tachiyomi.extension.all.mangadex","apk":"x.apk","lang":"all","version":"1.4.1"}]`))
+		w.Write([]byte(`[{"name":"Tachiyomi: Example","pkg":"eu.kanade.tachiyomi.extension.all.example","apk":"x.apk","lang":"all","version":"1.4.1"}]`))
 	})
 	exts, err := FetchIndex(srv.URL + "/repo/index.min.json")
-	if err != nil || len(exts) != 1 || exts[0].PackageName != "eu.kanade.tachiyomi.extension.all.mangadex" {
+	if err != nil || len(exts) != 1 || exts[0].PackageName != "eu.kanade.tachiyomi.extension.all.example" {
 		t.Fatalf("got %+v %v", exts, err)
 	}
 }

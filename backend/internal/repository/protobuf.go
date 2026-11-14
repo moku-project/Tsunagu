@@ -176,7 +176,7 @@ func decodeExtension(b []byte) (*extension, error) {
 			}
 			b = b[n:]
 			ext.ContentWarning = int32(v)
-		// Keiyoushi-style indexes put sources in 8; Aniyomi-style ones use 8 for a
+		// Mihon-style indexes put sources in 8; Aniyomi-style ones use 8 for a
 		// varint flag and put sources in 9.
 		case 8, 9:
 			if typ != protowire.BytesType {

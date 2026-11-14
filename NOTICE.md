@@ -38,7 +38,7 @@ extensions are written against. Adapted under
 <https://github.com/tsundoku-otaku/extensions-lib>
 
 Tsundoku's fork of the Mihon extension API adds the interfaces its novel
-extensions (e.g. the NovelSourcery repo) are compiled against. Adapted as
+extensions are compiled against. Adapted as
 `SourceTracker` and `RateLimited` under
 `sandbox/src/main/kotlin/eu/kanade/tachiyomi/source/`.
 

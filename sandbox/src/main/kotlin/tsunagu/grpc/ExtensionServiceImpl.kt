@@ -32,6 +32,8 @@ import tsunagu.grpc.FilterSerde.toProto
 import tsunagu.registry.ExtensionRegistry
 import java.io.File
 
+private val RUNTIME_PACKAGES = listOf("java.", "javax.", "jdk.", "sun.", "kotlin.", "kotlinx.", "okhttp3.", "okio.", "io.grpc.", "com.google.", "android.", "org.jsoup.")
+
 class ExtensionServiceImpl(
     private val registry: ExtensionRegistry,
 ) : ExtensionServiceGrpc.ExtensionServiceImplBase() {
@@ -47,11 +49,8 @@ class ExtensionServiceImpl(
     private fun appFrames(e: Throwable, limit: Int = 4): String {
         val root = generateSequence(e) { it.cause }.last()
         return root.stackTrace
-            .filter {
-                it.className.startsWith("eu.kanade.") ||
-                    it.className.startsWith("tsunagu.") ||
-                    it.className.startsWith("keiyoushi.")
-            }
+            // Extensions and their helper libraries use many package names, so keep every frame that isn't the runtime's.
+            .filter { frame -> RUNTIME_PACKAGES.none { frame.className.startsWith(it) } }
             .take(limit)
             .joinToString("; ") { "${it.className.substringAfterLast('.')}.${it.methodName}:${it.lineNumber}" }
     }

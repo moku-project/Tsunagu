@@ -21,8 +21,7 @@ data class LoadedExtension(
 
 class ExtensionLoadException(message: String) : Exception(message)
 
-// SourceFactory extensions (e.g. MangaDex) register one Source per language; picking index 0
-// blindly locks every request to whatever language sorts first alphabetically (e.g. "af").
+// Multi-language extensions register one Source per language; index 0 would be whichever sorts first.
 private fun List<Source>.pickPreferredLang(): Source? = find { it.lang == "en" } ?: firstOrNull()
 private fun List<AnimeSource>.pickPreferredLang(): AnimeSource? = find { it.lang == "en" } ?: firstOrNull()
 

@@ -17,7 +17,7 @@ func TestExtensionDownloadTarget(t *testing.T) {
 		wantExt   string
 	}{
 		{"LNReader plugin", sqlcgen.Extension{ContentType: "novel", JarUrl: jar("https://x/plugin.js")}, "https://x/plugin.js", false, "js"},
-		{"Tsundoku novel jar", sqlcgen.Extension{ContentType: "novel", JarUrl: jar("https://x/boxnovel.jar"), ApkUrl: "https://x/boxnovel.apk"}, "https://x/boxnovel.jar", false, "jar"},
+		{"Tsundoku novel jar", sqlcgen.Extension{ContentType: "novel", JarUrl: jar("https://x/novel.jar"), ApkUrl: "https://x/novel.apk"}, "https://x/novel.jar", false, "jar"},
 		{"manga apk only", sqlcgen.Extension{ContentType: "manga", ApkUrl: "https://x/m.apk"}, "https://x/m.apk", false, "apk"},
 		{"manga jar and apk", sqlcgen.Extension{ContentType: "manga", JarUrl: jar("https://x/m.jar"), ApkUrl: "https://x/m.apk"}, "https://x/m.jar", false, "jar"},
 		{"manga jar and apk, APK preferred", sqlcgen.Extension{ContentType: "manga", JarUrl: jar("https://x/m.jar"), ApkUrl: "https://x/m.apk"}, "https://x/m.apk", true, "apk"},

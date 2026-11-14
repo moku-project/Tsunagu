@@ -119,8 +119,7 @@ func filterValid(indexURL string, exts []ParsedExtension) []ParsedExtension {
 
 // indexV2URL returns the protobuf index a Mihon-style repo advertises in the
 // repo.json next to its index (or at indexURL itself), or "" when it has none.
-// Such repos (Keiyoushi, NovelSourcery) serve a placeholder index.min.json to
-// apps that predate index_v2.
+// Some repos serve a placeholder index.min.json to apps that predate index_v2.
 func indexV2URL(indexURL string) string {
 	if !strings.HasSuffix(indexURL, ".json") {
 		return ""
