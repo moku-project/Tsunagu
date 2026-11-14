@@ -10,6 +10,7 @@ import (
 )
 
 type Config struct {
+	ServerName        string
 	DataDir           string
 	HTTPAddr          string
 	DBPath            string
@@ -52,6 +53,7 @@ func (c *Config) IdleTimeout() time.Duration {
 
 func Defaults() Config {
 	return Config{
+		ServerName:           "Tsunagu",
 		HTTPAddr:             "127.0.0.1:6007",
 		DBPath:               "tsunagu.db",
 		JarCacheDir:          "jar-cache",

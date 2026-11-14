@@ -410,6 +410,7 @@ type BackupImportResult {
 }
 
 type AboutServer {
+  "The name the owner gave this server (the server_name setting), or Tsunagu."
   name: String!
   version: String!
   buildTime: String!

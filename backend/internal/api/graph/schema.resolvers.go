@@ -1537,7 +1537,7 @@ func (r *queryResolver) About(ctx context.Context) (*model.AboutServer, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &model.AboutServer{Name: r.Name, Version: r.Version, BuildTime: r.BuildTime, InstanceID: id}, nil
+	return &model.AboutServer{Name: r.serverName(), Version: r.Version, BuildTime: r.BuildTime, InstanceID: id}, nil
 }
 
 func (r *queryResolver) Folders(ctx context.Context) ([]*model.Folder, error) {

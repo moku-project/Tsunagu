@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"errors"
+	"strings"
 	"sync"
 
 	"tsunagu/backend/internal/db/sqlcgen"
@@ -35,4 +36,14 @@ func (r *Resolver) instanceID(ctx context.Context) (string, error) {
 		return "", err
 	}
 	return id, nil
+}
+
+// serverName is what clients label this server with; the product name when the owner hasn't set one.
+func (r *Resolver) serverName() string {
+	if r.Cfg != nil {
+		if n := strings.TrimSpace(r.Cfg.Config().ServerName); n != "" {
+			return n
+		}
+	}
+	return r.Name
 }

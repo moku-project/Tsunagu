@@ -15,6 +15,7 @@ type FilterNode interface {
 }
 
 type AboutServer struct {
+	// The name the owner gave this server (the server_name setting), or Tsunagu.
 	Name      string `json:"name"`
 	Version   string `json:"version"`
 	BuildTime string `json:"buildTime"`
