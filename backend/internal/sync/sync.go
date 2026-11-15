@@ -887,7 +887,11 @@ func (s *Syncer) SetInLibrary(ctx context.Context, c *sandbox.Client, mediaID in
 	}
 
 	if inLibrary {
-		return s.q.AddMediaToLibrary(ctx, mediaID)
+		added, err := s.q.AddMediaToLibrary(ctx, mediaID)
+		if err == nil {
+			go s.maybeEnrich(context.Background(), mediaID)
+		}
+		return added, err
 	}
 
 	if err := s.q.RemoveMediaFromAllFolders(ctx, mediaID); err != nil {
@@ -1170,8 +1174,12 @@ func (s *Syncer) upsertEntryFromDetails(ctx context.Context, c *sandbox.Client, 
 	return entry, nil
 }
 
+// Only library titles are matched; browsing would otherwise fire a metadata search per result.
 func (s *Syncer) maybeEnrich(ctx context.Context, mediaID int64) {
 	if s.enricher == nil {
+		return
+	}
+	if m, err := s.q.GetMedia(ctx, mediaID); err != nil || !m.AddedAt.Valid {
 		return
 	}
 	ec, cancel := context.WithTimeout(ctx, 15*time.Second)
