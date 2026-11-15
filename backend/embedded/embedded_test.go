@@ -57,12 +57,15 @@ func TestStartRequiresToken(t *testing.T) {
 	if code := query(APIToken()); code != http.StatusOK {
 		t.Fatalf("with token: %d", code)
 	}
+	if LocalSourceDir() == "" {
+		t.Fatal("LocalSourceDir empty while running")
+	}
 
 	if err := Stop(); err != nil {
 		t.Fatal(err)
 	}
-	if BaseURL() != "" {
-		t.Fatal("BaseURL set after Stop")
+	if BaseURL() != "" || LocalSourceDir() != "" {
+		t.Fatal("BaseURL or LocalSourceDir set after Stop")
 	}
 }
 

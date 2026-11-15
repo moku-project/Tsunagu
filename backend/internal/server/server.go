@@ -67,8 +67,14 @@ type Server struct {
 	http     *http.Server
 	sandbox  *sandbox.SupervisedClient
 	q        *sqlcgen.Queries
+	local    *localsource.Scanner
 	cleanups []func()
 }
+
+// LocalSourceDir is the folder scanned for local media
+// (<dir>/<manga|novels|anime>/<series>/...). Clients add files there, then
+// call the rescanLocalMedia mutation, as desktop Moku does.
+func (s *Server) LocalSourceDir() string { return s.local.LocalDir() }
 
 // AttachSandbox points an external sandbox at the embedder's extension host
 // and waits until the host answers, so the embedder learns about a host that
@@ -285,6 +291,7 @@ func Start(opts Options) (*Server, error) {
 		return d
 	}
 	localScanner := localsource.New(q, absMediaDir)
+	s.local = localScanner
 	localScanner.SetEnricher(metadataMgr)
 	localScanner.SetLocalDir(resolveLocalSourceDir())
 	store.OnChange("local_source_dir", func(context.Context) {

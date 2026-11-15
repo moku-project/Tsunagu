@@ -89,6 +89,18 @@ func AttachSandbox(sandboxAddr, sandboxToken string) error {
 	return running.AttachSandbox(ctx, sandboxAddr, sandboxToken)
 }
 
+// LocalSourceDir is the folder Tsunagu scans for local media, laid out as
+// <dir>/<manga|novels|anime>/<series>/<chapter>/... Copy files there, then
+// run the rescanLocalMedia mutation. Empty when stopped.
+func LocalSourceDir() string {
+	mu.Lock()
+	defer mu.Unlock()
+	if running == nil {
+		return ""
+	}
+	return running.LocalSourceDir()
+}
+
 // Stop shuts the server down; Start may be called again afterwards.
 func Stop() error {
 	mu.Lock()
