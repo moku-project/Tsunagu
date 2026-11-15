@@ -35,6 +35,25 @@ func TestRandomHistoriesConverge(t *testing.T) {
 	}
 }
 
+// folderNames is the pool random folder names come from; a small pool makes devices merge folders often.
+var folderNames = 100
+
+func TestRandomHistoriesConvergeWithFrequentFolderMerges(t *testing.T) {
+	defer func(n int) { folderNames = n }(folderNames)
+	folderNames = 4
+	seeds := 25
+	if v, err := strconv.Atoi(os.Getenv("MOKU_SYNC_SEEDS")); err == nil && v > 0 {
+		seeds = v
+	} else if testing.Short() {
+		seeds = 5
+	}
+	for seed := int64(500); seed < 500+int64(seeds); seed++ {
+		t.Run(fmt.Sprintf("seed%d", seed), func(t *testing.T) {
+			runHistory(t, seed, 4, 250, func(i, j, n int) bool { return true })
+		})
+	}
+}
+
 func TestRandomHistoriesConvergeInSmallBatches(t *testing.T) {
 	defer func(l int) { batchLimit = l }(batchLimit)
 	batchLimit = 4
@@ -125,11 +144,11 @@ func randomEdit(r *rand.Rand, n *node) string {
 		n.setInLibrary(m, in)
 		return fmt.Sprintf("library %d=%v", m, in)
 	case k == 6 || len(folders) == 0:
-		id := n.createFolder(fmt.Sprintf("F%d", r.Intn(100)))
+		id := n.createFolder(fmt.Sprintf("F%d", r.Intn(folderNames)))
 		return "create folder " + id[:6]
 	case k == 7:
 		id := folders[r.Intn(len(folders))]
-		name := fmt.Sprintf("F%d", r.Intn(100))
+		name := fmt.Sprintf("F%d", r.Intn(folderNames))
 		n.renameFolder(id, name)
 		return fmt.Sprintf("rename %s=%s", id[:6], name)
 	case k == 8 && r.Intn(3) == 0:

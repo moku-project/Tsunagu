@@ -325,6 +325,10 @@ func (e *Engine) captureFolder(ctx context.Context, tx *sql.Tx, d dirtyRow, wall
 		return 0, err
 	}
 	if !ok {
+		// A folder merged into another loses its row here, but it wasn't deleted.
+		if canon, err := canonicalFolder(ctx, tx, d.key); err != nil || canon != d.key {
+			return 0, err
+		}
 		return e.emitSet(ctx, tx, KindFolder, d.key, "deleted", json.RawMessage("true"), wall)
 	}
 	n := 0
@@ -339,17 +343,93 @@ func (e *Engine) captureFolder(ctx context.Context, tx *sql.Tx, d dirtyRow, wall
 }
 
 func (e *Engine) captureMember(ctx context.Context, tx *sql.Tx, d dirtyRow, wall int64) (int, error) {
-	tags, err := liveTags(ctx, tx, d.kind, d.key, d.field)
+	keys := []string{d.key}
+	if d.kind == KindFolderMember {
+		canon, err := canonicalFolder(ctx, tx, d.key)
+		if err != nil {
+			return 0, err
+		}
+		if keys, err = folderAliases(ctx, tx, canon); err != nil {
+			return 0, err
+		}
+	}
+	tags := make([][]string, len(keys))
+	found := false
+	for i, k := range keys {
+		var err error
+		if tags[i], err = liveTags(ctx, tx, d.kind, k, d.field); err != nil {
+			return 0, err
+		}
+		found = found || len(tags[i]) > 0
+	}
+	if d.op == "add" {
+		if found {
+			return 0, nil
+		}
+		return 1, e.emit(ctx, tx, Op{Kind: d.kind, Key: keys[0], Field: d.field, Type: OpAdd}, wall)
+	}
+	// A removal covers folders merged into this one too, or their copy would keep the title shown.
+	n := 0
+	for i, k := range keys {
+		if len(tags[i]) == 0 {
+			continue
+		}
+		if err := e.emit(ctx, tx, Op{Kind: d.kind, Key: k, Field: d.field, Type: OpRemove, Tags: tags[i]}, wall); err != nil {
+			return n, err
+		}
+		n++
+	}
+	return n, nil
+}
+
+// mergeArrivedFolders merges a folder that just arrived into a same-name folder this device already
+// had, so two "Reading" folders made before pairing become one. Same-name folders made on one device stay apart.
+func (e *Engine) mergeArrivedFolders(ctx context.Context, tx *sql.Tx, before map[string]bool) error {
+	rows, err := tx.QueryContext(ctx, `SELECT lower(trim(name)), sync_id FROM folders WHERE kind = 'custom' ORDER BY 1, 2`)
 	if err != nil {
-		return 0, err
+		return err
 	}
-	switch {
-	case d.op == "add" && len(tags) == 0:
-		return 1, e.emit(ctx, tx, Op{Kind: d.kind, Key: d.key, Field: d.field, Type: OpAdd}, wall)
-	case d.op == "remove" && len(tags) > 0:
-		return 1, e.emit(ctx, tx, Op{Kind: d.kind, Key: d.key, Field: d.field, Type: OpRemove, Tags: tags}, wall)
+	type pair struct{ a, b string }
+	var pairs []pair
+	local := map[string]string{} // name -> smallest folder this device already had
+	var arrived [][2]string
+	for rows.Next() {
+		var name, id string
+		if err := rows.Scan(&name, &id); err != nil {
+			rows.Close()
+			return err
+		}
+		if before[id] {
+			if _, ok := local[name]; !ok {
+				local[name] = id
+			}
+		} else {
+			arrived = append(arrived, [2]string{name, id})
+		}
 	}
-	return 0, nil
+	if err := rows.Close(); err != nil {
+		return err
+	}
+	for _, a := range arrived {
+		if l, ok := local[a[0]]; ok {
+			pairs = append(pairs, pair{a[1], l})
+		}
+	}
+	wall := nowMillis()
+	if e.wall != nil {
+		wall = e.wall()
+	}
+	for _, p := range pairs {
+		// The smaller ID wins, so every device that merges the same pair picks the same direction.
+		winner, loser := min(p.a, p.b), max(p.a, p.b)
+		if err := e.emit(ctx, tx, Op{Kind: KindFolder, Key: loser, Field: "merged_into", Type: OpSet, Value: mustJSON(winner)}, wall); err != nil {
+			return err
+		}
+		if err := project(ctx, tx, target{KindFolder, loser, "merged_into"}); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (e *Engine) emitSet(ctx context.Context, tx *sql.Tx, kind, key, field string, value json.RawMessage, wall int64) (int, error) {
@@ -408,9 +488,26 @@ func (e *Engine) apply(ctx context.Context, tx *sql.Tx, ops []Op) error {
 			order = append(order, t)
 		}
 	}
+	folderChanged := false
+	for _, t := range order {
+		folderChanged = folderChanged || t.kind == KindFolder
+	}
+	var before map[string]bool
+	if folderChanged {
+		ids, err := customFolders(ctx, tx)
+		if err != nil {
+			return err
+		}
+		before = ids
+	}
 	for _, t := range order {
 		if err := project(ctx, tx, t); err != nil {
 			return fmt.Errorf("project %s %q %s: %w", t.kind, t.key, t.field, err)
+		}
+	}
+	if folderChanged {
+		if err := e.mergeArrivedFolders(ctx, tx, before); err != nil {
+			return fmt.Errorf("merge same-name folders: %w", err)
 		}
 	}
 	if len(order) > 0 {

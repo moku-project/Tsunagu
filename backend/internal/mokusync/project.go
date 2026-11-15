@@ -106,6 +106,199 @@ func readFolder(ctx context.Context, q querier, syncID string) (map[string]json.
 	}, true, nil
 }
 
+func customFolders(ctx context.Context, q querier) (map[string]bool, error) {
+	rows, err := q.QueryContext(ctx, `SELECT sync_id FROM folders WHERE kind = 'custom'`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := map[string]bool{}
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		out[id] = true
+	}
+	return out, rows.Err()
+}
+
+// canonicalFolder follows merged_into to the folder a merged folder now lives in. Merges always point
+// at a smaller ID, so the chain ends; the depth cap only guards against corrupt data.
+func canonicalFolder(ctx context.Context, q querier, syncID string) (string, error) {
+	for range 32 {
+		v, _, ok, err := register(ctx, q, KindFolder, syncID, "merged_into")
+		if err != nil || !ok {
+			return syncID, err
+		}
+		var next string
+		if err := json.Unmarshal(v, &next); err != nil {
+			return "", err
+		}
+		if next >= syncID {
+			return syncID, nil
+		}
+		syncID = next
+	}
+	return syncID, nil
+}
+
+// folderAliases lists canon and every live folder merged into it, canon first.
+func folderAliases(ctx context.Context, q querier, canon string) ([]string, error) {
+	rows, err := q.QueryContext(ctx, `SELECT m.key FROM sync_registers m WHERE m.kind = 'folder' AND m.field = 'merged_into'
+		AND NOT EXISTS (SELECT 1 FROM sync_registers d WHERE d.kind = 'folder' AND d.key = m.key AND d.field = 'deleted' AND d.value = 'true')
+		ORDER BY m.key`)
+	if err != nil {
+		return nil, err
+	}
+	var merged []string
+	for rows.Next() {
+		var k string
+		if err := rows.Scan(&k); err != nil {
+			rows.Close()
+			return nil, err
+		}
+		merged = append(merged, k)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	out := []string{canon}
+	for _, k := range merged {
+		c, err := canonicalFolder(ctx, q, k)
+		if err != nil {
+			return nil, err
+		}
+		if c == canon && k != canon {
+			out = append(out, k)
+		}
+	}
+	return out, nil
+}
+
+// projectAllMembers re-applies every synced title's folders: a merge, deletion or new folder can move titles
+// several merges along. These events are rare, so the full pass is cheap overall.
+func projectAllMembers(ctx context.Context, tx *sql.Tx) error {
+	rows, err := tx.QueryContext(ctx, `SELECT DISTINCT key, element FROM sync_set_adds WHERE kind = 'folder_member' ORDER BY element, key`)
+	if err != nil {
+		return err
+	}
+	var targets []target
+	for rows.Next() {
+		t := target{kind: KindFolderMember}
+		if err := rows.Scan(&t.key, &t.field); err != nil {
+			rows.Close()
+			return err
+		}
+		targets = append(targets, t)
+	}
+	if err := rows.Close(); err != nil {
+		return err
+	}
+	done := map[string]bool{}
+	for _, t := range targets {
+		if done[t.field] {
+			continue
+		}
+		done[t.field] = true
+		if err := project(ctx, tx, t); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func folderDeleted(ctx context.Context, q querier, key string) (bool, error) {
+	v, _, ok, err := register(ctx, q, KindFolder, key, "deleted")
+	return ok && string(v) == "true", err
+}
+
+// projectTitleFolders works per title, not per folder, so the result is right however merges and deletions arrive.
+func projectTitleFolders(ctx context.Context, tx *sql.Tx, element string) (bool, error) {
+	mediaID, ok, err := resolveMedia(ctx, tx, element)
+	if err != nil || !ok {
+		return false, err
+	}
+	rows, err := tx.QueryContext(ctx, `SELECT DISTINCT key FROM sync_set_adds WHERE kind = 'folder_member' AND element = ?`, element)
+	if err != nil {
+		return false, err
+	}
+	var keys []string
+	for rows.Next() {
+		var k string
+		if err := rows.Scan(&k); err != nil {
+			rows.Close()
+			return false, err
+		}
+		keys = append(keys, k)
+	}
+	if err := rows.Close(); err != nil {
+		return false, err
+	}
+	complete := true
+	want := map[int64]bool{}
+	for _, k := range keys {
+		canon, err := canonicalFolder(ctx, tx, k)
+		if err != nil {
+			return false, err
+		}
+		gone, err := folderDeleted(ctx, tx, k)
+		if err != nil {
+			return false, err
+		}
+		if gone {
+			continue
+		}
+		if gone, err = folderDeleted(ctx, tx, canon); err != nil || gone {
+			if err != nil {
+				return false, err
+			}
+			continue
+		}
+		var id int64
+		err = tx.QueryRowContext(ctx, `SELECT id FROM folders WHERE sync_id = ?`, canon).Scan(&id)
+		if errors.Is(err, sql.ErrNoRows) {
+			complete = false
+			continue
+		}
+		if err != nil {
+			return false, err
+		}
+		want[id] = true
+	}
+	have := map[int64]bool{}
+	hrows, err := tx.QueryContext(ctx, `SELECT folder_id FROM media_folders WHERE media_id = ?`, mediaID)
+	if err != nil {
+		return false, err
+	}
+	for hrows.Next() {
+		var id int64
+		if err := hrows.Scan(&id); err != nil {
+			hrows.Close()
+			return false, err
+		}
+		have[id] = true
+	}
+	if err := hrows.Close(); err != nil {
+		return false, err
+	}
+	for id := range want {
+		if !have[id] {
+			if _, err := tx.ExecContext(ctx, `INSERT INTO media_folders (media_id, folder_id) VALUES (?, ?)`, mediaID, id); err != nil {
+				return false, err
+			}
+		}
+	}
+	for id := range have {
+		if !want[id] {
+			if _, err := tx.ExecContext(ctx, `DELETE FROM media_folders WHERE media_id = ? AND folder_id = ?`, mediaID, id); err != nil {
+				return false, err
+			}
+		}
+	}
+	return complete, nil
+}
+
 func elements(ctx context.Context, q querier, kind, key string) ([]string, error) {
 	rows, err := q.QueryContext(ctx, `SELECT DISTINCT element FROM sync_set_adds WHERE kind = ? AND key = ? ORDER BY element`, kind, key)
 	if err != nil {
@@ -184,28 +377,7 @@ func projectTarget(ctx context.Context, tx *sql.Tx, t target) (bool, error) {
 		}
 		return err == nil, err
 	case KindFolderMember:
-		mediaID, ok, err := resolveMedia(ctx, tx, t.field)
-		if err != nil || !ok {
-			return false, err
-		}
-		var folderID int64
-		err = tx.QueryRowContext(ctx, `SELECT id FROM folders WHERE sync_id = ?`, t.key).Scan(&folderID)
-		if errors.Is(err, sql.ErrNoRows) {
-			return false, nil
-		}
-		if err != nil {
-			return false, err
-		}
-		in, err := present(ctx, tx, KindFolderMember, t.key, t.field)
-		if err != nil {
-			return false, err
-		}
-		if in {
-			_, err = tx.ExecContext(ctx, `INSERT OR IGNORE INTO media_folders (media_id, folder_id) VALUES (?, ?)`, mediaID, folderID)
-		} else {
-			_, err = tx.ExecContext(ctx, `DELETE FROM media_folders WHERE media_id = ? AND folder_id = ?`, mediaID, folderID)
-		}
-		return err == nil, err
+		return projectTitleFolders(ctx, tx, t.field)
 	case KindFolder:
 		return projectFolder(ctx, tx, t.key)
 	}
@@ -254,6 +426,20 @@ func projectChapter(ctx context.Context, tx *sql.Tx, t target) (bool, error) {
 }
 
 func projectFolder(ctx context.Context, tx *sql.Tx, syncID string) (bool, error) {
+	canon, err := canonicalFolder(ctx, tx, syncID)
+	if err != nil {
+		return false, err
+	}
+	if canon != syncID {
+		// Merged away: its titles now show in the folder it merged into.
+		if _, err := tx.ExecContext(ctx, `DELETE FROM folders WHERE sync_id = ? AND kind = 'custom'`, syncID); err != nil {
+			return false, err
+		}
+		if _, err := projectFolder(ctx, tx, canon); err != nil {
+			return false, err
+		}
+		return true, projectAllMembers(ctx, tx)
+	}
 	vals := map[string]json.RawMessage{}
 	for _, f := range append([]string{"deleted"}, folderFields...) {
 		v, _, ok, err := register(ctx, tx, KindFolder, syncID, f)
@@ -290,15 +476,9 @@ func projectFolder(ctx context.Context, tx *sql.Tx, syncID string) (bool, error)
 		if _, err := tx.ExecContext(ctx, `INSERT INTO folders (name, kind, sync_id) VALUES (?, 'custom', ?)`, name, syncID); err != nil {
 			return false, fmt.Errorf("create folder: %w", err)
 		}
-		// Memberships that arrived before the folder were skipped; apply them now.
-		members, err := elements(ctx, tx, KindFolderMember, syncID)
-		if err != nil {
+		// Memberships that arrived before the folder, here or in folders merged into it, apply now.
+		if err := projectAllMembers(ctx, tx); err != nil {
 			return false, err
-		}
-		for _, m := range members {
-			if err := project(ctx, tx, target{KindFolderMember, syncID, m}); err != nil {
-				return false, err
-			}
 		}
 	}
 	for _, f := range folderFields {

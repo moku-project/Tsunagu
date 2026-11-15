@@ -226,6 +226,63 @@ func TestFoldersSyncByIDNotName(t *testing.T) {
 	}
 }
 
+func TestSameNameFoldersMergeWhenTheyMeet(t *testing.T) {
+	a := newNode(t, "a", nil)
+	b := newNode(t, "b", nil)
+	c := newNode(t, "c", nil)
+	for _, n := range []*node{a, b} {
+		n.setInLibrary(0, true)
+		n.setInLibrary(1, true)
+	}
+	fa := a.createFolder("Reading")
+	a.setInFolder(fa, 0, true)
+	fb := b.createFolder(" reading")
+	b.setInFolder(fb, 1, true)
+	a.capture()
+	b.capture()
+	a.syncWith(b)
+	b.syncWith(c)
+	c.syncWith(a)
+
+	winner := min(fa, fb)
+	for _, n := range []*node{a, b, c} {
+		if got := n.folderIDs(); len(got) != 1 || got[0] != winner {
+			t.Fatalf("%s folders = %v, want just %s", n.e.name, got, winner)
+		}
+		got := n.strings(`SELECT m.external_id FROM media_folders mf JOIN media m ON m.id = mf.media_id ORDER BY 1`)
+		if len(got) != 2 {
+			t.Fatalf("%s merged folder holds %v, want both titles", n.e.name, got)
+		}
+	}
+
+	// Removing a title from the merged folder removes it from the folder that merged in, too.
+	b.setInFolder(winner, 1, false)
+	b.setInFolder(winner, 0, false)
+	b.capture()
+	b.syncWith(a)
+	a.syncWith(c)
+	for _, n := range []*node{a, b, c} {
+		if got := n.strings(`SELECT media_id FROM media_folders`); len(got) != 0 {
+			t.Fatalf("%s still shows %v in the merged folder", n.e.name, got)
+		}
+	}
+	if d := diff(a.crdtState(), c.crdtState()); d != "" {
+		t.Fatalf("sync state differs:\n%s", d)
+	}
+}
+
+func TestSameNameFoldersOnOneDeviceStayApart(t *testing.T) {
+	a := newNode(t, "a", nil)
+	b := newNode(t, "b", nil)
+	a.createFolder("Later")
+	a.createFolder("Later")
+	a.capture()
+	a.syncWith(b)
+	if got := b.folderIDs(); len(got) != 2 {
+		t.Fatalf("b folders = %v, want both of a's", got)
+	}
+}
+
 func TestValuesWaitForATitleThisDeviceDoesNotHaveYet(t *testing.T) {
 	a := newNode(t, "a", nil)
 	b := newNode(t, "b", []int{0, 1})
