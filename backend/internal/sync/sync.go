@@ -962,6 +962,24 @@ func (s *Syncer) MigrateMedia(ctx context.Context, c *sandbox.Client, fromMediaI
 		}
 	}
 
+	// Per-series automation rules belong to the series, not the source.
+	if rules, err := qtx.GetMediaAutomation(ctx, fromMediaID); err == nil {
+		if _, err := qtx.UpsertMediaAutomation(ctx, sqlcgen.UpsertMediaAutomationParams{
+			MediaID:          newMedia.ID,
+			AutoDownload:     rules.AutoDownload,
+			DownloadAhead:    rules.DownloadAhead,
+			DeleteOnRead:     rules.DeleteOnRead,
+			DeleteDelayHours: rules.DeleteDelayHours,
+			MaxKeepChapters:  rules.MaxKeepChapters,
+			PauseUpdates:     rules.PauseUpdates,
+			RefreshInterval:  rules.RefreshInterval,
+		}); err != nil {
+			return sqlcgen.Medium{}, fmt.Errorf("carry automation rules: %w", err)
+		}
+	} else if !errors.Is(err, sql.ErrNoRows) {
+		return sqlcgen.Medium{}, fmt.Errorf("read source automation rules: %w", err)
+	}
+
 	if _, err := qtx.AddMediaToLibrary(ctx, newMedia.ID); err != nil {
 		return sqlcgen.Medium{}, fmt.Errorf("add target to library: %w", err)
 	}
