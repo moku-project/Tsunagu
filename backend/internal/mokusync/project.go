@@ -142,70 +142,84 @@ func clockTime(clock string) string {
 	return time.UnixMilli(c.Wall).UTC().Format(time.DateTime)
 }
 
-// project writes the merged value of one target into the library. Targets whose title, chapter or
-// folder isn't on this instance yet are skipped; ProjectAll applies them once they exist.
+// project writes the merged value of one target into the library. A target whose title, chapter or
+// folder isn't on this instance yet is kept in sync_pending until ProjectPending can apply it.
 func project(ctx context.Context, tx *sql.Tx, t target) error {
+	applied, err := projectTarget(ctx, tx, t)
+	if err != nil {
+		return err
+	}
+	if applied {
+		_, err = tx.ExecContext(ctx, `DELETE FROM sync_pending WHERE kind = ? AND key = ? AND field = ?`, t.kind, t.key, t.field)
+	} else {
+		_, err = tx.ExecContext(ctx, `INSERT OR IGNORE INTO sync_pending (kind, key, field) VALUES (?, ?, ?)`, t.kind, t.key, t.field)
+	}
+	return err
+}
+
+// projectTarget reports false when the row the value belongs on doesn't exist here yet.
+func projectTarget(ctx context.Context, tx *sql.Tx, t target) (bool, error) {
 	switch t.kind {
 	case KindChapter:
 		return projectChapter(ctx, tx, t)
 	case KindLibrary:
 		mediaID, ok, err := resolveMedia(ctx, tx, t.field)
 		if err != nil || !ok {
-			return err
+			return false, err
 		}
 		in, err := present(ctx, tx, KindLibrary, t.key, t.field)
 		if err != nil {
-			return err
+			return false, err
 		}
 		if in {
 			// Date added is the oldest add still standing, so it matches on every device.
 			var first string
 			if err := tx.QueryRowContext(ctx, `SELECT MIN(clock) FROM sync_set_adds WHERE kind = ? AND key = ? AND element = ?`,
 				KindLibrary, t.key, t.field).Scan(&first); err != nil {
-				return err
+				return false, err
 			}
 			_, err = tx.ExecContext(ctx, `UPDATE media SET added_at = COALESCE(added_at, ?) WHERE id = ?`, clockTime(first), mediaID)
 		} else {
 			_, err = tx.ExecContext(ctx, `UPDATE media SET added_at = NULL WHERE id = ?`, mediaID)
 		}
-		return err
+		return err == nil, err
 	case KindFolderMember:
 		mediaID, ok, err := resolveMedia(ctx, tx, t.field)
 		if err != nil || !ok {
-			return err
+			return false, err
 		}
 		var folderID int64
 		err = tx.QueryRowContext(ctx, `SELECT id FROM folders WHERE sync_id = ?`, t.key).Scan(&folderID)
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil
+			return false, nil
 		}
 		if err != nil {
-			return err
+			return false, err
 		}
 		in, err := present(ctx, tx, KindFolderMember, t.key, t.field)
 		if err != nil {
-			return err
+			return false, err
 		}
 		if in {
 			_, err = tx.ExecContext(ctx, `INSERT OR IGNORE INTO media_folders (media_id, folder_id) VALUES (?, ?)`, mediaID, folderID)
 		} else {
 			_, err = tx.ExecContext(ctx, `DELETE FROM media_folders WHERE media_id = ? AND folder_id = ?`, mediaID, folderID)
 		}
-		return err
+		return err == nil, err
 	case KindFolder:
 		return projectFolder(ctx, tx, t.key)
 	}
-	return nil
+	return true, nil
 }
 
-func projectChapter(ctx context.Context, tx *sql.Tx, t target) error {
+func projectChapter(ctx context.Context, tx *sql.Tx, t target) (bool, error) {
 	chapterID, mediaID, ok, err := resolveChapter(ctx, tx, t.key)
 	if err != nil || !ok {
-		return err
+		return false, err
 	}
 	v, clock, ok, err := register(ctx, tx, KindChapter, t.key, t.field)
 	if err != nil || !ok {
-		return err
+		return err == nil, err
 	}
 	// History orders by updated_at, so it carries when the read happened, not when it arrived.
 	at := clockTime(clock)
@@ -213,7 +227,7 @@ func projectChapter(ctx context.Context, tx *sql.Tx, t target) error {
 	case "completed":
 		var completed bool
 		if err := json.Unmarshal(v, &completed); err != nil {
-			return err
+			return false, err
 		}
 		_, err = tx.ExecContext(ctx, `INSERT INTO reading_progress (media_id, chapter_id, completed, updated_at) VALUES (?, ?, ?, ?)
 			ON CONFLICT(media_id, chapter_id) DO UPDATE SET completed = excluded.completed,
@@ -222,7 +236,7 @@ func projectChapter(ctx context.Context, tx *sql.Tx, t target) error {
 	case "position":
 		var p position
 		if err := json.Unmarshal(v, &p); err != nil {
-			return err
+			return false, err
 		}
 		_, err = tx.ExecContext(ctx, `INSERT INTO reading_progress (media_id, chapter_id, progress, position_seconds, duration_seconds, updated_at)
 			VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(media_id, chapter_id) DO UPDATE SET progress = excluded.progress,
@@ -232,19 +246,19 @@ func projectChapter(ctx context.Context, tx *sql.Tx, t target) error {
 	case "bookmarked":
 		var b bool
 		if err := json.Unmarshal(v, &b); err != nil {
-			return err
+			return false, err
 		}
 		_, err = tx.ExecContext(ctx, `UPDATE chapters SET bookmarked = ? WHERE id = ?`, b, chapterID)
 	}
-	return err
+	return err == nil, err
 }
 
-func projectFolder(ctx context.Context, tx *sql.Tx, syncID string) error {
+func projectFolder(ctx context.Context, tx *sql.Tx, syncID string) (bool, error) {
 	vals := map[string]json.RawMessage{}
 	for _, f := range append([]string{"deleted"}, folderFields...) {
 		v, _, ok, err := register(ctx, tx, KindFolder, syncID, f)
 		if err != nil {
-			return err
+			return false, err
 		}
 		if ok {
 			vals[f] = v
@@ -253,37 +267,37 @@ func projectFolder(ctx context.Context, tx *sql.Tx, syncID string) error {
 	var deleted bool
 	if v, ok := vals["deleted"]; ok {
 		if err := json.Unmarshal(v, &deleted); err != nil {
-			return err
+			return false, err
 		}
 	}
 	if deleted {
 		_, err := tx.ExecContext(ctx, `DELETE FROM folders WHERE sync_id = ? AND kind = 'custom'`, syncID)
-		return err
+		return err == nil, err
 	}
 	var exists bool
 	if err := tx.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM folders WHERE sync_id = ?)`, syncID).Scan(&exists); err != nil {
-		return err
+		return false, err
 	}
 	if !exists {
 		// System folders exist everywhere already; a custom one needs its name before it can be created.
 		if strings.HasPrefix(syncID, "sys:") || vals["name"] == nil {
-			return nil
+			return false, nil
 		}
 		var name string
 		if err := json.Unmarshal(vals["name"], &name); err != nil {
-			return err
+			return false, err
 		}
 		if _, err := tx.ExecContext(ctx, `INSERT INTO folders (name, kind, sync_id) VALUES (?, 'custom', ?)`, name, syncID); err != nil {
-			return fmt.Errorf("create folder: %w", err)
+			return false, fmt.Errorf("create folder: %w", err)
 		}
 		// Memberships that arrived before the folder were skipped; apply them now.
 		members, err := elements(ctx, tx, KindFolderMember, syncID)
 		if err != nil {
-			return err
+			return false, err
 		}
 		for _, m := range members {
 			if err := project(ctx, tx, target{KindFolderMember, syncID, m}); err != nil {
-				return err
+				return false, err
 			}
 		}
 	}
@@ -297,25 +311,25 @@ func projectFolder(ctx context.Context, tx *sql.Tx, syncID string) error {
 		case "name", "content_types":
 			var s string
 			if err := json.Unmarshal(v, &s); err != nil {
-				return err
+				return false, err
 			}
 			arg = s
 		case "sort_order":
 			var n int64
 			if err := json.Unmarshal(v, &n); err != nil {
-				return err
+				return false, err
 			}
 			arg = n
 		default:
 			var b bool
 			if err := json.Unmarshal(v, &b); err != nil {
-				return err
+				return false, err
 			}
 			arg = b
 		}
 		if _, err := tx.ExecContext(ctx, `UPDATE folders SET `+f+` = ? WHERE sync_id = ?`, arg, syncID); err != nil {
-			return fmt.Errorf("update folder %s: %w", f, err)
+			return false, fmt.Errorf("update folder %s: %w", f, err)
 		}
 	}
-	return nil
+	return true, nil
 }

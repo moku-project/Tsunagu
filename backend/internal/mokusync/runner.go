@@ -25,6 +25,9 @@ func (e *Engine) Run(ctx context.Context, client *http.Client, interval, idle ti
 			log.Printf("moku-sync: capture: %v", err)
 			continue
 		}
+		if _, err := e.ProjectPending(ctx); err != nil {
+			log.Printf("moku-sync: apply pending: %v", err)
+		}
 		if n == 0 && time.Since(lastDial) < idle {
 			continue
 		}
@@ -45,6 +48,11 @@ func (e *Engine) Run(ctx context.Context, client *http.Client, interval, idle ti
 				continue
 			}
 			failing[nodes[i]] = false
+		}
+		if e.resolver != nil {
+			if _, err := e.ResolveMissing(ctx, e.resolver); err != nil && ctx.Err() == nil {
+				log.Printf("moku-sync: fetch missing titles: %v", err)
+			}
 		}
 	}
 }

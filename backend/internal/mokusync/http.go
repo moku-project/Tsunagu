@@ -234,7 +234,12 @@ func (h *Handler) status(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	writeJSON(w, r, map[string]any{"node": h.E.node, "name": h.E.name, "peers": peers, "vv": vv})
+	pending, err := h.E.PendingTitles(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	writeJSON(w, r, map[string]any{"node": h.E.node, "name": h.E.name, "peers": peers, "vv": vv, "pendingTitles": pending})
 }
 
 // HTTPPeer reaches another Tsunagu over its sync API.

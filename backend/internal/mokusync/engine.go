@@ -25,8 +25,13 @@ type Engine struct {
 	hlc  *HLC
 	mu   sync.Mutex
 	// wall overrides the time local changes are stamped with; tests use it to stage concurrent edits.
-	wall func() int64
+	wall     func() int64
+	resolve  resolveState
+	resolver Resolver
 }
+
+// SetResolver lets the runner fetch library titles this instance doesn't have yet.
+func (e *Engine) SetResolver(r Resolver) { e.resolver = r }
 
 type querier interface {
 	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
@@ -36,7 +41,7 @@ type querier interface {
 
 // Open loads or creates this instance's node ID, op counter and clock.
 func Open(ctx context.Context, db *sql.DB) (*Engine, error) {
-	e := &Engine{db: db}
+	e := &Engine{db: db, resolve: resolveState{failed: map[string]time.Time{}}}
 	node, err := e.meta(ctx, db, "node")
 	if err != nil {
 		return nil, err
@@ -114,7 +119,7 @@ func initNode(ctx context.Context, db *sql.DB) (string, error) {
 		return "", err
 	}
 	defer tx.Rollback()
-	for _, kv := range [][2]string{{"node", node}, {"seq", "0"}, {"name", host}} {
+	for _, kv := range [][2]string{{"node", node}, {"seq", "0"}, {"name", host}, {"rows", "1"}} {
 		if _, err := tx.ExecContext(ctx, `INSERT INTO sync_meta (key, value) VALUES (?, ?)`, kv[0], kv[1]); err != nil {
 			return "", fmt.Errorf("init sync meta: %w", err)
 		}

@@ -67,6 +67,14 @@ CREATE TABLE sync_pairing_codes (
     expires_at INTEGER NOT NULL
 );
 
+-- Synced values whose title, chapter or folder isn't on this instance yet.
+CREATE TABLE sync_pending (
+    kind TEXT NOT NULL,
+    key TEXT NOT NULL,
+    field TEXT NOT NULL,
+    PRIMARY KEY (kind, key, field)
+);
+
 -- Local writes waiting to become ops. Triggers fill it, so every write path is captured.
 CREATE TABLE sync_dirty (
     id INTEGER PRIMARY KEY,
@@ -89,6 +97,22 @@ BEGIN
     INSERT INTO sync_dirty (kind, key, field, op, recorded_at)
     SELECT 'folder', sync_id, '*', 'set', CAST((julianday('now') - 2440587.5) * 86400000 AS INTEGER)
     FROM folders WHERE id = NEW.id;
+END;
+
+-- Counts new titles, chapters and folders, so pending values are only rechecked when one appears.
+CREATE TRIGGER sync_rows_media AFTER INSERT ON media
+BEGIN
+    UPDATE sync_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'rows';
+END;
+
+CREATE TRIGGER sync_rows_chapters AFTER INSERT ON chapters
+BEGIN
+    UPDATE sync_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'rows';
+END;
+
+CREATE TRIGGER sync_rows_folders AFTER INSERT ON folders
+BEGIN
+    UPDATE sync_meta SET value = CAST(value AS INTEGER) + 1 WHERE key = 'rows';
 END;
 
 CREATE VIEW sync_media_keys AS

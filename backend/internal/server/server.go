@@ -354,6 +354,7 @@ func Start(opts Options) (*Server, error) {
 		return nil, fmt.Errorf("opening moku-sync: %w", err)
 	}
 	mux.Handle("/api/sync/v1/", &mokusync.Handler{E: syncEngine})
+	syncEngine.SetResolver(syncResolver{sy: syncer, sc: supervised})
 	syncCtx, stopSync := context.WithCancel(context.Background())
 	s.cleanups = append(s.cleanups, stopSync)
 	go syncEngine.Run(syncCtx, nil, 2*time.Second, time.Minute)
