@@ -348,7 +348,14 @@ func (h *ContentHandler) serveVideo(w http.ResponseWriter, r *http.Request, chap
 
 	// Resolve relative entries against the post-redirect URL.
 	base := resp.Request.URL
-	switch ct := strings.ToLower(resp.Header.Get("Content-Type")); {
+	ct := strings.ToLower(resp.Header.Get("Content-Type"))
+	// Some hosts label playlists text/plain or octet-stream; sniff so the player still gets a rewritten playlist.
+	peek := bufio.NewReader(resp.Body)
+	if head, _ := peek.Peek(7); string(head) == "#EXTM3U" {
+		ct = "application/vnd.apple.mpegurl"
+	}
+	resp.Body = io.NopCloser(peek)
+	switch {
 	case strings.Contains(ct, "mpegurl"):
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 8<<20))
 		w.Header().Set("Content-Type", "application/vnd.apple.mpegurl")
@@ -357,9 +364,7 @@ func (h *ContentHandler) serveVideo(w http.ResponseWriter, r *http.Request, chap
 		return
 	case strings.Contains(ct, "dash+xml"):
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 8<<20))
-		w.Header().Set("Content-Type", "application/dash+xml")
-		w.Header().Set("Cache-Control", "no-store")
-		_, _ = w.Write(rewriteDASHManifest(body, base, headers))
+		writeDASHManifest(w, r, rewriteDASHManifest(body, base, headers))
 		return
 	}
 
@@ -1231,9 +1236,23 @@ func (h *ContentHandler) streamDASHManifest(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	body, _ := io.ReadAll(io.LimitReader(resp.Body, 8<<20))
-	w.Header().Set("Content-Type", "application/dash+xml")
+	writeDASHManifest(w, r, rewriteDASHManifest(body, resp.Request.URL, headers))
+}
+
+// writeDASHManifest serves the proxied manifest, or HLS playlists built from it when the player asks for format=hls.
+func writeDASHManifest(w http.ResponseWriter, r *http.Request, manifest []byte) {
 	w.Header().Set("Cache-Control", "no-store")
-	_, _ = w.Write(rewriteDASHManifest(body, resp.Request.URL, headers))
+	if r.URL.Query().Get("format") == "hls" {
+		playlist, err := dashToHLS(manifest, r.URL.Query().Get("rep"), r.URL)
+		if err == nil {
+			w.Header().Set("Content-Type", "application/vnd.apple.mpegurl")
+			_, _ = w.Write(playlist)
+			return
+		}
+		log.Printf("dash to hls: %v", err)
+	}
+	w.Header().Set("Content-Type", "application/dash+xml")
+	_, _ = w.Write(manifest)
 }
 
 func decodeB64Any(s string) ([]byte, error) {
