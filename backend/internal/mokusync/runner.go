@@ -7,13 +7,21 @@ import (
 	"time"
 )
 
-// Run captures local changes every interval and syncs with each paired instance this one dials.
-// A dial runs right after a capture that found changes, and at least every idle interval otherwise.
+// watchWait is how long a peer holds a watcher's exchange open waiting for a change.
+var watchWait = 25 * time.Second
+
+// Run captures local changes every interval, keeps one watcher per instance this one dials so remote
+// changes arrive within seconds, and fetches missing library titles after remote changes or every idle.
 func (e *Engine) Run(ctx context.Context, client *http.Client, interval, idle time.Duration) {
 	tick := time.NewTicker(interval)
 	defer tick.Stop()
-	var lastDial time.Time
-	failing := map[string]bool{}
+	watchers := map[string]context.CancelFunc{}
+	defer func() {
+		for _, stop := range watchers {
+			stop()
+		}
+	}()
+	var lastResolve time.Time
 	for {
 		select {
 		case <-ctx.Done():
@@ -28,31 +36,73 @@ func (e *Engine) Run(ctx context.Context, client *http.Client, interval, idle ti
 		if _, err := e.ProjectPending(ctx); err != nil {
 			log.Printf("moku-sync: apply pending: %v", err)
 		}
-		if n == 0 && time.Since(lastDial) < idle {
-			continue
-		}
-		lastDial = time.Now()
 		peers, nodes, err := e.dialPeers(ctx)
 		if err != nil {
 			log.Printf("moku-sync: list peers: %v", err)
 			continue
 		}
+		live := map[string]bool{}
 		for i, p := range peers {
 			p.Client = client
-			if err := e.SyncWith(ctx, p, nodes[i]); err != nil {
-				// Peers are often asleep or away; log a failure once, not every tick.
-				if !failing[nodes[i]] {
-					log.Printf("moku-sync: sync with %s: %v", p.Address, err)
-				}
-				failing[nodes[i]] = true
-				continue
+			key := nodes[i] + " " + p.Address
+			live[key] = true
+			if _, ok := watchers[key]; !ok {
+				wctx, stop := context.WithCancel(ctx)
+				watchers[key] = stop
+				go e.watch(wctx, p, nodes[i], interval)
 			}
-			failing[nodes[i]] = false
+			// A watcher only learns of remote changes; local ones are pushed right away.
+			if n > 0 {
+				if err := e.SyncWith(ctx, p, nodes[i]); err != nil && ctx.Err() == nil {
+					log.Printf("moku-sync: push to %s: %v", p.Address, err)
+				}
+			}
 		}
-		if e.resolver != nil {
+		for key, stop := range watchers {
+			if !live[key] {
+				stop()
+				delete(watchers, key)
+			}
+		}
+		if e.resolver != nil && (e.remoteChanged.Swap(false) || time.Since(lastResolve) >= idle) {
+			lastResolve = time.Now()
 			if _, err := e.ResolveMissing(ctx, e.resolver); err != nil && ctx.Err() == nil {
 				log.Printf("moku-sync: fetch missing titles: %v", err)
 			}
+		}
+	}
+}
+
+// watch keeps a held exchange open with one peer, backing off while it's unreachable.
+func (e *Engine) watch(ctx context.Context, p HTTPPeer, node string, interval time.Duration) {
+	backoff := interval
+	failing := false
+	for ctx.Err() == nil {
+		start := time.Now()
+		err := e.syncWith(ctx, p, node, watchWait)
+		if ctx.Err() != nil {
+			return
+		}
+		wait := interval
+		if err != nil {
+			// Peers are often asleep or away; log once per outage, not on every retry.
+			if !failing {
+				log.Printf("moku-sync: watch %s: %v", p.Address, err)
+			}
+			failing = true
+			backoff = min(backoff*2, 2*time.Minute)
+			wait = backoff
+		} else {
+			failing, backoff = false, interval
+			// A peer that answers at once without holding still gets polled at a steady pace.
+			if time.Since(start) >= interval {
+				wait = 0
+			}
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(wait):
 		}
 	}
 }

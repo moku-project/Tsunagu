@@ -1,0 +1,40 @@
+"Another Tsunagu this one syncs its library with."
+type SyncPeer {
+  node: ID!
+  name: String!
+  "Where this instance reaches the peer. Empty when only the peer connects here."
+  address: String
+  lastSeenAt: Time
+}
+
+type SyncStatus {
+  "This instance's sync ID."
+  node: ID!
+  "The name paired devices show for this instance."
+  name: String!
+  peers: [SyncPeer!]!
+  "Library titles synced here whose source hasn't been fetched yet."
+  pendingTitles: Int!
+}
+
+type SyncPairingCode {
+  "Entered on the other device. Works once."
+  code: String!
+  expiresAt: Time!
+}
+
+extend type Query {
+  syncStatus: SyncStatus!
+}
+
+extend type Mutation {
+  "Issues a one-time code another Tsunagu enters to pair with this one."
+  createSyncPairingCode: SyncPairingCode!
+  "Pairs with the Tsunagu at address using a code it issued, then keeps syncing with it."
+  connectSyncPeer(address: String!, code: String!): SyncPeer!
+  "Unpairs a device on this side."
+  removeSyncPeer(node: ID!): SyncStatus!
+  setSyncDeviceName(name: String!): SyncStatus!
+  "Syncs with every paired device and fetches missing titles now."
+  syncNow: SyncStatus!
+}

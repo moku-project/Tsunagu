@@ -324,8 +324,10 @@ type ComplexityRoot struct {
 		ClearDownloads             func(childComplexity int, status []model.DownloadStatus) int
 		ClearImageCache            func(childComplexity int) int
 		ClearStorageCategory       func(childComplexity int, key string) int
+		ConnectSyncPeer            func(childComplexity int, address string, code string) int
 		CreateDatabaseBackup       func(childComplexity int) int
 		CreateFolder               func(childComplexity int, name string, parentFolderID *string) int
+		CreateSyncPairingCode      func(childComplexity int) int
 		CreateTrackerStub          func(childComplexity int, trackerKey string, remoteID string, contentType model.ContentType, title string, coverURL *string) int
 		DeleteDatabaseBackup       func(childComplexity int, name string) int
 		DeleteDownload             func(childComplexity int, mediaID string, chapterIds []string) int
@@ -354,6 +356,7 @@ type ComplexityRoot struct {
 		RelocateLocalSource        func(childComplexity int, newPath string, migrate bool) int
 		RemoveContentFilterRule    func(childComplexity int, id string) int
 		RemoveMediaFromFolder      func(childComplexity int, mediaID string, folderID string) int
+		RemoveSyncPeer             func(childComplexity int, node string) int
 		RenameFolder               func(childComplexity int, folderID string, name string) int
 		RenameLocalSeries          func(childComplexity int, mediaID string, newTitle string) int
 		RenameRepository           func(childComplexity int, repositoryID string, name string) int
@@ -371,10 +374,12 @@ type ComplexityRoot struct {
 		SetMediaCover              func(childComplexity int, mediaID string, url *string) int
 		SetPassword                func(childComplexity int, newPassword string) int
 		SetSourcePreference        func(childComplexity int, extensionID string, key string, value string) int
+		SetSyncDeviceName          func(childComplexity int, name string) int
 		StartDownloader            func(childComplexity int) int
 		StartLibraryUpdate         func(childComplexity int, folderID *string, trigger *model.LibraryUpdateTrigger) int
 		StopDownloader             func(childComplexity int) int
 		SyncChapters               func(childComplexity int, mediaID string) int
+		SyncNow                    func(childComplexity int) int
 		SyncRepositories           func(childComplexity int) int
 		SyncRepository             func(childComplexity int, repositoryID string) int
 		TrackerLogin               func(childComplexity int, trackerKey string, token string) int
@@ -430,6 +435,7 @@ type ComplexityRoot struct {
 		SkipTimestamps           func(childComplexity int, chapterID string, episodeLengthMs *int32) int
 		SourcePreferences        func(childComplexity int, extensionID string) int
 		StorageInfo              func(childComplexity int) int
+		SyncStatus               func(childComplexity int) int
 		TrackSearch              func(childComplexity int, trackerKey string, query string, contentType *model.ContentType) int
 		TrackerLibrary           func(childComplexity int, trackerKey string, contentType model.ContentType, statuses []string) int
 		Trackers                 func(childComplexity int) int
@@ -550,6 +556,25 @@ type ComplexityRoot struct {
 	SubtitleTrack struct {
 		Lang func(childComplexity int) int
 		URL  func(childComplexity int) int
+	}
+
+	SyncPairingCode struct {
+		Code      func(childComplexity int) int
+		ExpiresAt func(childComplexity int) int
+	}
+
+	SyncPeer struct {
+		Address    func(childComplexity int) int
+		LastSeenAt func(childComplexity int) int
+		Name       func(childComplexity int) int
+		Node       func(childComplexity int) int
+	}
+
+	SyncStatus struct {
+		Name          func(childComplexity int) int
+		Node          func(childComplexity int) int
+		Peers         func(childComplexity int) int
+		PendingTitles func(childComplexity int) int
 	}
 
 	TagFacet struct {
@@ -766,6 +791,11 @@ type MutationResolver interface {
 	ApplyMetadataMatch(ctx context.Context, mediaID string, providerID string, provider *string) (*model.Media, error)
 	UnlinkMetadata(ctx context.Context, mediaID string) (bool, error)
 	RefreshMetadataMatch(ctx context.Context, mediaID string) (*model.Media, error)
+	CreateSyncPairingCode(ctx context.Context) (*model.SyncPairingCode, error)
+	ConnectSyncPeer(ctx context.Context, address string, code string) (*model.SyncPeer, error)
+	RemoveSyncPeer(ctx context.Context, node string) (*model.SyncStatus, error)
+	SetSyncDeviceName(ctx context.Context, name string) (*model.SyncStatus, error)
+	SyncNow(ctx context.Context) (*model.SyncStatus, error)
 }
 type QueryResolver interface {
 	AutomationSettings(ctx context.Context) (*model.AutomationSettings, error)
@@ -809,6 +839,7 @@ type QueryResolver interface {
 	TrackerLibrary(ctx context.Context, trackerKey string, contentType model.ContentType, statuses []string) ([]*model.TrackerLibraryEntry, error)
 	SearchMetadata(ctx context.Context, query string, contentType model.ContentType, provider *string) ([]*model.MetadataCandidate, error)
 	SkipTimestamps(ctx context.Context, chapterID string, episodeLengthMs *int32) ([]*model.SkipMarker, error)
+	SyncStatus(ctx context.Context) (*model.SyncStatus, error)
 }
 
 // endregion ************************** generated!.gotpl **************************
@@ -2125,6 +2156,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.ClearStorageCategory(childComplexity, args["key"].(string)), true
+	case "Mutation.connectSyncPeer":
+		if e.ComplexityRoot.Mutation.ConnectSyncPeer == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_connectSyncPeer_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.ConnectSyncPeer(childComplexity, args["address"].(string), args["code"].(string)), true
 	case "Mutation.createDatabaseBackup":
 		if e.ComplexityRoot.Mutation.CreateDatabaseBackup == nil {
 			break
@@ -2142,6 +2184,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CreateFolder(childComplexity, args["name"].(string), args["parentFolderId"].(*string)), true
+	case "Mutation.createSyncPairingCode":
+		if e.ComplexityRoot.Mutation.CreateSyncPairingCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Mutation.CreateSyncPairingCode(childComplexity), true
 	case "Mutation.createTrackerStub":
 		if e.ComplexityRoot.Mutation.CreateTrackerStub == nil {
 			break
@@ -2430,6 +2478,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.RemoveMediaFromFolder(childComplexity, args["mediaId"].(string), args["folderId"].(string)), true
+	case "Mutation.removeSyncPeer":
+		if e.ComplexityRoot.Mutation.RemoveSyncPeer == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_removeSyncPeer_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.RemoveSyncPeer(childComplexity, args["node"].(string)), true
 	case "Mutation.renameFolder":
 		if e.ComplexityRoot.Mutation.RenameFolder == nil {
 			break
@@ -2607,6 +2666,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.SetSourcePreference(childComplexity, args["extensionId"].(string), args["key"].(string), args["value"].(string)), true
+	case "Mutation.setSyncDeviceName":
+		if e.ComplexityRoot.Mutation.SetSyncDeviceName == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_setSyncDeviceName_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.SetSyncDeviceName(childComplexity, args["name"].(string)), true
 	case "Mutation.startDownloader":
 		if e.ComplexityRoot.Mutation.StartDownloader == nil {
 			break
@@ -2641,6 +2711,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.SyncChapters(childComplexity, args["mediaId"].(string)), true
+	case "Mutation.syncNow":
+		if e.ComplexityRoot.Mutation.SyncNow == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Mutation.SyncNow(childComplexity), true
 	case "Mutation.syncRepositories":
 		if e.ComplexityRoot.Mutation.SyncRepositories == nil {
 			break
@@ -3130,6 +3206,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.StorageInfo(childComplexity), true
+	case "Query.syncStatus":
+		if e.ComplexityRoot.Query.SyncStatus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.SyncStatus(childComplexity), true
 	case "Query.trackSearch":
 		if e.ComplexityRoot.Query.TrackSearch == nil {
 			break
@@ -3605,6 +3687,69 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.SubtitleTrack.URL(childComplexity), true
+
+	case "SyncPairingCode.code":
+		if e.ComplexityRoot.SyncPairingCode.Code == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SyncPairingCode.Code(childComplexity), true
+	case "SyncPairingCode.expiresAt":
+		if e.ComplexityRoot.SyncPairingCode.ExpiresAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SyncPairingCode.ExpiresAt(childComplexity), true
+
+	case "SyncPeer.address":
+		if e.ComplexityRoot.SyncPeer.Address == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SyncPeer.Address(childComplexity), true
+	case "SyncPeer.lastSeenAt":
+		if e.ComplexityRoot.SyncPeer.LastSeenAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SyncPeer.LastSeenAt(childComplexity), true
+	case "SyncPeer.name":
+		if e.ComplexityRoot.SyncPeer.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SyncPeer.Name(childComplexity), true
+	case "SyncPeer.node":
+		if e.ComplexityRoot.SyncPeer.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SyncPeer.Node(childComplexity), true
+
+	case "SyncStatus.name":
+		if e.ComplexityRoot.SyncStatus.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SyncStatus.Name(childComplexity), true
+	case "SyncStatus.node":
+		if e.ComplexityRoot.SyncStatus.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SyncStatus.Node(childComplexity), true
+	case "SyncStatus.peers":
+		if e.ComplexityRoot.SyncStatus.Peers == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SyncStatus.Peers(childComplexity), true
+	case "SyncStatus.pendingTitles":
+		if e.ComplexityRoot.SyncStatus.PendingTitles == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SyncStatus.PendingTitles(childComplexity), true
 
 	case "TagFacet.count":
 		if e.ComplexityRoot.TagFacet.Count == nil {
@@ -4112,7 +4257,7 @@ func newExecutionContext(
 	}
 }
 
-//go:embed "schema.graphqls"
+//go:embed "schema.graphqls" "sync.graphqls"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -4125,6 +4270,7 @@ func sourceData(filename string) string {
 
 var sources = []*ast.Source{
 	{Name: "schema.graphqls", Input: sourceData("schema.graphqls"), BuiltIn: false},
+	{Name: "sync.graphqls", Input: sourceData("sync.graphqls"), BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
@@ -4848,6 +4994,44 @@ func (ec *executionContext) childFields_SubtitleTrack(ctx context.Context, field
 	return nil, fmt.Errorf("no field named %q was found under type SubtitleTrack", field.Name)
 }
 
+func (ec *executionContext) childFields_SyncPairingCode(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "code":
+		return ec.fieldContext_SyncPairingCode_code(ctx, field)
+	case "expiresAt":
+		return ec.fieldContext_SyncPairingCode_expiresAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type SyncPairingCode", field.Name)
+}
+
+func (ec *executionContext) childFields_SyncPeer(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_SyncPeer_node(ctx, field)
+	case "name":
+		return ec.fieldContext_SyncPeer_name(ctx, field)
+	case "address":
+		return ec.fieldContext_SyncPeer_address(ctx, field)
+	case "lastSeenAt":
+		return ec.fieldContext_SyncPeer_lastSeenAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type SyncPeer", field.Name)
+}
+
+func (ec *executionContext) childFields_SyncStatus(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_SyncStatus_node(ctx, field)
+	case "name":
+		return ec.fieldContext_SyncStatus_name(ctx, field)
+	case "peers":
+		return ec.fieldContext_SyncStatus_peers(ctx, field)
+	case "pendingTitles":
+		return ec.fieldContext_SyncStatus_pendingTitles(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type SyncStatus", field.Name)
+}
+
 func (ec *executionContext) childFields_TagFacet(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "id":
@@ -5319,6 +5503,28 @@ func (ec *executionContext) field_Mutation_clearStorageCategory_args(ctx context
 		return nil, err
 	}
 	args["key"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_connectSyncPeer_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "address",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["address"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "code",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["code"] = arg1
 	return args, nil
 }
 
@@ -5808,6 +6014,20 @@ func (ec *executionContext) field_Mutation_removeMediaFromFolder_args(ctx contex
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_removeSyncPeer_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "node",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["node"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_renameFolder_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -6135,6 +6355,20 @@ func (ec *executionContext) field_Mutation_setSourcePreference_args(ctx context.
 		return nil, err
 	}
 	args["value"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_setSyncDeviceName_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "name",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["name"] = arg0
 	return args, nil
 }
 
@@ -14772,6 +15006,202 @@ func (ec *executionContext) fieldContext_Mutation_refreshMetadataMatch(ctx conte
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_createSyncPairingCode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_createSyncPairingCode(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Mutation().CreateSyncPairingCode(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.SyncPairingCode) graphql.Marshaler {
+			return ec.marshalNSyncPairingCode2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSyncPairingCode(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_createSyncPairingCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_SyncPairingCode(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_connectSyncPeer(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_connectSyncPeer(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().ConnectSyncPeer(ctx, fc.Args["address"].(string), fc.Args["code"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.SyncPeer) graphql.Marshaler {
+			return ec.marshalNSyncPeer2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSyncPeer(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_connectSyncPeer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_SyncPeer(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_connectSyncPeer_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_removeSyncPeer(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_removeSyncPeer(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().RemoveSyncPeer(ctx, fc.Args["node"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.SyncStatus) graphql.Marshaler {
+			return ec.marshalNSyncStatus2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSyncStatus(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_removeSyncPeer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_SyncStatus(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_removeSyncPeer_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_setSyncDeviceName(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_setSyncDeviceName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().SetSyncDeviceName(ctx, fc.Args["name"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.SyncStatus) graphql.Marshaler {
+			return ec.marshalNSyncStatus2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSyncStatus(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_setSyncDeviceName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_SyncStatus(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_setSyncDeviceName_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_syncNow(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_syncNow(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Mutation().SyncNow(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.SyncStatus) graphql.Marshaler {
+			return ec.marshalNSyncStatus2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSyncStatus(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_syncNow(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_SyncStatus(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_automationSettings(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -16380,6 +16810,38 @@ func (ec *executionContext) fieldContext_Query_skipTimestamps(ctx context.Contex
 	if fc.Args, err = ec.field_Query_skipTimestamps_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_syncStatus(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_syncStatus(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Query().SyncStatus(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.SyncStatus) graphql.Marshaler {
+			return ec.marshalNSyncStatus2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSyncStatus(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_syncStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_SyncStatus(ctx, field)
+		},
 	}
 	return fc, nil
 }
@@ -18150,6 +18612,245 @@ func (ec *executionContext) _SubtitleTrack_url(ctx context.Context, field graphq
 }
 func (ec *executionContext) fieldContext_SubtitleTrack_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("SubtitleTrack", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _SyncPairingCode_code(ctx context.Context, field graphql.CollectedField, obj *model.SyncPairingCode) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SyncPairingCode_code(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Code, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SyncPairingCode_code(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SyncPairingCode", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _SyncPairingCode_expiresAt(ctx context.Context, field graphql.CollectedField, obj *model.SyncPairingCode) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SyncPairingCode_expiresAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ExpiresAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v time.Time) graphql.Marshaler {
+			return ec.marshalNTime2timeᚐTime(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SyncPairingCode_expiresAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SyncPairingCode", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
+func (ec *executionContext) _SyncPeer_node(ctx context.Context, field graphql.CollectedField, obj *model.SyncPeer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SyncPeer_node(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SyncPeer_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SyncPeer", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _SyncPeer_name(ctx context.Context, field graphql.CollectedField, obj *model.SyncPeer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SyncPeer_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SyncPeer_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SyncPeer", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _SyncPeer_address(ctx context.Context, field graphql.CollectedField, obj *model.SyncPeer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SyncPeer_address(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Address, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_SyncPeer_address(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SyncPeer", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _SyncPeer_lastSeenAt(ctx context.Context, field graphql.CollectedField, obj *model.SyncPeer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SyncPeer_lastSeenAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LastSeenAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *time.Time) graphql.Marshaler {
+			return ec.marshalOTime2ᚖtimeᚐTime(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_SyncPeer_lastSeenAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SyncPeer", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
+func (ec *executionContext) _SyncStatus_node(ctx context.Context, field graphql.CollectedField, obj *model.SyncStatus) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SyncStatus_node(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SyncStatus_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SyncStatus", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _SyncStatus_name(ctx context.Context, field graphql.CollectedField, obj *model.SyncStatus) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SyncStatus_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SyncStatus_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SyncStatus", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _SyncStatus_peers(ctx context.Context, field graphql.CollectedField, obj *model.SyncStatus) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SyncStatus_peers(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Peers, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.SyncPeer) graphql.Marshaler {
+			return ec.marshalNSyncPeer2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSyncPeerᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SyncStatus_peers(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SyncStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_SyncPeer(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SyncStatus_pendingTitles(ctx context.Context, field graphql.CollectedField, obj *model.SyncStatus) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SyncStatus_pendingTitles(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PendingTitles, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SyncStatus_pendingTitles(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SyncStatus", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
 func (ec *executionContext) _TagFacet_id(ctx context.Context, field graphql.CollectedField, obj *model.TagFacet) (ret graphql.Marshaler) {
@@ -24678,6 +25379,41 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "createSyncPairingCode":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createSyncPairingCode(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "connectSyncPeer":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_connectSyncPeer(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "removeSyncPeer":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_removeSyncPeer(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "setSyncDeviceName":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_setSyncDeviceName(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "syncNow":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_syncNow(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -25621,6 +26357,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "syncStatus":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_syncStatus(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "__type":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
@@ -26487,6 +27245,155 @@ func (ec *executionContext) _SubtitleTrack(ctx context.Context, sel ast.Selectio
 			}
 		case "url":
 			out.Values[i] = ec._SubtitleTrack_url(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var syncPairingCodeImplementors = []string{"SyncPairingCode"}
+
+func (ec *executionContext) _SyncPairingCode(ctx context.Context, sel ast.SelectionSet, obj *model.SyncPairingCode) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, syncPairingCodeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SyncPairingCode")
+		case "code":
+			out.Values[i] = ec._SyncPairingCode_code(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "expiresAt":
+			out.Values[i] = ec._SyncPairingCode_expiresAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var syncPeerImplementors = []string{"SyncPeer"}
+
+func (ec *executionContext) _SyncPeer(ctx context.Context, sel ast.SelectionSet, obj *model.SyncPeer) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, syncPeerImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SyncPeer")
+		case "node":
+			out.Values[i] = ec._SyncPeer_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._SyncPeer_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "address":
+			out.Values[i] = ec._SyncPeer_address(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "lastSeenAt":
+			out.Values[i] = ec._SyncPeer_lastSeenAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var syncStatusImplementors = []string{"SyncStatus"}
+
+func (ec *executionContext) _SyncStatus(ctx context.Context, sel ast.SelectionSet, obj *model.SyncStatus) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, syncStatusImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SyncStatus")
+		case "node":
+			out.Values[i] = ec._SyncStatus_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._SyncStatus_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "peers":
+			out.Values[i] = ec._SyncStatus_peers(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pendingTitles":
+			out.Values[i] = ec._SyncStatus_pendingTitles(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -28570,6 +29477,52 @@ func (ec *executionContext) marshalNSubtitleTrack2ᚖtsunaguᚋbackendᚋinterna
 		return graphql.Null
 	}
 	return ec._SubtitleTrack(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNSyncPairingCode2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSyncPairingCode(ctx context.Context, sel ast.SelectionSet, v *model.SyncPairingCode) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SyncPairingCode(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNSyncPeer2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSyncPeerᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SyncPeer) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNSyncPeer2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSyncPeer(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNSyncPeer2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSyncPeer(ctx context.Context, sel ast.SelectionSet, v *model.SyncPeer) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SyncPeer(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNSyncStatus2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSyncStatus(ctx context.Context, sel ast.SelectionSet, v *model.SyncStatus) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SyncStatus(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNTagFacet2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐTagFacetᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.TagFacet) graphql.Marshaler {

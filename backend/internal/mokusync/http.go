@@ -150,7 +150,7 @@ func (h *Handler) pair(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
-	writeJSON(w, r, pairResponse{Node: h.E.node, Name: h.E.name, Token: token})
+	writeJSON(w, r, pairResponse{Node: h.E.node, Name: h.E.Name(), Token: token})
 }
 
 func (h *Handler) pairingCode(w http.ResponseWriter, r *http.Request) {
@@ -159,7 +159,7 @@ func (h *Handler) pairingCode(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	writeJSON(w, r, map[string]any{"code": code, "expiresAt": expires.UnixMilli(), "node": h.E.node, "name": h.E.name})
+	writeJSON(w, r, map[string]any{"code": code, "expiresAt": expires.UnixMilli(), "node": h.E.node, "name": h.E.Name()})
 }
 
 func (h *Handler) connect(w http.ResponseWriter, r *http.Request) {
@@ -186,7 +186,7 @@ func (e *Engine) Connect(ctx context.Context, client *http.Client, address, code
 		return "", errors.New("missing address")
 	}
 	var resp pairResponse
-	if err := postJSON(ctx, client, address+pairPath, "", pairRequest{Code: code, Node: e.node, Name: e.name}, &resp); err != nil {
+	if err := postJSON(ctx, client, address+pairPath, "", pairRequest{Code: code, Node: e.node, Name: e.Name()}, &resp); err != nil {
 		return "", fmt.Errorf("pair with %s: %w", address, err)
 	}
 	if resp.Node == "" || resp.Token == "" {
@@ -224,22 +224,12 @@ func (e *Engine) Peers(ctx context.Context) ([]PeerStatus, error) {
 }
 
 func (h *Handler) status(w http.ResponseWriter, r *http.Request) {
-	peers, err := h.E.Peers(r.Context())
+	st, err := h.E.Status(r.Context())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	vv, err := h.E.VersionVector(r.Context())
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	pending, err := h.E.PendingTitles(r.Context())
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	writeJSON(w, r, map[string]any{"node": h.E.node, "name": h.E.name, "peers": peers, "vv": vv, "pendingTitles": pending})
+	writeJSON(w, r, st)
 }
 
 // HTTPPeer reaches another Tsunagu over its sync API.

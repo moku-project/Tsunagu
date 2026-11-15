@@ -14,20 +14,51 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
 // Engine owns this instance's sync state in the Tsunagu database.
 type Engine struct {
-	db   *sql.DB
-	node string
-	name string
-	hlc  *HLC
-	mu   sync.Mutex
+	db     *sql.DB
+	node   string
+	nameMu sync.Mutex
+	name   string
+	hlc    *HLC
+	mu     sync.Mutex
 	// wall overrides the time local changes are stamped with; tests use it to stage concurrent edits.
 	wall     func() int64
 	resolve  resolveState
 	resolver Resolver
+	notify   notifier
+	// newOps is set while a write stores ops this instance hadn't seen; guarded by mu.
+	newOps bool
+	// remoteChanged tells the runner applied ops may have left titles to fetch.
+	remoteChanged atomic.Bool
+}
+
+// notifier wakes everyone waiting for the next change; each change replaces the channel.
+type notifier struct {
+	mu sync.Mutex
+	ch chan struct{}
+}
+
+func (n *notifier) wait() <-chan struct{} {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	if n.ch == nil {
+		n.ch = make(chan struct{})
+	}
+	return n.ch
+}
+
+func (n *notifier) broadcast() {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	if n.ch != nil {
+		close(n.ch)
+		n.ch = nil
+	}
 }
 
 // SetResolver lets the runner fetch library titles this instance doesn't have yet.
@@ -68,7 +99,28 @@ func Open(ctx context.Context, db *sql.DB) (*Engine, error) {
 }
 
 func (e *Engine) Node() string { return e.node }
-func (e *Engine) Name() string { return e.name }
+
+func (e *Engine) Name() string {
+	e.nameMu.Lock()
+	defer e.nameMu.Unlock()
+	return e.name
+}
+
+// SetName changes the name other instances show for this one.
+func (e *Engine) SetName(ctx context.Context, name string) error {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return errors.New("device name can't be empty")
+	}
+	if _, err := e.db.ExecContext(ctx, `INSERT INTO sync_meta (key, value) VALUES ('name', ?)
+		ON CONFLICT(key) DO UPDATE SET value = excluded.value`, name); err != nil {
+		return err
+	}
+	e.nameMu.Lock()
+	e.name = name
+	e.nameMu.Unlock()
+	return nil
+}
 
 func (e *Engine) meta(ctx context.Context, q querier, key string) (string, error) {
 	var v string
@@ -95,6 +147,7 @@ func (e *Engine) write(ctx context.Context, fn func(tx *sql.Tx) error) error {
 	if _, err := tx.ExecContext(ctx, `UPDATE sync_meta SET value = value WHERE key = 'node'`); err != nil {
 		return fmt.Errorf("lock sync tx: %w", err)
 	}
+	e.newOps = false
 	if err := fn(tx); err != nil {
 		return err
 	}
@@ -102,7 +155,13 @@ func (e *Engine) write(ctx context.Context, fn func(tx *sql.Tx) error) error {
 		ON CONFLICT(key) DO UPDATE SET value = excluded.value`, e.hlc.Last().String()); err != nil {
 		return fmt.Errorf("save clock: %w", err)
 	}
-	return tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+	if e.newOps {
+		e.notify.broadcast()
+	}
+	return nil
 }
 
 // initNode creates the node ID and records the existing library in one transaction,
@@ -354,6 +413,9 @@ func (e *Engine) apply(ctx context.Context, tx *sql.Tx, ops []Op) error {
 			return fmt.Errorf("project %s %q %s: %w", t.kind, t.key, t.field, err)
 		}
 	}
+	if len(order) > 0 {
+		e.remoteChanged.Store(true)
+	}
 	// The projection fired the triggers; those records describe remote changes, not local ones.
 	if _, err := tx.ExecContext(ctx, `DELETE FROM sync_dirty WHERE id > ?`, baseline); err != nil {
 		return fmt.Errorf("clear projected changes: %w", err)
@@ -374,6 +436,7 @@ func (e *Engine) applyOp(ctx context.Context, tx *sql.Tx, op Op) (bool, error) {
 		ON CONFLICT(origin) DO UPDATE SET seq = excluded.seq`, op.Origin, op.Seq); err != nil {
 		return false, fmt.Errorf("advance version vector: %w", err)
 	}
+	e.newOps = true
 	clock, err := ParseClock(op.Clock)
 	if err != nil {
 		return false, err

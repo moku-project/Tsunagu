@@ -361,7 +361,7 @@ func Start(opts Options) (*Server, error) {
 	registerRoutes(mux, authMgr)
 	registerGraphQL(mux, &graph.Resolver{
 		Sy: syncer, Sc: supervised, Dm: downloadMgr, Au: automationMgr, Ls: localScanner, Tk: trackerMgr,
-		Md: metadataMgr, Sr: streamResolver, Q: q, DB: conn, Fs: fsMgr, Cfg: store, Cf: cfMgr, Am: authMgr,
+		Md: metadataMgr, Sr: streamResolver, Q: q, DB: conn, Fs: fsMgr, Cfg: store, Cf: cfMgr, Am: authMgr, Ms: syncEngine,
 		MediaDir: absMediaDir, Name: Name, Version: opts.Version, BuildTime: opts.BuildTime,
 	})
 

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 )
 
 // batchLimit caps the ops in one exchange; a bigger backlog continues in further rounds.
@@ -20,7 +21,12 @@ type ExchangeRequest struct {
 	Base     VersionVector `json:"base"`
 	Ops      []Op          `json:"ops"`
 	Complete bool          `json:"complete"`
+	// WaitMillis holds the reply until the receiver has something new or the time runs out.
+	WaitMillis int64 `json:"wait,omitempty"`
 }
+
+// maxWait bounds a held exchange below common proxy and client timeouts.
+const maxWait = 30 * time.Second
 
 // ExchangeResponse carries every op the caller lacks (up to batchLimit) and the receiver's version vector.
 type ExchangeResponse struct {
@@ -38,7 +44,28 @@ type Peer interface {
 
 // Serve answers an exchange: it merges the caller's ops, then returns what the caller lacks.
 func (e *Engine) Serve(ctx context.Context, req ExchangeRequest) (ExchangeResponse, error) {
-	resp := ExchangeResponse{Node: e.node, Name: e.name}
+	// Taken before reading, so a change that lands while we read still wakes a held reply.
+	changed := e.notify.wait()
+	resp, err := e.serve(ctx, req)
+	if err != nil || req.WaitMillis <= 0 || len(resp.Ops) > 0 || resp.More {
+		return resp, err
+	}
+	wait := min(time.Duration(req.WaitMillis)*time.Millisecond, maxWait)
+	timer := time.NewTimer(wait)
+	defer timer.Stop()
+	select {
+	case <-changed:
+	case <-timer.C:
+		return resp, nil
+	case <-ctx.Done():
+		return resp, ctx.Err()
+	}
+	req.Ops, req.Complete = nil, false
+	return e.serve(ctx, req)
+}
+
+func (e *Engine) serve(ctx context.Context, req ExchangeRequest) (ExchangeResponse, error) {
+	resp := ExchangeResponse{Node: e.node, Name: e.Name()}
 	err := e.write(ctx, func(tx *sql.Tx) error {
 		mine, err := versionVector(ctx, tx)
 		if err != nil {
@@ -72,6 +99,11 @@ func (e *Engine) Serve(ctx context.Context, req ExchangeRequest) (ExchangeRespon
 
 // SyncWith exchanges ops with peer until neither side lacks anything the other has.
 func (e *Engine) SyncWith(ctx context.Context, peer Peer, peerNode string) error {
+	return e.syncWith(ctx, peer, peerNode, 0)
+}
+
+// syncWith asks the peer to hold its first reply for up to wait, so it doubles as a change feed.
+func (e *Engine) syncWith(ctx context.Context, peer Peer, peerNode string, wait time.Duration) error {
 	for round := 0; round < 64; round++ {
 		if _, err := e.Capture(ctx); err != nil {
 			return err
@@ -88,7 +120,11 @@ func (e *Engine) SyncWith(ctx context.Context, peer Peer, peerNode string) error
 		if err != nil {
 			return err
 		}
-		resp, err := peer.Exchange(ctx, ExchangeRequest{Node: e.node, Name: e.name, VV: mine, Base: known, Ops: ops, Complete: !more})
+		req := ExchangeRequest{Node: e.node, Name: e.Name(), VV: mine, Base: known, Ops: ops, Complete: !more}
+		if round == 0 {
+			req.WaitMillis = wait.Milliseconds()
+		}
+		resp, err := peer.Exchange(ctx, req)
 		if err != nil {
 			return err
 		}

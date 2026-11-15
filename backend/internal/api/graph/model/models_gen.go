@@ -502,6 +502,31 @@ type SubtitleTrack struct {
 	URL  string `json:"url"`
 }
 
+type SyncPairingCode struct {
+	// Entered on the other device. Works once.
+	Code      string    `json:"code"`
+	ExpiresAt time.Time `json:"expiresAt"`
+}
+
+// Another Tsunagu this one syncs its library with.
+type SyncPeer struct {
+	Node string `json:"node"`
+	Name string `json:"name"`
+	// Where this instance reaches the peer. Empty when only the peer connects here.
+	Address    *string    `json:"address,omitempty"`
+	LastSeenAt *time.Time `json:"lastSeenAt,omitempty"`
+}
+
+type SyncStatus struct {
+	// This instance's sync ID.
+	Node string `json:"node"`
+	// The name paired devices show for this instance.
+	Name  string      `json:"name"`
+	Peers []*SyncPeer `json:"peers"`
+	// Library titles synced here whose source hasn't been fetched yet.
+	PendingTitles int32 `json:"pendingTitles"`
+}
+
 type TagFacet struct {
 	ID        string `json:"id"`
 	Name      string `json:"name"`
