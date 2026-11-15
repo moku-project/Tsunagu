@@ -28,6 +28,7 @@ import (
 	"tsunagu/backend/internal/flaresolverr"
 	"tsunagu/backend/internal/localsource"
 	"tsunagu/backend/internal/metadata"
+	"tsunagu/backend/internal/mokusync"
 	"tsunagu/backend/internal/sandbox"
 	"tsunagu/backend/internal/streamresolve"
 	"tsunagu/backend/internal/sync"
@@ -348,6 +349,14 @@ func Start(opts Options) (*Server, error) {
 		_, _ = w.Write([]byte("<h2>Connected to MyAnimeList as " + html.EscapeString(info.Username) + "</h2><p>You can close this tab.</p>"))
 	})
 	authMgr := auth.New(q)
+	syncEngine, err := mokusync.Open(context.Background(), conn)
+	if err != nil {
+		return nil, fmt.Errorf("opening moku-sync: %w", err)
+	}
+	mux.Handle("/api/sync/v1/", &mokusync.Handler{E: syncEngine})
+	syncCtx, stopSync := context.WithCancel(context.Background())
+	s.cleanups = append(s.cleanups, stopSync)
+	go syncEngine.Run(syncCtx, nil, 2*time.Second, time.Minute)
 	registerRoutes(mux, authMgr)
 	registerGraphQL(mux, &graph.Resolver{
 		Sy: syncer, Sc: supervised, Dm: downloadMgr, Au: automationMgr, Ls: localScanner, Tk: trackerMgr,
