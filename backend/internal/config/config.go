@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -127,8 +128,26 @@ func Load(opts Options) (*Config, string, map[string]bool, error) {
 		c.HTTPAddr = addr
 	}
 
+	c.rebaseDataDir(opts.DataDir)
 	c.applyDataDir(active)
 	return &c, path, active, nil
+}
+
+// The caller's data dir wins over a saved one; iOS moves the app container on every update.
+func (c *Config) rebaseDataDir(dataDir string) {
+	if dataDir == "" || c.DataDir == dataDir {
+		return
+	}
+	old := c.DataDir
+	c.DataDir = dataDir
+	if old == "" {
+		return
+	}
+	for _, p := range []*string{&c.DBPath, &c.JarCacheDir, &c.MediaDir, &c.DownloadsDir, &c.LocalSourceDir, &c.SandboxExtDir, &c.SandboxStorageDir} {
+		if rel, err := filepath.Rel(old, *p); err == nil && filepath.IsAbs(*p) && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+			*p = filepath.Join(dataDir, rel)
+		}
+	}
 }
 
 func (c *Config) applyDataDir(active map[string]bool) {
