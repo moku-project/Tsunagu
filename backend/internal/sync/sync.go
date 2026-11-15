@@ -721,6 +721,17 @@ func (s *Syncer) PersistExtensionMeta(ctx context.Context, ext sqlcgen.Extension
 			ext = updated
 		}
 	}
+	if baseURL := loaded.GetBaseUrl(); baseURL != "" && baseURL != ext.BaseUrl {
+		updated, err := s.q.UpdateExtensionBaseURL(ctx, sqlcgen.UpdateExtensionBaseURLParams{
+			BaseUrl: baseURL,
+			ID:      ext.ID,
+		})
+		if err != nil {
+			log.Printf("sync: persisting baseUrl for %s failed: %v", ext.PackageName, err)
+		} else {
+			ext = updated
+		}
+	}
 	if sourceID := loaded.GetSourceId(); sourceID != 0 && sourceID != ext.SourceID {
 		updated, err := s.q.UpdateExtensionSourceID(ctx, sqlcgen.UpdateExtensionSourceIDParams{
 			SourceID: sourceID,

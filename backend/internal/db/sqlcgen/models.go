@@ -95,6 +95,7 @@ type Extension struct {
 	IsNsfw           bool           `json:"is_nsfw"`
 	SupportsLatest   bool           `json:"supports_latest"`
 	SourceID         int64          `json:"source_id"`
+	BaseUrl          string         `json:"base_url"`
 }
 
 type Folder struct {

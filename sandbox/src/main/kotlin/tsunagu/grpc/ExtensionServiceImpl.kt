@@ -693,7 +693,18 @@ class ExtensionServiceImpl(
             .setLang(extensionLang(ext.source))
             .setSupportsLatest(extensionSupportsLatest(ext.source))
             .setSourceId(extensionSourceId(ext.source))
+            .setBaseUrl(extensionBaseUrl(ext.source))
             .build()
+
+    private fun extensionBaseUrl(source: Any): String =
+        runCatching {
+            when (source) {
+                is eu.kanade.tachiyomi.source.online.HttpSource -> source.baseUrl
+                is eu.kanade.tachiyomi.animesource.online.AnimeHttpSource -> source.baseUrl
+                is tsunagu.novel.NovelPlugin -> source.site
+                else -> ""
+            }
+        }.getOrDefault("")
 
     private fun splitGenres(genre: String?): List<String> =
         genre.orEmpty().split(Regex("[,;/|]"))

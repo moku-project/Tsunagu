@@ -372,6 +372,7 @@ func toExtension(e sqlcgen.Extension, mediaDir string) *model.Extension {
 		IsNsfw:           e.IsNsfw,
 		DisplayName:      extensionDisplayName(e.Name, e.Lang),
 		SupportsLatest:   e.SupportsLatest,
+		BaseURL:          nonEmptyPtr(e.BaseUrl),
 	}
 }
 

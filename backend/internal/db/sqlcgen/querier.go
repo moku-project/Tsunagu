@@ -213,6 +213,7 @@ type Querier interface {
 	UpdateChapterExternalID(ctx context.Context, arg UpdateChapterExternalIDParams) error
 	UpdateDownloadProgress(ctx context.Context, arg UpdateDownloadProgressParams) error
 	UpdateDownloadStats(ctx context.Context, arg UpdateDownloadStatsParams) error
+	UpdateExtensionBaseURL(ctx context.Context, arg UpdateExtensionBaseURLParams) (Extension, error)
 	UpdateExtensionIconLocalPath(ctx context.Context, arg UpdateExtensionIconLocalPathParams) error
 	UpdateExtensionSourceID(ctx context.Context, arg UpdateExtensionSourceIDParams) (Extension, error)
 	UpdateExtensionSupportsLatest(ctx context.Context, arg UpdateExtensionSupportsLatestParams) (Extension, error)

@@ -185,6 +185,8 @@ type Extension struct {
 	IsNsfw           bool        `json:"isNsfw"`
 	DisplayName      string      `json:"displayName"`
 	SupportsLatest   bool        `json:"supportsLatest"`
+	// The site the loaded source reads from, once the extension host has loaded it.
+	BaseURL *string `json:"baseUrl,omitempty"`
 }
 
 type ExtensionPage struct {

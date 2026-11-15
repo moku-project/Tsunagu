@@ -126,3 +126,7 @@ SELECT * FROM extensions WHERE installed = TRUE AND source_id != 0 ORDER BY name
 -- name: GetExtensionsByIDs :many
 
 SELECT * FROM extensions WHERE id IN (sqlc.slice('ids'));
+
+-- name: UpdateExtensionBaseURL :one
+UPDATE extensions SET base_url = ? WHERE id = ?
+RETURNING *;

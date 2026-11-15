@@ -169,6 +169,7 @@ type ComplexityRoot struct {
 
 	Extension struct {
 		ApkURL           func(childComplexity int) int
+		BaseURL          func(childComplexity int) int
 		ContentType      func(childComplexity int) int
 		DiscoveredAt     func(childComplexity int) int
 		DisplayName      func(childComplexity int) int
@@ -1361,6 +1362,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Extension.ApkURL(childComplexity), true
+	case "Extension.baseUrl":
+		if e.ComplexityRoot.Extension.BaseURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Extension.BaseURL(childComplexity), true
 	case "Extension.contentType":
 		if e.ComplexityRoot.Extension.ContentType == nil {
 			break
@@ -4399,6 +4406,8 @@ func (ec *executionContext) childFields_Extension(ctx context.Context, field gra
 		return ec.fieldContext_Extension_displayName(ctx, field)
 	case "supportsLatest":
 		return ec.fieldContext_Extension_supportsLatest(ctx, field)
+	case "baseUrl":
+		return ec.fieldContext_Extension_baseUrl(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type Extension", field.Name)
 }
@@ -9531,6 +9540,29 @@ func (ec *executionContext) _Extension_supportsLatest(ctx context.Context, field
 }
 func (ec *executionContext) fieldContext_Extension_supportsLatest(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("Extension", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _Extension_baseUrl(ctx context.Context, field graphql.CollectedField, obj *model.Extension) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Extension_baseUrl(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BaseURL, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Extension_baseUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Extension", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _ExtensionPage_items(ctx context.Context, field graphql.CollectedField, obj *model.ExtensionPage) (ret graphql.Marshaler) {
@@ -22668,6 +22700,11 @@ func (ec *executionContext) _Extension(ctx context.Context, sel ast.SelectionSet
 		case "supportsLatest":
 			out.Values[i] = ec._Extension_supportsLatest(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "baseUrl":
+			out.Values[i] = ec._Extension_baseUrl(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
 				out.Invalids++
 			}
 		default:

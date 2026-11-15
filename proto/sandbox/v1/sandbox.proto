@@ -60,6 +60,8 @@ message Extension {
   string lang = 5;
   bool supports_latest = 6;
   int64 source_id = 7;
+  // The site the source reads from, for browser verification. Empty if unknown.
+  string base_url = 8;
 }
 
 message ExtensionList {

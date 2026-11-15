@@ -38,6 +38,8 @@ type Extension {
   isNsfw: Boolean!
   displayName: String!
   supportsLatest: Boolean!
+  "The site the loaded source reads from, once the extension host has loaded it."
+  baseUrl: String
 }
 
 type ExtensionPage {
