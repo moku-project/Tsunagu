@@ -16,6 +16,7 @@ import io.grpc.stub.StreamObserver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import sandbox.v1.ExtensionServiceGrpc
 import sandbox.v1.Sandbox
 import tsunagu.loader.ContentType
@@ -578,7 +579,7 @@ class ExtensionServiceImpl(
                     "audio=${videos.sumOf { it.audioTracks.size }} " +
                     "timestamps=${preferred.timestamps.size}"
             }
-            toStreamInfo(preferred, videos)
+            toStreamInfo(preferred, videos, source)
         }
     }
 
@@ -838,16 +839,34 @@ class ExtensionServiceImpl(
             Sandbox.SubtitleTrack.newBuilder().setUrl(it.url).setLang(it.lang).build()
         }
 
-    private fun headerMap(video: Video): Map<String, String> =
-        video.headers?.let { h -> h.names().associateWith { h[it] ?: "" } } ?: emptyMap()
+    /**
+     * The headers a player needs to fetch [video] the way the source would:
+     * the extension's own, plus the source's cookies for that URL and the
+     * User-Agent a solved challenge is bound to. Many video hosts refuse
+     * requests without them.
+     */
+    private fun headerMap(video: Video, source: AnimeHttpSource): Map<String, String> {
+        val headers = (video.headers?.let { h -> h.names().associateWith { h[it] ?: "" } } ?: emptyMap()).toMutableMap()
+        val url = video.videoUrl.toHttpUrlOrNull() ?: return headers
+        if (headers.keys.none { it.equals("Cookie", ignoreCase = true) }) {
+            val cookies = source.client.cookieJar.loadForRequest(url)
+            if (cookies.isNotEmpty()) headers["Cookie"] = cookies.joinToString("; ") { "${it.name}=${it.value}" }
+        }
+        val store = org.koin.core.context.GlobalContext.get().get<eu.kanade.tachiyomi.network.NetworkHelper>().cookieStore
+        store.userAgent(url)?.let { agent ->
+            headers.keys.filter { it.equals("User-Agent", ignoreCase = true) }.forEach(headers::remove)
+            headers["User-Agent"] = agent
+        }
+        return headers
+    }
 
-    private fun toStreamInfo(preferred: Video, all: List<Video>): Sandbox.StreamInfo {
+    private fun toStreamInfo(preferred: Video, all: List<Video>, source: AnimeHttpSource): Sandbox.StreamInfo {
         val builder = Sandbox.StreamInfo.newBuilder()
             .setStreamUrl(preferred.videoUrl)
             .setQuality(preferred.videoTitle)
 
         builder.addAllSubtitles(subtitleProtos(preferred))
-        headerMap(preferred).forEach { (k, v) -> builder.putHeaders(k, v) }
+        headerMap(preferred, source).forEach { (k, v) -> builder.putHeaders(k, v) }
 
         all.forEach { v ->
             val src = Sandbox.VideoSource.newBuilder()
@@ -856,7 +875,7 @@ class ExtensionServiceImpl(
                 .setResolution(parseResolution(v))
                 .setPreferred(v === preferred || v.preferred)
                 .addAllSubtitles(subtitleProtos(v))
-            headerMap(v).forEach { (k, value) -> src.putHeaders(k, value) }
+            headerMap(v, source).forEach { (k, value) -> src.putHeaders(k, value) }
             builder.addSources(src.build())
         }
 
