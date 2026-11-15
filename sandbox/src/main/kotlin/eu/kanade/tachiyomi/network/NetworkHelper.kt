@@ -104,6 +104,8 @@ class NetworkHelper(cookiesFile: File? = null) {
             builder.addNetworkInterceptor(httpLoggingInterceptor)
 
             builder.addInterceptor(CloudflareInterceptor(cookieStore))
+            // First, so it also runs interceptors extensions add later through newBuilder().
+            builder.interceptors().add(0, tsunagu.net.NativeHttp.interceptor)
 
             return builder
         }

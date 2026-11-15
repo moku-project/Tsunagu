@@ -21,7 +21,7 @@ class ExtensionRegistry(
     private val extensions = ConcurrentHashMap<String, LoadedExtension>()
     private val pendingFiles = ConcurrentHashMap<String, File>()
     private val loadLocks = ConcurrentHashMap<String, Any>()
-    private val client = OkHttpClient()
+    private val client = OkHttpClient.Builder().addInterceptor(tsunagu.net.NativeHttp.interceptor).build()
 
     init {
         extensionsDir.mkdirs()
