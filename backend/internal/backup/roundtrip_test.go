@@ -103,6 +103,11 @@ func TestExportImportRoundTrip(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("mark chapter read: %v", err)
 	}
+	if _, err := srcQ.SetChapterBookmarked(ctx, sqlcgen.SetChapterBookmarkedParams{
+		Bookmarked: true, ID: chapter.ID, MediaID: media.ID,
+	}); err != nil {
+		t.Fatalf("bookmark chapter: %v", err)
+	}
 
 	acct, err := srcQ.UpsertTrackerAccount(ctx, sqlcgen.UpsertTrackerAccountParams{
 		TrackerType: "anilist",
@@ -145,7 +150,7 @@ func TestExportImportRoundTrip(t *testing.T) {
 	if b.Manga[0].Source != 123456789 {
 		t.Fatalf("expected source 123456789, got %d", b.Manga[0].Source)
 	}
-	if len(b.Manga[0].Chapters) != 1 || !b.Manga[0].Chapters[0].Read {
+	if len(b.Manga[0].Chapters) != 1 || !b.Manga[0].Chapters[0].Read || !b.Manga[0].Chapters[0].Bookmark {
 		t.Fatalf("expected 1 read chapter in export, got %+v", b.Manga[0].Chapters)
 	}
 	if len(b.Manga[0].Tracking) != 1 || b.Manga[0].Tracking[0].SyncId != 2 {
@@ -191,6 +196,9 @@ func TestExportImportRoundTrip(t *testing.T) {
 	if err != nil || len(chapters) != 1 {
 		t.Fatalf("expected 1 imported chapter, got %d (err=%v)", len(chapters), err)
 	}
+	if !chapters[0].Bookmarked {
+		t.Fatal("imported chapter lost its bookmark")
+	}
 	progress, err := dstQ.ListReadingProgressByMedia(ctx, imported.ID)
 	if err != nil || len(progress) != 1 || !progress[0].Completed {
 		t.Fatalf("expected imported chapter to be marked read, got %+v (err=%v)", progress, err)
@@ -200,4 +208,76 @@ func TestExportImportRoundTrip(t *testing.T) {
 	if err != nil || len(folders) != 1 || folders[0].Name != "Favorites" {
 		t.Fatalf("expected imported media in Favorites folder, got %+v (err=%v)", folders, err)
 	}
+}
+
+// A source refresh upserts chapters in place, and de-duplication moves state
+// to the surviving row: neither may drop a bookmark.
+func TestChapterBookmarkSurvivesRefreshAndMove(t *testing.T) {
+	ctx := context.Background()
+	q := openTestDB(t)
+	ext := mustCreateExtension(t, q, "com.example.bookmarks", 42)
+	media, err := q.UpsertMediaDetails(ctx, sqlcgen.UpsertMediaDetailsParams{
+		ExtensionID: sql.NullInt64{Int64: ext.ID, Valid: true}, ExtensionName: ext.Name,
+		ExternalID: "/m", ContentType: "manga", Title: "M",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	create := func(id string) sqlcgen.Chapter {
+		c, err := q.CreateChapter(ctx, sqlcgen.CreateChapterParams{
+			MediaID: media.ID, ExternalID: id, Number: sql.NullFloat64{Float64: 1, Valid: true},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return c
+	}
+	first := create("/c1")
+	if first.Bookmarked {
+		t.Fatal("new chapter starts bookmarked")
+	}
+	if _, err := q.SetChapterBookmarked(ctx, sqlcgen.SetChapterBookmarkedParams{Bookmarked: true, ID: first.ID, MediaID: media.ID}); err != nil {
+		t.Fatal(err)
+	}
+	if again := create("/c1"); again.ID != first.ID || !again.Bookmarked {
+		t.Fatalf("refresh dropped the bookmark: %+v", again)
+	}
+	if _, err := q.SetChapterBookmarked(ctx, sqlcgen.SetChapterBookmarkedParams{Bookmarked: true, ID: first.ID, MediaID: media.ID + 1}); err == nil {
+		t.Fatal("bookmarked a chapter through another title")
+	}
+
+	second := create("/c2")
+	if err := q.MoveChapterBookmark(ctx, sqlcgen.MoveChapterBookmarkParams{FromID: first.ID, ToID: second.ID}); err != nil {
+		t.Fatal(err)
+	}
+	chapters, err := q.ListChaptersByMedia(ctx, media.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range chapters {
+		if c.ID == second.ID && !c.Bookmarked {
+			t.Fatal("moving chapter state dropped the bookmark")
+		}
+	}
+	if _, err := q.SetChapterBookmarked(ctx, sqlcgen.SetChapterBookmarkedParams{Bookmarked: false, ID: second.ID, MediaID: media.ID}); err != nil {
+		t.Fatal(err)
+	}
+	third := create("/c3")
+	if err := q.MoveChapterBookmark(ctx, sqlcgen.MoveChapterBookmarkParams{FromID: second.ID, ToID: third.ID}); err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range mustList(t, q, media.ID) {
+		if c.ID == third.ID && c.Bookmarked {
+			t.Fatal("moving an unbookmarked chapter set a bookmark")
+		}
+	}
+}
+
+func mustList(t *testing.T, q *sqlcgen.Queries, mediaID int64) []sqlcgen.Chapter {
+	t.Helper()
+	chapters, err := q.ListChaptersByMedia(context.Background(), mediaID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return chapters
 }

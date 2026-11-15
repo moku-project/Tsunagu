@@ -150,6 +150,13 @@ func Import(ctx context.Context, q *sqlcgen.Queries, b *mihonpb.Backup) (ImportR
 			if err != nil {
 				return res, err
 			}
+			if bc.Bookmark {
+				if _, err := q.SetChapterBookmarked(ctx, sqlcgen.SetChapterBookmarkedParams{
+					Bookmarked: true, ID: ch.ID, MediaID: media.ID,
+				}); err != nil {
+					return res, err
+				}
+			}
 			if bc.Read {
 				if _, err := q.UpsertReadingProgress(ctx, sqlcgen.UpsertReadingProgressParams{
 					MediaID:   media.ID,

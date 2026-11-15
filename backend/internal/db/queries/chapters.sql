@@ -12,7 +12,7 @@ RETURNING *;
 
 -- name: ListChapterUpdates :many
 
-SELECT c.id, c.media_id, c.external_id, c.title, c.number, c.source_order, c.uploaded_at, c.first_seen_at
+SELECT c.id, c.media_id, c.external_id, c.title, c.number, c.source_order, c.uploaded_at, c.first_seen_at, c.scanlator, c.bookmarked
 FROM chapters c
 JOIN media m ON m.id = c.media_id
 WHERE m.added_at IS NOT NULL
@@ -207,7 +207,7 @@ DELETE FROM anime_episode_streams WHERE chapter_id = ?;
 
 -- name: ListRecentChapters :many
 SELECT
-    c.id, c.media_id, c.external_id, c.title, c.number, c.source_order, c.uploaded_at
+    c.id, c.media_id, c.external_id, c.title, c.number, c.source_order, c.uploaded_at, c.scanlator, c.bookmarked
 FROM chapters c
 JOIN media m ON m.id = c.media_id
 WHERE c.uploaded_at IS NOT NULL
@@ -270,3 +270,13 @@ SELECT * FROM chapters WHERE id IN (sqlc.slice('ids'));
 SELECT mp.chapter_id, mp.local_path FROM manga_pages mp
 WHERE mp.chapter_id IN (sqlc.slice('chapter_ids'))
   AND mp.page_number = (SELECT MIN(p2.page_number) FROM manga_pages p2 WHERE p2.chapter_id = mp.chapter_id);
+
+-- name: SetChapterBookmarked :one
+UPDATE chapters SET bookmarked = sqlc.arg(bookmarked)
+WHERE id = sqlc.arg(id) AND media_id = sqlc.arg(media_id)
+RETURNING *;
+
+-- name: MoveChapterBookmark :exec
+UPDATE chapters SET bookmarked = TRUE
+WHERE chapters.id = sqlc.arg(to_id)
+  AND (SELECT f.bookmarked FROM chapters AS f WHERE f.id = sqlc.arg(from_id));

@@ -81,14 +81,16 @@ type BackupImportResult struct {
 }
 
 type Chapter struct {
-	ID              string           `json:"id"`
-	MediaID         string           `json:"mediaId"`
-	ExternalID      string           `json:"externalId"`
-	Title           *string          `json:"title,omitempty"`
-	Number          *float64         `json:"number,omitempty"`
-	SourceOrder     *int32           `json:"sourceOrder,omitempty"`
-	Scanlator       *string          `json:"scanlator,omitempty"`
-	UploadedAt      *time.Time       `json:"uploadedAt,omitempty"`
+	ID          string     `json:"id"`
+	MediaID     string     `json:"mediaId"`
+	ExternalID  string     `json:"externalId"`
+	Title       *string    `json:"title,omitempty"`
+	Number      *float64   `json:"number,omitempty"`
+	SourceOrder *int32     `json:"sourceOrder,omitempty"`
+	Scanlator   *string    `json:"scanlator,omitempty"`
+	UploadedAt  *time.Time `json:"uploadedAt,omitempty"`
+	// Bookmarked by the reader, as in Mihon.
+	Bookmarked      bool             `json:"bookmarked"`
 	ReadingProgress *ReadingProgress `json:"readingProgress,omitempty"`
 	Completed       bool             `json:"completed"`
 	Downloaded      bool             `json:"downloaded"`

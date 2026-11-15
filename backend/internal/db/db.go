@@ -70,6 +70,9 @@ var migration0019 string
 //go:embed migrations/0020_automation.sql
 var migration0020 string
 
+//go:embed migrations/0021_chapter_bookmarks.sql
+var migration0021 string
+
 var migrations = []struct {
 	name string
 	sql  string
@@ -94,6 +97,7 @@ var migrations = []struct {
 	{"0018_repair_anime_episode_identifiers.sql", migration0018},
 	{"0019_folder_content_types.sql", migration0019},
 	{"0020_automation.sql", migration0020},
+	{"0021_chapter_bookmarks.sql", migration0021},
 }
 
 func Open(path string) (*sql.DB, error) {

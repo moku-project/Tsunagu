@@ -46,6 +46,7 @@ type Chapter struct {
 	SourceOrder sql.NullInt64   `json:"source_order"`
 	FirstSeenAt sql.NullTime    `json:"first_seen_at"`
 	Scanlator   string          `json:"scanlator"`
+	Bookmarked  bool            `json:"bookmarked"`
 }
 
 type ContentFilterRule struct {

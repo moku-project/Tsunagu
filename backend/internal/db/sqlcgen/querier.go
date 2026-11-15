@@ -169,6 +169,7 @@ type Querier interface {
 	MarkMediaExtensionRemoved(ctx context.Context, extensionID sql.NullInt64) error
 	MaxReadChapterNumber(ctx context.Context, mediaID int64) (float64, error)
 	MediaInAutoDownloadFolder(ctx context.Context, mediaID int64) (bool, error)
+	MoveChapterBookmark(ctx context.Context, arg MoveChapterBookmarkParams) error
 	MoveChapterDownloads(ctx context.Context, arg MoveChapterDownloadsParams) error
 	MoveChapterEpisodeStream(ctx context.Context, arg MoveChapterEpisodeStreamParams) error
 	MoveChapterNovelContent(ctx context.Context, arg MoveChapterNovelContentParams) error
@@ -192,6 +193,7 @@ type Querier interface {
 	RetryDownload(ctx context.Context, id int64) (Download, error)
 	ScheduleChapterDeletion(ctx context.Context, arg ScheduleChapterDeletionParams) error
 	SetAnimeEpisodeStreamPath(ctx context.Context, arg SetAnimeEpisodeStreamPathParams) error
+	SetChapterBookmarked(ctx context.Context, arg SetChapterBookmarkedParams) (Chapter, error)
 	SetChapterNumber(ctx context.Context, arg SetChapterNumberParams) error
 	SetDownloadPosition(ctx context.Context, arg SetDownloadPositionParams) error
 	SetExtensionEnabled(ctx context.Context, arg SetExtensionEnabledParams) (Extension, error)

@@ -267,6 +267,9 @@ func moveChapterState(ctx context.Context, q *sqlcgen.Queries, from, to int64) e
 	if err := q.MoveChapterProgress(ctx, sqlcgen.MoveChapterProgressParams{FromID: from, ToID: to}); err != nil {
 		return err
 	}
+	if err := q.MoveChapterBookmark(ctx, sqlcgen.MoveChapterBookmarkParams{FromID: from, ToID: to}); err != nil {
+		return err
+	}
 	if err := q.MoveChapterDownloads(ctx, sqlcgen.MoveChapterDownloadsParams{FromID: from, ToID: to}); err != nil {
 		return err
 	}
@@ -950,6 +953,19 @@ func (s *Syncer) MigrateMedia(ctx context.Context, c *sandbox.Client, fromMediaI
 			DurationSeconds: p.DurationSeconds,
 		}); err != nil {
 			return sqlcgen.Medium{}, fmt.Errorf("carry progress for chapter %d: %w", p.ChapterID, err)
+		}
+	}
+
+	for _, oldCh := range oldChapters {
+		if !oldCh.Bookmarked {
+			continue
+		}
+		if newCh, ok := match(oldCh); ok {
+			if _, err := qtx.SetChapterBookmarked(ctx, sqlcgen.SetChapterBookmarkedParams{
+				Bookmarked: true, ID: newCh.ID, MediaID: newMedia.ID,
+			}); err != nil {
+				return sqlcgen.Medium{}, fmt.Errorf("carry bookmark for chapter %d: %w", oldCh.ID, err)
+			}
 		}
 	}
 

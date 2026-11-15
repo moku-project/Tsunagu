@@ -8,6 +8,7 @@ package graph
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -477,6 +478,31 @@ func (r *mutationResolver) MarkChaptersRead(ctx context.Context, mediaID string,
 		go r.Tk.SyncMediaProgress(context.Background(), mID)
 	}
 	return results, nil
+}
+
+func (r *mutationResolver) SetChaptersBookmarked(ctx context.Context, mediaID string, chapterIds []string, bookmarked bool) ([]*model.Chapter, error) {
+	mID, err := parseID(mediaID)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*model.Chapter, 0, len(chapterIds))
+	for _, chapterID := range chapterIds {
+		chID, err := parseID(chapterID)
+		if err != nil {
+			return nil, err
+		}
+		row, err := r.Q.SetChapterBookmarked(ctx, sqlcgen.SetChapterBookmarkedParams{
+			Bookmarked: bookmarked, ID: chID, MediaID: mID,
+		})
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("chapter %s is not part of media %s", chapterID, mediaID)
+		}
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, toChapter(row))
+	}
+	return out, nil
 }
 
 func (r *mutationResolver) DequeueDownload(ctx context.Context, mediaID string, chapterID string) (bool, error) {
@@ -2103,6 +2129,8 @@ func (r *queryResolver) RecentChapters(ctx context.Context, since *time.Time, li
 				Number:      nullFloat64Ptr(row.Number),
 				SourceOrder: nullInt64Int32Ptr(row.SourceOrder),
 				UploadedAt:  epochToTimePtr(row.UploadedAt),
+				Scanlator:   nonEmptyPtr(row.Scanlator),
+				Bookmarked:  row.Bookmarked,
 			},
 			Media: toMedia(m, r.MediaDir),
 		})
@@ -2160,6 +2188,8 @@ func (r *queryResolver) ChapterUpdates(ctx context.Context, since *time.Time, li
 				Number:      nullFloat64Ptr(row.Number),
 				SourceOrder: nullInt64Int32Ptr(row.SourceOrder),
 				UploadedAt:  epochToTimePtr(row.UploadedAt),
+				Scanlator:   nonEmptyPtr(row.Scanlator),
+				Bookmarked:  row.Bookmarked,
 			},
 			Media:   toMedia(m, r.MediaDir),
 			FoundAt: nullTimePtr(row.FirstSeenAt),

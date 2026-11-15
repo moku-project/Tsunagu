@@ -588,6 +588,7 @@ func toChapter(c sqlcgen.Chapter) *model.Chapter {
 		SourceOrder: nullInt64Int32Ptr(c.SourceOrder),
 		Scanlator:   scanlator,
 		UploadedAt:  epochToTimePtr(c.UploadedAt),
+		Bookmarked:  c.Bookmarked,
 	}
 }
 
@@ -881,4 +882,12 @@ func folderContentTypesToString(cts []model.ContentType) string {
 		}
 	}
 	return strings.Join(parts, ",")
+}
+
+// nonEmptyPtr returns nil for an empty string.
+func nonEmptyPtr(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
 }

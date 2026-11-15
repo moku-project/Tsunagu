@@ -188,7 +188,7 @@ ON CONFLICT(media_id, external_id) DO UPDATE SET
     uploaded_at = excluded.uploaded_at,
     source_order = excluded.source_order,
     scanlator = excluded.scanlator
-RETURNING id, media_id, external_id, title, number, uploaded_at, source_order, first_seen_at, scanlator
+RETURNING id, media_id, external_id, title, number, uploaded_at, source_order, first_seen_at, scanlator, bookmarked
 `
 
 type CreateChapterParams struct {
@@ -222,6 +222,7 @@ func (q *Queries) CreateChapter(ctx context.Context, arg CreateChapterParams) (C
 		&i.SourceOrder,
 		&i.FirstSeenAt,
 		&i.Scanlator,
+		&i.Bookmarked,
 	)
 	return i, err
 }
@@ -288,7 +289,7 @@ func (q *Queries) GetAnimeEpisodeStream(ctx context.Context, chapterID int64) (A
 }
 
 const getChapter = `-- name: GetChapter :one
-SELECT id, media_id, external_id, title, number, uploaded_at, source_order, first_seen_at, scanlator FROM chapters WHERE id = ?
+SELECT id, media_id, external_id, title, number, uploaded_at, source_order, first_seen_at, scanlator, bookmarked FROM chapters WHERE id = ?
 `
 
 func (q *Queries) GetChapter(ctx context.Context, id int64) (Chapter, error) {
@@ -304,12 +305,13 @@ func (q *Queries) GetChapter(ctx context.Context, id int64) (Chapter, error) {
 		&i.SourceOrder,
 		&i.FirstSeenAt,
 		&i.Scanlator,
+		&i.Bookmarked,
 	)
 	return i, err
 }
 
 const getChapterByMediaAndExternalID = `-- name: GetChapterByMediaAndExternalID :one
-SELECT id, media_id, external_id, title, number, uploaded_at, source_order, first_seen_at, scanlator FROM chapters WHERE media_id = ? AND external_id = ?
+SELECT id, media_id, external_id, title, number, uploaded_at, source_order, first_seen_at, scanlator, bookmarked FROM chapters WHERE media_id = ? AND external_id = ?
 `
 
 type GetChapterByMediaAndExternalIDParams struct {
@@ -330,6 +332,7 @@ func (q *Queries) GetChapterByMediaAndExternalID(ctx context.Context, arg GetCha
 		&i.SourceOrder,
 		&i.FirstSeenAt,
 		&i.Scanlator,
+		&i.Bookmarked,
 	)
 	return i, err
 }
@@ -410,7 +413,7 @@ func (q *Queries) GetNovelChapterContent(ctx context.Context, chapterID int64) (
 
 const latestChapterByMediaIDs = `-- name: LatestChapterByMediaIDs :many
 
-SELECT c.id, c.media_id, c.external_id, c.title, c.number, c.uploaded_at, c.source_order, c.first_seen_at, c.scanlator
+SELECT c.id, c.media_id, c.external_id, c.title, c.number, c.uploaded_at, c.source_order, c.first_seen_at, c.scanlator, c.bookmarked
 FROM chapters c
 WHERE c.media_id IN (/*SLICE:media_ids*/?)
   AND c.id = (
@@ -450,6 +453,7 @@ func (q *Queries) LatestChapterByMediaIDs(ctx context.Context, mediaIds []int64)
 			&i.SourceOrder,
 			&i.FirstSeenAt,
 			&i.Scanlator,
+			&i.Bookmarked,
 		); err != nil {
 			return nil, err
 		}
@@ -726,7 +730,7 @@ func (q *Queries) ListChapterExternalIDsByMedia(ctx context.Context, mediaID int
 
 const listChapterUpdates = `-- name: ListChapterUpdates :many
 
-SELECT c.id, c.media_id, c.external_id, c.title, c.number, c.source_order, c.uploaded_at, c.first_seen_at
+SELECT c.id, c.media_id, c.external_id, c.title, c.number, c.source_order, c.uploaded_at, c.first_seen_at, c.scanlator, c.bookmarked
 FROM chapters c
 JOIN media m ON m.id = c.media_id
 WHERE m.added_at IS NOT NULL
@@ -750,6 +754,8 @@ type ListChapterUpdatesRow struct {
 	SourceOrder sql.NullInt64   `json:"source_order"`
 	UploadedAt  sql.NullInt64   `json:"uploaded_at"`
 	FirstSeenAt sql.NullTime    `json:"first_seen_at"`
+	Scanlator   string          `json:"scanlator"`
+	Bookmarked  bool            `json:"bookmarked"`
 }
 
 func (q *Queries) ListChapterUpdates(ctx context.Context, arg ListChapterUpdatesParams) ([]ListChapterUpdatesRow, error) {
@@ -770,6 +776,8 @@ func (q *Queries) ListChapterUpdates(ctx context.Context, arg ListChapterUpdates
 			&i.SourceOrder,
 			&i.UploadedAt,
 			&i.FirstSeenAt,
+			&i.Scanlator,
+			&i.Bookmarked,
 		); err != nil {
 			return nil, err
 		}
@@ -785,7 +793,7 @@ func (q *Queries) ListChapterUpdates(ctx context.Context, arg ListChapterUpdates
 }
 
 const listChaptersByIDs = `-- name: ListChaptersByIDs :many
-SELECT id, media_id, external_id, title, number, uploaded_at, source_order, first_seen_at, scanlator FROM chapters WHERE id IN (/*SLICE:ids*/?)
+SELECT id, media_id, external_id, title, number, uploaded_at, source_order, first_seen_at, scanlator, bookmarked FROM chapters WHERE id IN (/*SLICE:ids*/?)
 `
 
 func (q *Queries) ListChaptersByIDs(ctx context.Context, ids []int64) ([]Chapter, error) {
@@ -817,6 +825,7 @@ func (q *Queries) ListChaptersByIDs(ctx context.Context, ids []int64) ([]Chapter
 			&i.SourceOrder,
 			&i.FirstSeenAt,
 			&i.Scanlator,
+			&i.Bookmarked,
 		); err != nil {
 			return nil, err
 		}
@@ -832,7 +841,7 @@ func (q *Queries) ListChaptersByIDs(ctx context.Context, ids []int64) ([]Chapter
 }
 
 const listChaptersByMedia = `-- name: ListChaptersByMedia :many
-SELECT id, media_id, external_id, title, number, uploaded_at, source_order, first_seen_at, scanlator FROM chapters WHERE media_id = ? ORDER BY source_order, number
+SELECT id, media_id, external_id, title, number, uploaded_at, source_order, first_seen_at, scanlator, bookmarked FROM chapters WHERE media_id = ? ORDER BY source_order, number
 `
 
 func (q *Queries) ListChaptersByMedia(ctx context.Context, mediaID int64) ([]Chapter, error) {
@@ -854,6 +863,7 @@ func (q *Queries) ListChaptersByMedia(ctx context.Context, mediaID int64) ([]Cha
 			&i.SourceOrder,
 			&i.FirstSeenAt,
 			&i.Scanlator,
+			&i.Bookmarked,
 		); err != nil {
 			return nil, err
 		}
@@ -1059,7 +1069,7 @@ func (q *Queries) ListMangaPages(ctx context.Context, chapterID int64) ([]MangaP
 
 const listRecentChapters = `-- name: ListRecentChapters :many
 SELECT
-    c.id, c.media_id, c.external_id, c.title, c.number, c.source_order, c.uploaded_at
+    c.id, c.media_id, c.external_id, c.title, c.number, c.source_order, c.uploaded_at, c.scanlator, c.bookmarked
 FROM chapters c
 JOIN media m ON m.id = c.media_id
 WHERE c.uploaded_at IS NOT NULL
@@ -1082,6 +1092,8 @@ type ListRecentChaptersRow struct {
 	Number      sql.NullFloat64 `json:"number"`
 	SourceOrder sql.NullInt64   `json:"source_order"`
 	UploadedAt  sql.NullInt64   `json:"uploaded_at"`
+	Scanlator   string          `json:"scanlator"`
+	Bookmarked  bool            `json:"bookmarked"`
 }
 
 func (q *Queries) ListRecentChapters(ctx context.Context, arg ListRecentChaptersParams) ([]ListRecentChaptersRow, error) {
@@ -1101,6 +1113,8 @@ func (q *Queries) ListRecentChapters(ctx context.Context, arg ListRecentChapters
 			&i.Number,
 			&i.SourceOrder,
 			&i.UploadedAt,
+			&i.Scanlator,
+			&i.Bookmarked,
 		); err != nil {
 			return nil, err
 		}
@@ -1113,6 +1127,22 @@ func (q *Queries) ListRecentChapters(ctx context.Context, arg ListRecentChapters
 		return nil, err
 	}
 	return items, nil
+}
+
+const moveChapterBookmark = `-- name: MoveChapterBookmark :exec
+UPDATE chapters SET bookmarked = TRUE
+WHERE chapters.id = ?1
+  AND (SELECT f.bookmarked FROM chapters AS f WHERE f.id = ?2)
+`
+
+type MoveChapterBookmarkParams struct {
+	ToID   int64 `json:"to_id"`
+	FromID int64 `json:"from_id"`
+}
+
+func (q *Queries) MoveChapterBookmark(ctx context.Context, arg MoveChapterBookmarkParams) error {
+	_, err := q.db.ExecContext(ctx, moveChapterBookmark, arg.ToID, arg.FromID)
+	return err
 }
 
 const moveChapterDownloads = `-- name: MoveChapterDownloads :exec
@@ -1187,7 +1217,7 @@ func (q *Queries) MoveChapterProgress(ctx context.Context, arg MoveChapterProgre
 
 const nextUnreadChapterByMediaIDs = `-- name: NextUnreadChapterByMediaIDs :many
 
-SELECT c.id, c.media_id, c.external_id, c.title, c.number, c.uploaded_at, c.source_order, c.first_seen_at, c.scanlator
+SELECT c.id, c.media_id, c.external_id, c.title, c.number, c.uploaded_at, c.source_order, c.first_seen_at, c.scanlator, c.bookmarked
 FROM chapters c
 WHERE c.media_id IN (/*SLICE:media_ids*/?)
   AND NOT EXISTS (
@@ -1235,6 +1265,7 @@ func (q *Queries) NextUnreadChapterByMediaIDs(ctx context.Context, mediaIds []in
 			&i.SourceOrder,
 			&i.FirstSeenAt,
 			&i.Scanlator,
+			&i.Bookmarked,
 		); err != nil {
 			return nil, err
 		}
@@ -1261,6 +1292,36 @@ type SetAnimeEpisodeStreamPathParams struct {
 func (q *Queries) SetAnimeEpisodeStreamPath(ctx context.Context, arg SetAnimeEpisodeStreamPathParams) error {
 	_, err := q.db.ExecContext(ctx, setAnimeEpisodeStreamPath, arg.LocalPath, arg.ChapterID)
 	return err
+}
+
+const setChapterBookmarked = `-- name: SetChapterBookmarked :one
+UPDATE chapters SET bookmarked = ?1
+WHERE id = ?2 AND media_id = ?3
+RETURNING id, media_id, external_id, title, number, uploaded_at, source_order, first_seen_at, scanlator, bookmarked
+`
+
+type SetChapterBookmarkedParams struct {
+	Bookmarked bool  `json:"bookmarked"`
+	ID         int64 `json:"id"`
+	MediaID    int64 `json:"media_id"`
+}
+
+func (q *Queries) SetChapterBookmarked(ctx context.Context, arg SetChapterBookmarkedParams) (Chapter, error) {
+	row := q.db.QueryRowContext(ctx, setChapterBookmarked, arg.Bookmarked, arg.ID, arg.MediaID)
+	var i Chapter
+	err := row.Scan(
+		&i.ID,
+		&i.MediaID,
+		&i.ExternalID,
+		&i.Title,
+		&i.Number,
+		&i.UploadedAt,
+		&i.SourceOrder,
+		&i.FirstSeenAt,
+		&i.Scanlator,
+		&i.Bookmarked,
+	)
+	return i, err
 }
 
 const setChapterNumber = `-- name: SetChapterNumber :exec

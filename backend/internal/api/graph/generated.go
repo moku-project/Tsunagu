@@ -91,6 +91,7 @@ type ComplexityRoot struct {
 	}
 
 	Chapter struct {
+		Bookmarked      func(childComplexity int) int
 		Completed       func(childComplexity int) int
 		Download        func(childComplexity int) int
 		Downloaded      func(childComplexity int) int
@@ -361,6 +362,7 @@ type ComplexityRoot struct {
 		ResetMediaAutomation       func(childComplexity int, mediaID *string) int
 		ResyncTrack                func(childComplexity int, linkID string) int
 		RetryDownload              func(childComplexity int, mediaID string, chapterID string) int
+		SetChaptersBookmarked      func(childComplexity int, mediaID string, chapterIds []string, bookmarked bool) int
 		SetFolderContentTypes      func(childComplexity int, folderID string, contentTypes []model.ContentType) int
 		SetInLibrary               func(childComplexity int, mediaID string, inLibrary bool) int
 		SetMediaAutomation         func(childComplexity int, mediaID string, input model.MediaAutomationInput) int
@@ -694,6 +696,7 @@ type MutationResolver interface {
 	AddMediaToFolder(ctx context.Context, mediaID string, folderID string) (bool, error)
 	RemoveMediaFromFolder(ctx context.Context, mediaID string, folderID string) (bool, error)
 	MarkChaptersRead(ctx context.Context, mediaID string, chapterIds []string, read bool) ([]*model.ReadingProgress, error)
+	SetChaptersBookmarked(ctx context.Context, mediaID string, chapterIds []string, bookmarked bool) ([]*model.Chapter, error)
 	DequeueDownload(ctx context.Context, mediaID string, chapterID string) (bool, error)
 	AddRepository(ctx context.Context, indexURL string, name *string) (*model.Repository, error)
 	RenameRepository(ctx context.Context, repositoryID string, name string) (*model.Repository, error)
@@ -1009,6 +1012,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.BackupImportResult.Warnings(childComplexity), true
 
+	case "Chapter.bookmarked":
+		if e.ComplexityRoot.Chapter.Bookmarked == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Chapter.Bookmarked(childComplexity), true
 	case "Chapter.completed":
 		if e.ComplexityRoot.Chapter.Completed == nil {
 			break
@@ -2506,6 +2515,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.RetryDownload(childComplexity, args["mediaId"].(string), args["chapterId"].(string)), true
+	case "Mutation.setChaptersBookmarked":
+		if e.ComplexityRoot.Mutation.SetChaptersBookmarked == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_setChaptersBookmarked_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.SetChaptersBookmarked(childComplexity, args["mediaId"].(string), args["chapterIds"].([]string), args["bookmarked"].(bool)), true
 	case "Mutation.setFolderContentTypes":
 		if e.ComplexityRoot.Mutation.SetFolderContentTypes == nil {
 			break
@@ -4211,6 +4231,8 @@ func (ec *executionContext) childFields_Chapter(ctx context.Context, field graph
 		return ec.fieldContext_Chapter_scanlator(ctx, field)
 	case "uploadedAt":
 		return ec.fieldContext_Chapter_uploadedAt(ctx, field)
+	case "bookmarked":
+		return ec.fieldContext_Chapter_bookmarked(ctx, field)
 	case "readingProgress":
 		return ec.fieldContext_Chapter_readingProgress(ctx, field)
 	case "completed":
@@ -5932,6 +5954,36 @@ func (ec *executionContext) field_Mutation_retryDownload_args(ctx context.Contex
 		return nil, err
 	}
 	args["chapterId"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_setChaptersBookmarked_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "mediaId",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["mediaId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "chapterIds",
+		func(ctx context.Context, v any) ([]string, error) {
+			return ec.unmarshalNID2ᚕstringᚄ(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["chapterIds"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "bookmarked",
+		func(ctx context.Context, v any) (bool, error) {
+			return ec.unmarshalNBoolean2bool(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["bookmarked"] = arg2
 	return args, nil
 }
 
@@ -7879,6 +7931,29 @@ func (ec *executionContext) _Chapter_uploadedAt(ctx context.Context, field graph
 }
 func (ec *executionContext) fieldContext_Chapter_uploadedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("Chapter", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
+func (ec *executionContext) _Chapter_bookmarked(ctx context.Context, field graphql.CollectedField, obj *model.Chapter) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Chapter_bookmarked(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Bookmarked, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Chapter_bookmarked(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Chapter", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
 func (ec *executionContext) _Chapter_readingProgress(ctx context.Context, field graphql.CollectedField, obj *model.Chapter) (ret graphql.Marshaler) {
@@ -11885,6 +11960,50 @@ func (ec *executionContext) fieldContext_Mutation_markChaptersRead(ctx context.C
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_markChaptersRead_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_setChaptersBookmarked(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_setChaptersBookmarked(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().SetChaptersBookmarked(ctx, fc.Args["mediaId"].(string), fc.Args["chapterIds"].([]string), fc.Args["bookmarked"].(bool))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.Chapter) graphql.Marshaler {
+			return ec.marshalNChapter2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐChapterᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_setChaptersBookmarked(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Chapter(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_setChaptersBookmarked_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -21650,6 +21769,11 @@ func (ec *executionContext) _Chapter(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.RequiredNull {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "bookmarked":
+			out.Values[i] = ec._Chapter_bookmarked(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "readingProgress":
 			field := field
 
@@ -23966,6 +24090,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "markChaptersRead":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_markChaptersRead(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "setChaptersBookmarked":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_setChaptersBookmarked(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++

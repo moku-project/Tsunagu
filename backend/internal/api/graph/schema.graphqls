@@ -240,6 +240,8 @@ type Chapter {
 
   scanlator: String
   uploadedAt: Time
+  "Bookmarked by the reader, as in Mihon."
+  bookmarked: Boolean!
   readingProgress: ReadingProgress @goField(forceResolver: true)
   completed: Boolean! @goField(forceResolver: true)
   downloaded: Boolean! @goField(forceResolver: true)
@@ -539,6 +541,8 @@ type Mutation {
   removeMediaFromFolder(mediaId: ID!, folderId: ID!): Boolean!
 
   markChaptersRead(mediaId: ID!, chapterIds: [ID!]!, read: Boolean!): [ReadingProgress!]!
+  "Bookmarks or unbookmarks chapters of one title."
+  setChaptersBookmarked(mediaId: ID!, chapterIds: [ID!]!, bookmarked: Boolean!): [Chapter!]!
   dequeueDownload(mediaId: ID!, chapterId: ID!): Boolean!
 
   addRepository(indexUrl: String!, name: String): Repository!

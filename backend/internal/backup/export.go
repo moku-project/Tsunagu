@@ -158,6 +158,7 @@ func Export(ctx context.Context, q *sqlcgen.Queries) (*mihonpb.Backup, error) {
 			if p, ok := progressByChapter[c.ID]; ok {
 				bc.Read = p.Completed
 			}
+			bc.Bookmark = c.Bookmarked
 			bkChapters = append(bkChapters, bc)
 		}
 
