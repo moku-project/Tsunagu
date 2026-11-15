@@ -55,6 +55,9 @@ type Options struct {
 
 	// For hosts that load extension APKs natively.
 	PreferAPK bool
+
+	// VideoEngine downloads episodes in-process instead of running ffmpeg.
+	VideoEngine download.VideoDownloadEngine
 }
 
 type Server struct {
@@ -254,6 +257,9 @@ func Start(opts Options) (*Server, error) {
 		return d
 	}
 	downloadMgr := download.New(q, supervised, absMediaDir, resolveDownloadsDir(), store.Config().MangaDownloadFormat)
+	if opts.VideoEngine != nil {
+		downloadMgr.SetVideoEngine(opts.VideoEngine)
+	}
 	downloadMgr.Start()
 	s.cleanups = append(s.cleanups, downloadMgr.Shutdown)
 	store.OnChange("downloads_dir", func(context.Context) {
@@ -384,8 +390,21 @@ func Start(opts Options) (*Server, error) {
 }
 
 // Shutdown stops accepting requests, then stops the background services.
+// shutdownGrace bounds how long Shutdown waits for in-flight requests before
+// closing connections. http.Server.Shutdown otherwise waits up to 5 seconds
+// for any connection a client opened but has not sent a request on yet, and
+// streams (video, events) never finish on their own. iOS gives a backgrounded
+// app only a few seconds to stop.
+const shutdownGrace = 2 * time.Second
+
 func (s *Server) Shutdown(ctx context.Context) error {
-	err := s.http.Shutdown(ctx)
+	grace, cancel := context.WithTimeout(ctx, shutdownGrace)
+	defer cancel()
+	err := s.http.Shutdown(grace)
+	if err != nil {
+		log.Printf("server: closing connections still open after shutdown grace: %v", err)
+		err = s.http.Close()
+	}
 	s.runCleanups()
 	return err
 }
