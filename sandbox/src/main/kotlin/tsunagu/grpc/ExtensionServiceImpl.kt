@@ -595,7 +595,8 @@ class ExtensionServiceImpl(
         val (client, headers) = when (val s = extension.source) {
             is HttpSource -> s.client to s.headers
             is AnimeHttpSource -> s.client to s.headers
-            is NovelPlugin -> NovelJsBridge.client to okhttp3.Headers.headersOf("Referer", s.site)
+            // Browsers send the origin with a trailing slash; sites that check Referer expect that form.
+            is NovelPlugin -> NovelJsBridge.client to okhttp3.Headers.headersOf("Referer", s.site.trimEnd('/') + "/")
             else -> {
                 responseObserver.onError(internal(IllegalStateException("extension ${request.extensionId} has no HTTP client")))
                 return

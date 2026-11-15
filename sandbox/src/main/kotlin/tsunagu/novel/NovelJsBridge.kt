@@ -23,10 +23,18 @@ import org.jsoup.nodes.TextNode
 
 object NovelJsBridge {
 
-    internal val client =
-        OkHttpClient.Builder()
-            .dns(buildSandboxDns(System.getenv("SANDBOX_DOH") ?: "off"))
-            .build()
+    /**
+     * The client every source uses, so novel plugins share the cookie jar,
+     * Cloudflare handling and solved User-Agents with manga and anime
+     * extensions. A plain client never sent a site's cookies, so pages gated
+     * on a session (or a challenge clearance) came back 403.
+     */
+    internal val client: OkHttpClient by lazy {
+        org.koin.core.context.GlobalContext.getOrNull()?.get<eu.kanade.tachiyomi.network.NetworkHelper>()?.client
+            ?: OkHttpClient.Builder()
+                .dns(buildSandboxDns(System.getenv("SANDBOX_DOH") ?: "off"))
+                .build()
+    }
 
     const val REQUIRE_GLUE = """
         function __require(name) {
