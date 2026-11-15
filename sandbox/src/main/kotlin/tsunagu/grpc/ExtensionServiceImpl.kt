@@ -16,6 +16,8 @@ import io.grpc.stub.StreamObserver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import sandbox.v1.ExtensionServiceGrpc
 import sandbox.v1.Sandbox
@@ -437,7 +439,9 @@ class ExtensionServiceImpl(
                 is HttpSource -> {
                     val stub = mangaStub(request.extensionId, request.sourceEntryId)
                     val update = runBlocking {
-                        source.getMangaUpdate(stub, emptyList(), fetchDetails = true, fetchChapters = false)
+                        withEntryLock(request.extensionId, request.sourceEntryId) {
+                            source.getMangaUpdate(stub, emptyList(), fetchDetails = true, fetchChapters = false)
+                        }
                     }
                     stub.mergeDetailsFrom(update.manga)
                     EntryModelCache.putManga(request.extensionId, stub)
@@ -452,6 +456,12 @@ class ExtensionServiceImpl(
             responseObserver.onError(internal(e))
         }
     }
+
+    // Sources reject overlapping updates for one title, and the server asks for details and chapters at once.
+    private val entryLocks = java.util.concurrent.ConcurrentHashMap<String, Mutex>()
+
+    private suspend fun <T> withEntryLock(extensionId: String, entryId: String, block: suspend () -> T): T =
+        entryLocks.computeIfAbsent("$extensionId\u0000$entryId") { Mutex() }.withLock { block() }
 
     override fun getChapters(
         request: Sandbox.EntryRequest,
@@ -473,7 +483,9 @@ class ExtensionServiceImpl(
                 is HttpSource -> {
                     val stub = mangaStub(request.extensionId, request.sourceEntryId)
                     val update = runBlocking {
-                        source.getMangaUpdate(stub, emptyList(), fetchDetails = false, fetchChapters = true)
+                        withEntryLock(request.extensionId, request.sourceEntryId) {
+                            source.getMangaUpdate(stub, emptyList(), fetchDetails = false, fetchChapters = true)
+                        }
                     }
                     val builder = Sandbox.ChapterList.newBuilder()
                     update.chapters.forEach { chapter ->
