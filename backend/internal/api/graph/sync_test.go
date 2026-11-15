@@ -65,7 +65,14 @@ func TestPairingThroughGraphQL(t *testing.T) {
 	if len(code) != 8 {
 		t.Fatalf("pairing code %q", code)
 	}
-	out = phoneGQL(`mutation { connectSyncPeer(address: "` + srv.URL + `", code: "` + code + `") { node name address } }`)
+	out = phoneGQL(`mutation { previewSyncPeer(address: "` + srv.URL + `", code: "` + code + `") { node titles newTitles sentTitles mergingFolders } }`)
+	if got, _ := json.Marshal(out["data"]); string(got) != `{"previewSyncPeer":{"mergingFolders":[],"newTitles":0,"node":"`+hub.Node()+`","sentTitles":0,"titles":0}}` {
+		t.Fatalf("preview %s (errors %v)", got, out["errors"])
+	}
+	if out := phoneGQL(`mutation { connectSyncPeer(address: "` + srv.URL + `", code: "` + code + `", node: "other") { node } }`); out["errors"] == nil {
+		t.Fatal("paired with a node other than the previewed one")
+	}
+	out = phoneGQL(`mutation { connectSyncPeer(address: "` + srv.URL + `", code: "` + code + `", node: "` + hub.Node() + `") { node name address } }`)
 	peer, _ := json.Marshal(out["data"])
 	if !strings.Contains(string(peer), hub.Node()) || !strings.Contains(string(peer), srv.URL) {
 		t.Fatalf("connect returned %s (errors %v)", peer, out["errors"])
@@ -104,5 +111,17 @@ func TestSyncNearbyAndAddresses(t *testing.T) {
 	}
 	if out := hubGQL(`{ syncNearby { node } }`); out["errors"] == nil {
 		t.Fatal("nearby worked with discovery off")
+	}
+}
+
+func TestMissingExtensionsInStatus(t *testing.T) {
+	_, gql := syncGraph(t)
+	out := gql(`{ syncStatus { missingExtensions { packageName name repository available titles examples } } }`)
+	if got, _ := json.Marshal(out["data"]); string(got) != `{"syncStatus":{"missingExtensions":[]}}` {
+		t.Fatalf("got %s (errors %v)", got, out["errors"])
+	}
+	out = gql(`mutation { installSyncExtension(packageName: "nobody.knows") { packageName } }`)
+	if errs, _ := json.Marshal(out["errors"]); !strings.Contains(string(errs), "add its repository by hand") {
+		t.Fatalf("installing an extension no device described: %s", errs)
 	}
 }

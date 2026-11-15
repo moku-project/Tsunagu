@@ -19,8 +19,12 @@ func (r *mutationResolver) CreateSyncPairingCode(ctx context.Context) (*model.Sy
 	return &model.SyncPairingCode{Code: code, ExpiresAt: expires}, nil
 }
 
-func (r *mutationResolver) ConnectSyncPeer(ctx context.Context, address string, code string) (*model.SyncPeer, error) {
-	node, err := r.Ms.Connect(ctx, nil, address, code)
+func (r *mutationResolver) PreviewSyncPeer(ctx context.Context, address string, code string) (*model.SyncPairPreview, error) {
+	return r.previewSyncPeer(ctx, address, code)
+}
+
+func (r *mutationResolver) ConnectSyncPeer(ctx context.Context, address string, code string, node string) (*model.SyncPeer, error) {
+	paired, err := r.Ms.ConnectTo(ctx, nil, address, code, node)
 	if err != nil {
 		return nil, err
 	}
@@ -29,11 +33,15 @@ func (r *mutationResolver) ConnectSyncPeer(ctx context.Context, address string, 
 		return nil, err
 	}
 	for _, p := range st.Peers {
-		if p.Node == node {
+		if p.Node == paired {
 			return toSyncPeer(p), nil
 		}
 	}
-	return nil, fmt.Errorf("paired with %s but it isn't listed", node)
+	return nil, fmt.Errorf("paired with %s but it isn't listed", paired)
+}
+
+func (r *mutationResolver) InstallSyncExtension(ctx context.Context, packageName string) (*model.Extension, error) {
+	return r.installSyncExtension(ctx, packageName)
 }
 
 func (r *mutationResolver) RemoveSyncPeer(ctx context.Context, node string) (*model.SyncStatus, error) {

@@ -17,6 +17,8 @@ type SyncStatus {
   pendingTitles: Int!
   "Where devices on the local network reach this one to pair. Empty when it only connects out."
   addresses: [String!]!
+  "Extensions this device lacks that synced library titles come from. Those titles appear once it's installed."
+  missingExtensions: [SyncMissingExtension!]!
 }
 
 "Another Tsunagu advertising on the local network."
@@ -26,6 +28,37 @@ type SyncNearbyDevice {
   address: String!
   "Already paired with this one."
   paired: Boolean!
+}
+
+"An extension synced titles need that isn't installed here."
+type SyncMissingExtension {
+  packageName: String!
+  name: String!
+  lang: String!
+  contentType: String!
+  "Where a paired device installed it from. Empty when no device said."
+  repository: String!
+  "This device already lists it, so installing needs no new repository."
+  available: Boolean!
+  "Library titles waiting on it."
+  titles: Int!
+  "A few of those titles by name."
+  examples: [String!]!
+}
+
+"What pairing with a device would merge. Shown before connecting so the user can back out."
+type SyncPairPreview {
+  node: ID!
+  name: String!
+  "Titles in their library, and how many of those this device doesn't have."
+  titles: Int!
+  newTitles: Int!
+  "This device's titles they don't have yet."
+  sentTitles: Int!
+  folders: Int!
+  readChapters: Int!
+  "Their folders that will merge with a same-name folder here."
+  mergingFolders: [String!]!
 }
 
 type SyncPairingCode {
@@ -43,8 +76,12 @@ extend type Query {
 extend type Mutation {
   "Issues a one-time code another Tsunagu enters to pair with this one."
   createSyncPairingCode: SyncPairingCode!
-  "Pairs with the Tsunagu at address using a code it issued, then keeps syncing with it."
-  connectSyncPeer(address: String!, code: String!): SyncPeer!
+  "Shows what pairing with the Tsunagu at address would merge. The code stays usable."
+  previewSyncPeer(address: String!, code: String!): SyncPairPreview!
+  "Pairs with the Tsunagu at address, only if it's node, the device previewSyncPeer showed."
+  connectSyncPeer(address: String!, code: String!, node: ID!): SyncPeer!
+  "Installs an extension synced titles need, adding the repository a paired device used when this one lacks it."
+  installSyncExtension(packageName: String!): Extension!
   "Unpairs a device on this side."
   removeSyncPeer(node: ID!): SyncStatus!
   setSyncDeviceName(name: String!): SyncStatus!

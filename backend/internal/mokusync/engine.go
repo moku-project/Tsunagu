@@ -309,6 +309,11 @@ func (e *Engine) capture(ctx context.Context, tx *sql.Tx) (int, error) {
 			made, err = e.captureFolder(ctx, tx, d, wall)
 		case d.kind == KindLibrary || d.kind == KindFolderMember:
 			made, err = e.captureMember(ctx, tx, d, wall)
+			if err == nil && d.kind == KindLibrary && d.op == "add" {
+				var info int
+				info, err = e.captureTitleInfo(ctx, tx, d.field, wall)
+				made += info
+			}
 		}
 		if err != nil {
 			return n, err

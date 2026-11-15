@@ -676,6 +676,9 @@ func (r *mutationResolver) InstallExtension(ctx context.Context, packageName str
 		return nil, err
 	}
 	ext = r.persistSupportsLatest(ctx, ext, loaded)
+	if r.Ms != nil {
+		r.Ms.ExtensionsChanged()
+	}
 	return toExtension(ext, r.MediaDir), nil
 }
 

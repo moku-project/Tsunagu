@@ -502,6 +502,22 @@ type SubtitleTrack struct {
 	URL  string `json:"url"`
 }
 
+// An extension synced titles need that isn't installed here.
+type SyncMissingExtension struct {
+	PackageName string `json:"packageName"`
+	Name        string `json:"name"`
+	Lang        string `json:"lang"`
+	ContentType string `json:"contentType"`
+	// Where a paired device installed it from. Empty when no device said.
+	Repository string `json:"repository"`
+	// This device already lists it, so installing needs no new repository.
+	Available bool `json:"available"`
+	// Library titles waiting on it.
+	Titles int32 `json:"titles"`
+	// A few of those titles by name.
+	Examples []string `json:"examples"`
+}
+
 // Another Tsunagu advertising on the local network.
 type SyncNearbyDevice struct {
 	Node    string `json:"node"`
@@ -509,6 +525,21 @@ type SyncNearbyDevice struct {
 	Address string `json:"address"`
 	// Already paired with this one.
 	Paired bool `json:"paired"`
+}
+
+// What pairing with a device would merge. Shown before connecting so the user can back out.
+type SyncPairPreview struct {
+	Node string `json:"node"`
+	Name string `json:"name"`
+	// Titles in their library, and how many of those this device doesn't have.
+	Titles    int32 `json:"titles"`
+	NewTitles int32 `json:"newTitles"`
+	// This device's titles they don't have yet.
+	SentTitles   int32 `json:"sentTitles"`
+	Folders      int32 `json:"folders"`
+	ReadChapters int32 `json:"readChapters"`
+	// Their folders that will merge with a same-name folder here.
+	MergingFolders []string `json:"mergingFolders"`
 }
 
 type SyncPairingCode struct {
@@ -536,6 +567,8 @@ type SyncStatus struct {
 	PendingTitles int32 `json:"pendingTitles"`
 	// Where devices on the local network reach this one to pair. Empty when it only connects out.
 	Addresses []string `json:"addresses"`
+	// Extensions this device lacks that synced library titles come from. Those titles appear once it's installed.
+	MissingExtensions []*SyncMissingExtension `json:"missingExtensions"`
 }
 
 type TagFacet struct {

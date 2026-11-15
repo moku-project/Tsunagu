@@ -16,8 +16,8 @@ func TestCaptureTurnsLocalWritesIntoOps(t *testing.T) {
 	a.setRead(0, 0, true)
 	a.setBookmark(0, 1, true)
 	a.setInLibrary(0, true)
-	if got := a.capture(); got != 4 {
-		t.Fatalf("read (completed + position), bookmark and library add made %d ops, want 4", got)
+	if got := a.capture(); got != 5 {
+		t.Fatalf("read (completed + position), bookmark, library add and its title info made %d ops, want 5", got)
 	}
 	if got := a.capture(); got != 0 {
 		t.Fatalf("second capture made %d ops", got)
@@ -361,9 +361,9 @@ func TestSupersededOpsArePruned(t *testing.T) {
 	a.capture()
 	a.setInLibrary(0, false)
 	a.capture()
-	// The add is gone; the remove stays as the tombstone.
-	if got := a.opCount(); got != 3 {
-		t.Fatalf("op log holds %d ops after add and remove, want 3", got)
+	// The add is gone; the remove stays as the tombstone, and the title info stays for a later re-add.
+	if got := a.opCount(); got != 4 {
+		t.Fatalf("op log holds %d ops after add and remove, want 4", got)
 	}
 }
 

@@ -125,6 +125,10 @@ func (e *Engine) ResolveMissing(ctx context.Context, r Resolver) (int, error) {
 	}
 	sort.Strings(keys)
 
+	installed, _, err := localExtensions(ctx, e.db)
+	if err != nil {
+		return 0, err
+	}
 	resolved := 0
 	now := time.Now()
 	for _, k := range keys {
@@ -138,7 +142,8 @@ func (e *Engine) ResolveMissing(ctx context.Context, r Resolver) (int, error) {
 			continue
 		}
 		p, ok := splitKey(k, 2)
-		if !ok {
+		// Without its extension the fetch can only fail; ExtensionsChanged retries once it's installed.
+		if !ok || !installed[p[0]] {
 			continue
 		}
 		if err := r.Resolve(ctx, p[0], p[1]); err != nil {

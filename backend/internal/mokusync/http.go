@@ -22,6 +22,7 @@ const (
 	PeerPrefix    = "/api/sync/v1/peer/"
 	exchangePath  = PeerPrefix + "exchange"
 	pairPath      = PeerPrefix + "pair"
+	previewPath   = PeerPrefix + "preview"
 	pairingTTL    = 10 * time.Minute
 	maxBodyBytes  = 64 << 20
 	pairingSymbol = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
@@ -47,6 +48,8 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.exchange(w, r)
 	case r.URL.Path == pairPath && r.Method == http.MethodPost:
 		h.pair(w, r)
+	case r.URL.Path == previewPath && r.Method == http.MethodPost:
+		h.preview(w, r)
 	case r.URL.Path == "/api/sync/v1/pairing-code" && r.Method == http.MethodPost:
 		h.pairingCode(w, r)
 	case r.URL.Path == "/api/sync/v1/connect" && r.Method == http.MethodPost:
@@ -113,9 +116,10 @@ func (e *Engine) PairingCode(ctx context.Context) (string, time.Time, error) {
 }
 
 type pairRequest struct {
-	Code string `json:"code"`
-	Node string `json:"node"`
-	Name string `json:"name"`
+	Code   string `json:"code"`
+	Node   string `json:"node"`
+	Name   string `json:"name"`
+	Expect string `json:"expect,omitempty"`
 }
 
 type pairResponse struct {
@@ -129,27 +133,19 @@ func (e *Engine) acceptPairing(ctx context.Context, req pairRequest) (string, er
 	if req.Node == "" || req.Node == e.node {
 		return "", errors.New("invalid peer node")
 	}
-	res, err := e.db.ExecContext(ctx, `DELETE FROM sync_pairing_codes WHERE code_hash = ? AND expires_at >= ?`,
-		hashSecret(strings.ToUpper(strings.TrimSpace(req.Code))), time.Now().UnixMilli())
-	if err != nil {
+	// The other device checked who it previewed; pairing with anyone else would merge a library it never saw.
+	if req.Expect != "" && req.Expect != e.node {
+		return "", errors.New("this is not the device that was previewed")
+	}
+	if err := e.checkCode(ctx, req.Code, true); err != nil {
 		return "", err
 	}
-	if n, _ := res.RowsAffected(); n != 1 {
-		if e.pairFailures.Add(1) >= maxPairFailures {
-			e.pairFailures.Store(0)
-			if _, err := e.db.ExecContext(ctx, `DELETE FROM sync_pairing_codes`); err != nil {
-				return "", err
-			}
-		}
-		return "", errors.New("pairing code is wrong or expired")
-	}
-	e.pairFailures.Store(0)
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {
 		return "", err
 	}
 	token := hex.EncodeToString(b)
-	_, err = e.db.ExecContext(ctx, `INSERT INTO sync_peers (node, name, token_hash) VALUES (?, ?, ?)
+	_, err := e.db.ExecContext(ctx, `INSERT INTO sync_peers (node, name, token_hash) VALUES (?, ?, ?)
 		ON CONFLICT(node) DO UPDATE SET name = excluded.name, token_hash = excluded.token_hash`, req.Node, req.Name, hashSecret(token))
 	return token, err
 }
@@ -181,12 +177,13 @@ func (h *Handler) connect(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Address string `json:"address"`
 		Code    string `json:"code"`
+		Node    string `json:"node"`
 	}
 	if err := readJSON(r, &req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	node, err := h.E.Connect(r.Context(), h.Client, req.Address, req.Code)
+	node, err := h.E.ConnectTo(r.Context(), h.Client, req.Address, req.Code, req.Node)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadGateway)
 		return
@@ -196,16 +193,24 @@ func (h *Handler) connect(w http.ResponseWriter, r *http.Request) {
 
 // Connect pairs with the instance at address and remembers it, so the runner keeps syncing with it.
 func (e *Engine) Connect(ctx context.Context, client *http.Client, address, code string) (string, error) {
+	return e.ConnectTo(ctx, client, address, code, "")
+}
+
+// ConnectTo pairs only if the instance at address is node, the one a preview showed; "" skips the check.
+func (e *Engine) ConnectTo(ctx context.Context, client *http.Client, address, code, node string) (string, error) {
 	address = strings.TrimRight(strings.TrimSpace(address), "/")
 	if address == "" {
 		return "", errors.New("missing address")
 	}
 	var resp pairResponse
-	if err := postJSON(ctx, client, address+pairPath, "", pairRequest{Code: code, Node: e.node, Name: e.Name()}, &resp); err != nil {
+	if err := postJSON(ctx, client, address+pairPath, "", pairRequest{Code: code, Node: e.node, Name: e.Name(), Expect: node}, &resp); err != nil {
 		return "", fmt.Errorf("pair with %s: %w", address, err)
 	}
 	if resp.Node == "" || resp.Token == "" {
 		return "", errors.New("peer sent an incomplete pairing reply")
+	}
+	if node != "" && resp.Node != node {
+		return "", errors.New("a different device answered than the one previewed")
 	}
 	_, err := e.db.ExecContext(ctx, `INSERT INTO sync_peers (node, name, address, dial_token) VALUES (?, ?, ?, ?)
 		ON CONFLICT(node) DO UPDATE SET name = excluded.name, address = excluded.address, dial_token = excluded.dial_token`,
