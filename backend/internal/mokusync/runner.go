@@ -21,7 +21,7 @@ func (e *Engine) Run(ctx context.Context, client *http.Client, interval, idle ti
 			stop()
 		}
 	}()
-	var lastResolve time.Time
+	var lastResolve, lastDiscover time.Time
 	for {
 		select {
 		case <-ctx.Done():
@@ -64,6 +64,14 @@ func (e *Engine) Run(ctx context.Context, client *http.Client, interval, idle ti
 				delete(watchers, key)
 			}
 		}
+		if e.unreachable.Load() > 0 && time.Since(lastDiscover) >= time.Minute {
+			lastDiscover = time.Now()
+			if n, err := e.rediscover(ctx); err != nil && ctx.Err() == nil {
+				log.Printf("moku-sync: look for moved devices: %v", err)
+			} else if n > 0 {
+				log.Printf("moku-sync: %d paired device(s) moved to a new address", n)
+			}
+		}
 		if e.resolver != nil && (e.remoteChanged.Swap(false) || time.Since(lastResolve) >= idle) {
 			lastResolve = time.Now()
 			if _, err := e.ResolveMissing(ctx, e.resolver); err != nil && ctx.Err() == nil {
@@ -77,6 +85,11 @@ func (e *Engine) Run(ctx context.Context, client *http.Client, interval, idle ti
 func (e *Engine) watch(ctx context.Context, p HTTPPeer, node string, interval time.Duration) {
 	backoff := interval
 	failing := false
+	defer func() {
+		if failing {
+			e.unreachable.Add(-1)
+		}
+	}()
 	for ctx.Err() == nil {
 		start := time.Now()
 		err := e.syncWith(ctx, p, node, watchWait)
@@ -88,11 +101,15 @@ func (e *Engine) watch(ctx context.Context, p HTTPPeer, node string, interval ti
 			// Peers are often asleep or away; log once per outage, not on every retry.
 			if !failing {
 				log.Printf("moku-sync: watch %s: %v", p.Address, err)
+				e.unreachable.Add(1)
 			}
 			failing = true
 			backoff = min(backoff*2, 2*time.Minute)
 			wait = backoff
 		} else {
+			if failing {
+				e.unreachable.Add(-1)
+			}
 			failing, backoff = false, interval
 			// A peer that answers at once without holding still gets polled at a steady pace.
 			if time.Since(start) >= interval {

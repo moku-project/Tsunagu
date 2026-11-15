@@ -15,6 +15,17 @@ type SyncStatus {
   peers: [SyncPeer!]!
   "Library titles synced here whose source hasn't been fetched yet."
   pendingTitles: Int!
+  "Where devices on the local network reach this one to pair. Empty when it only connects out."
+  addresses: [String!]!
+}
+
+"Another Tsunagu advertising on the local network."
+type SyncNearbyDevice {
+  node: ID!
+  name: String!
+  address: String!
+  "Already paired with this one."
+  paired: Boolean!
 }
 
 type SyncPairingCode {
@@ -25,6 +36,8 @@ type SyncPairingCode {
 
 extend type Query {
   syncStatus: SyncStatus!
+  "Looks for other instances on the local network for a moment and lists them."
+  syncNearby: [SyncNearbyDevice!]!
 }
 
 extend type Mutation {

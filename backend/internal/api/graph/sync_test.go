@@ -79,3 +79,30 @@ func TestPairingThroughGraphQL(t *testing.T) {
 		t.Fatalf("after unpairing: %s (errors %v)", got, out["errors"])
 	}
 }
+
+func TestSyncNearbyAndAddresses(t *testing.T) {
+	hub, hubGQL := syncGraph(t)
+	phone, phoneGQL := syncGraph(t)
+	hub.SetSyncPort(6008)
+	phone.SetDiscovery(func(ctx context.Context, self string) ([]mokusync.Nearby, error) {
+		return []mokusync.Nearby{{Node: hub.Node(), Name: "Desk", Address: "http://192.168.1.9:6008"}}, nil
+	})
+	out := phoneGQL(`{ syncNearby { node name address paired } syncStatus { addresses } }`)
+	got, _ := json.Marshal(out["data"])
+	want := `{"syncNearby":[{"address":"http://192.168.1.9:6008","name":"Desk","node":"` + hub.Node() + `","paired":false}],"syncStatus":{"addresses":[]}}`
+	if string(got) != want {
+		t.Fatalf("got %s, want %s (errors %v)", got, want, out["errors"])
+	}
+	out = hubGQL(`{ syncStatus { addresses } }`)
+	if out["errors"] != nil {
+		t.Fatal(out["errors"])
+	}
+	for _, a := range out["data"].(map[string]any)["syncStatus"].(map[string]any)["addresses"].([]any) {
+		if !strings.HasSuffix(a.(string), ":6008") {
+			t.Fatalf("address %v", a)
+		}
+	}
+	if out := hubGQL(`{ syncNearby { node } }`); out["errors"] == nil {
+		t.Fatal("nearby worked with discovery off")
+	}
+}

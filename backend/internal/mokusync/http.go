@@ -25,15 +25,23 @@ const (
 	pairingTTL    = 10 * time.Minute
 	maxBodyBytes  = 64 << 20
 	pairingSymbol = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+	// maxPairFailures wrong codes void every open code, so the LAN port can't be used to guess one.
+	maxPairFailures = 20
 )
 
 // Handler serves the sync API. Peer routes check peer tokens; the rest sit behind Tsunagu's own auth.
 type Handler struct {
 	E      *Engine
 	Client *http.Client
+	// PeerOnly serves just the peer routes, for the listener other devices reach.
+	PeerOnly bool
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if h.PeerOnly && !strings.HasPrefix(r.URL.Path, PeerPrefix) {
+		http.NotFound(w, r)
+		return
+	}
 	switch {
 	case r.URL.Path == exchangePath && r.Method == http.MethodPost:
 		h.exchange(w, r)
@@ -127,8 +135,15 @@ func (e *Engine) acceptPairing(ctx context.Context, req pairRequest) (string, er
 		return "", err
 	}
 	if n, _ := res.RowsAffected(); n != 1 {
+		if e.pairFailures.Add(1) >= maxPairFailures {
+			e.pairFailures.Store(0)
+			if _, err := e.db.ExecContext(ctx, `DELETE FROM sync_pairing_codes`); err != nil {
+				return "", err
+			}
+		}
 		return "", errors.New("pairing code is wrong or expired")
 	}
+	e.pairFailures.Store(0)
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {
 		return "", err

@@ -12,6 +12,8 @@ type Status struct {
 	Name          string       `json:"name"`
 	Peers         []PeerStatus `json:"peers"`
 	PendingTitles int          `json:"pendingTitles"`
+	// Addresses are where devices on the LAN reach this one; empty when it only dials out.
+	Addresses []string `json:"addresses"`
 }
 
 func (e *Engine) Status(ctx context.Context) (Status, error) {
@@ -23,7 +25,7 @@ func (e *Engine) Status(ctx context.Context) (Status, error) {
 	if err != nil {
 		return Status{}, err
 	}
-	return Status{Node: e.node, Name: e.Name(), Peers: peers, PendingTitles: pending}, nil
+	return Status{Node: e.node, Name: e.Name(), Peers: peers, PendingTitles: pending, Addresses: e.Addresses()}, nil
 }
 
 // RemovePeer unpairs an instance: its token stops working here, and this one stops dialing it.

@@ -13,7 +13,7 @@ func (r *Resolver) syncStatus(ctx context.Context) (*model.SyncStatus, error) {
 	if err != nil {
 		return nil, err
 	}
-	out := &model.SyncStatus{Node: st.Node, Name: st.Name, Peers: []*model.SyncPeer{}, PendingTitles: int32(st.PendingTitles)}
+	out := &model.SyncStatus{Node: st.Node, Name: st.Name, Peers: []*model.SyncPeer{}, PendingTitles: int32(st.PendingTitles), Addresses: st.Addresses}
 	for _, p := range st.Peers {
 		out.Peers = append(out.Peers, toSyncPeer(p))
 	}
@@ -30,4 +30,16 @@ func toSyncPeer(p mokusync.PeerStatus) *model.SyncPeer {
 		out.LastSeenAt = &t
 	}
 	return out
+}
+
+func (r *Resolver) syncNearby(ctx context.Context) ([]*model.SyncNearbyDevice, error) {
+	found, err := r.Ms.Nearby(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*model.SyncNearbyDevice, 0, len(found))
+	for _, d := range found {
+		out = append(out, &model.SyncNearbyDevice{Node: d.Node, Name: d.Name, Address: d.Address, Paired: d.Paired})
+	}
+	return out, nil
 }

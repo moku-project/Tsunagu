@@ -59,6 +59,7 @@ func Start(dataDir, sandboxAddr, sandboxToken string) error {
 		SandboxToken:    sandboxToken,
 		PreferAPK:       preferAPK,
 		VideoEngine:     engineOption(),
+		NoSyncListener:  true,
 	})
 	if err != nil {
 		return err

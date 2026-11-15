@@ -57,6 +57,9 @@ type Options struct {
 
 	// VideoEngine downloads episodes in-process instead of running ffmpeg.
 	VideoEngine download.VideoDownloadEngine
+
+	// NoSyncListener: this instance only dials out to paired devices and never listens on the LAN.
+	NoSyncListener bool
 }
 
 type Server struct {
@@ -357,6 +360,12 @@ func Start(opts Options) (*Server, error) {
 	syncEngine.SetResolver(syncResolver{sy: syncer, sc: supervised})
 	syncCtx, stopSync := context.WithCancel(context.Background())
 	s.cleanups = append(s.cleanups, stopSync)
+	syncEngine.SetDiscovery(mokusync.BrowseLAN)
+	if !opts.NoSyncListener && cfg.SyncAddr != "" {
+		if err := s.listenForPeers(syncCtx, syncEngine, cfg.SyncAddr); err != nil {
+			log.Printf("moku-sync: other devices can't reach this one: %v", err)
+		}
+	}
 	go syncEngine.Run(syncCtx, nil, 2*time.Second, time.Minute)
 	registerRoutes(mux, authMgr)
 	registerGraphQL(mux, &graph.Resolver{

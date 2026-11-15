@@ -35,6 +35,12 @@ type Engine struct {
 	newOps bool
 	// remoteChanged tells the runner applied ops may have left titles to fetch.
 	remoteChanged atomic.Bool
+	// syncPort is the LAN port peers reach this instance on; 0 when it only dials out.
+	syncPort atomic.Int32
+	discover func(ctx context.Context, self string) ([]Nearby, error)
+	// unreachable counts dialed peers whose watcher is failing; discovery then looks for their new address.
+	unreachable  atomic.Int32
+	pairFailures atomic.Int32
 }
 
 // notifier wakes everyone waiting for the next change; each change replaces the channel.
@@ -63,6 +69,14 @@ func (n *notifier) broadcast() {
 
 // SetResolver lets the runner fetch library titles this instance doesn't have yet.
 func (e *Engine) SetResolver(r Resolver) { e.resolver = r }
+
+// SetSyncPort records the port the peer listener took, for status and the mDNS advert.
+func (e *Engine) SetSyncPort(port int) { e.syncPort.Store(int32(port)) }
+
+// SetDiscovery turns on finding instances on the local network; call before Run.
+func (e *Engine) SetDiscovery(find func(ctx context.Context, self string) ([]Nearby, error)) {
+	e.discover = find
+}
 
 type querier interface {
 	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)

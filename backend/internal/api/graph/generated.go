@@ -435,6 +435,7 @@ type ComplexityRoot struct {
 		SkipTimestamps           func(childComplexity int, chapterID string, episodeLengthMs *int32) int
 		SourcePreferences        func(childComplexity int, extensionID string) int
 		StorageInfo              func(childComplexity int) int
+		SyncNearby               func(childComplexity int) int
 		SyncStatus               func(childComplexity int) int
 		TrackSearch              func(childComplexity int, trackerKey string, query string, contentType *model.ContentType) int
 		TrackerLibrary           func(childComplexity int, trackerKey string, contentType model.ContentType, statuses []string) int
@@ -558,6 +559,13 @@ type ComplexityRoot struct {
 		URL  func(childComplexity int) int
 	}
 
+	SyncNearbyDevice struct {
+		Address func(childComplexity int) int
+		Name    func(childComplexity int) int
+		Node    func(childComplexity int) int
+		Paired  func(childComplexity int) int
+	}
+
 	SyncPairingCode struct {
 		Code      func(childComplexity int) int
 		ExpiresAt func(childComplexity int) int
@@ -571,6 +579,7 @@ type ComplexityRoot struct {
 	}
 
 	SyncStatus struct {
+		Addresses     func(childComplexity int) int
 		Name          func(childComplexity int) int
 		Node          func(childComplexity int) int
 		Peers         func(childComplexity int) int
@@ -840,6 +849,7 @@ type QueryResolver interface {
 	SearchMetadata(ctx context.Context, query string, contentType model.ContentType, provider *string) ([]*model.MetadataCandidate, error)
 	SkipTimestamps(ctx context.Context, chapterID string, episodeLengthMs *int32) ([]*model.SkipMarker, error)
 	SyncStatus(ctx context.Context) (*model.SyncStatus, error)
+	SyncNearby(ctx context.Context) ([]*model.SyncNearbyDevice, error)
 }
 
 // endregion ************************** generated!.gotpl **************************
@@ -3206,6 +3216,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.StorageInfo(childComplexity), true
+	case "Query.syncNearby":
+		if e.ComplexityRoot.Query.SyncNearby == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.SyncNearby(childComplexity), true
 	case "Query.syncStatus":
 		if e.ComplexityRoot.Query.SyncStatus == nil {
 			break
@@ -3688,6 +3704,31 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.SubtitleTrack.URL(childComplexity), true
 
+	case "SyncNearbyDevice.address":
+		if e.ComplexityRoot.SyncNearbyDevice.Address == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SyncNearbyDevice.Address(childComplexity), true
+	case "SyncNearbyDevice.name":
+		if e.ComplexityRoot.SyncNearbyDevice.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SyncNearbyDevice.Name(childComplexity), true
+	case "SyncNearbyDevice.node":
+		if e.ComplexityRoot.SyncNearbyDevice.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SyncNearbyDevice.Node(childComplexity), true
+	case "SyncNearbyDevice.paired":
+		if e.ComplexityRoot.SyncNearbyDevice.Paired == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SyncNearbyDevice.Paired(childComplexity), true
+
 	case "SyncPairingCode.code":
 		if e.ComplexityRoot.SyncPairingCode.Code == nil {
 			break
@@ -3726,6 +3767,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.SyncPeer.Node(childComplexity), true
 
+	case "SyncStatus.addresses":
+		if e.ComplexityRoot.SyncStatus.Addresses == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SyncStatus.Addresses(childComplexity), true
 	case "SyncStatus.name":
 		if e.ComplexityRoot.SyncStatus.Name == nil {
 			break
@@ -4994,6 +5041,20 @@ func (ec *executionContext) childFields_SubtitleTrack(ctx context.Context, field
 	return nil, fmt.Errorf("no field named %q was found under type SubtitleTrack", field.Name)
 }
 
+func (ec *executionContext) childFields_SyncNearbyDevice(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_SyncNearbyDevice_node(ctx, field)
+	case "name":
+		return ec.fieldContext_SyncNearbyDevice_name(ctx, field)
+	case "address":
+		return ec.fieldContext_SyncNearbyDevice_address(ctx, field)
+	case "paired":
+		return ec.fieldContext_SyncNearbyDevice_paired(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type SyncNearbyDevice", field.Name)
+}
+
 func (ec *executionContext) childFields_SyncPairingCode(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "code":
@@ -5028,6 +5089,8 @@ func (ec *executionContext) childFields_SyncStatus(ctx context.Context, field gr
 		return ec.fieldContext_SyncStatus_peers(ctx, field)
 	case "pendingTitles":
 		return ec.fieldContext_SyncStatus_pendingTitles(ctx, field)
+	case "addresses":
+		return ec.fieldContext_SyncStatus_addresses(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type SyncStatus", field.Name)
 }
@@ -16846,6 +16909,38 @@ func (ec *executionContext) fieldContext_Query_syncStatus(_ context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_syncNearby(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_syncNearby(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Query().SyncNearby(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.SyncNearbyDevice) graphql.Marshaler {
+			return ec.marshalNSyncNearbyDevice2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSyncNearbyDeviceᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_syncNearby(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_SyncNearbyDevice(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -18614,6 +18709,98 @@ func (ec *executionContext) fieldContext_SubtitleTrack_url(_ context.Context, fi
 	return graphql.NewScalarFieldContext("SubtitleTrack", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _SyncNearbyDevice_node(ctx context.Context, field graphql.CollectedField, obj *model.SyncNearbyDevice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SyncNearbyDevice_node(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SyncNearbyDevice_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SyncNearbyDevice", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _SyncNearbyDevice_name(ctx context.Context, field graphql.CollectedField, obj *model.SyncNearbyDevice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SyncNearbyDevice_name(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Name, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SyncNearbyDevice_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SyncNearbyDevice", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _SyncNearbyDevice_address(ctx context.Context, field graphql.CollectedField, obj *model.SyncNearbyDevice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SyncNearbyDevice_address(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Address, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SyncNearbyDevice_address(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SyncNearbyDevice", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _SyncNearbyDevice_paired(ctx context.Context, field graphql.CollectedField, obj *model.SyncNearbyDevice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SyncNearbyDevice_paired(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Paired, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SyncNearbyDevice_paired(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SyncNearbyDevice", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
 func (ec *executionContext) _SyncPairingCode_code(ctx context.Context, field graphql.CollectedField, obj *model.SyncPairingCode) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -18851,6 +19038,29 @@ func (ec *executionContext) _SyncStatus_pendingTitles(ctx context.Context, field
 }
 func (ec *executionContext) fieldContext_SyncStatus_pendingTitles(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("SyncStatus", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _SyncStatus_addresses(ctx context.Context, field graphql.CollectedField, obj *model.SyncStatus) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SyncStatus_addresses(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Addresses, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []string) graphql.Marshaler {
+			return ec.marshalNString2ᚕstringᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SyncStatus_addresses(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SyncStatus", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 func (ec *executionContext) _TagFacet_id(ctx context.Context, field graphql.CollectedField, obj *model.TagFacet) (ret graphql.Marshaler) {
@@ -26379,6 +26589,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "syncNearby":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_syncNearby(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "__type":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
@@ -27269,6 +27501,59 @@ func (ec *executionContext) _SubtitleTrack(ctx context.Context, sel ast.Selectio
 	return out
 }
 
+var syncNearbyDeviceImplementors = []string{"SyncNearbyDevice"}
+
+func (ec *executionContext) _SyncNearbyDevice(ctx context.Context, sel ast.SelectionSet, obj *model.SyncNearbyDevice) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, syncNearbyDeviceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SyncNearbyDevice")
+		case "node":
+			out.Values[i] = ec._SyncNearbyDevice_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._SyncNearbyDevice_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "address":
+			out.Values[i] = ec._SyncNearbyDevice_address(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "paired":
+			out.Values[i] = ec._SyncNearbyDevice_paired(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var syncPairingCodeImplementors = []string{"SyncPairingCode"}
 
 func (ec *executionContext) _SyncPairingCode(ctx context.Context, sel ast.SelectionSet, obj *model.SyncPairingCode) graphql.Marshaler {
@@ -27394,6 +27679,11 @@ func (ec *executionContext) _SyncStatus(ctx context.Context, sel ast.SelectionSe
 			}
 		case "pendingTitles":
 			out.Values[i] = ec._SyncStatus_pendingTitles(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "addresses":
+			out.Values[i] = ec._SyncStatus_addresses(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -29477,6 +29767,32 @@ func (ec *executionContext) marshalNSubtitleTrack2ᚖtsunaguᚋbackendᚋinterna
 		return graphql.Null
 	}
 	return ec._SubtitleTrack(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNSyncNearbyDevice2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSyncNearbyDeviceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SyncNearbyDevice) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNSyncNearbyDevice2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSyncNearbyDevice(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNSyncNearbyDevice2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSyncNearbyDevice(ctx context.Context, sel ast.SelectionSet, v *model.SyncNearbyDevice) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SyncNearbyDevice(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNSyncPairingCode2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSyncPairingCode(ctx context.Context, sel ast.SelectionSet, v *model.SyncPairingCode) graphql.Marshaler {

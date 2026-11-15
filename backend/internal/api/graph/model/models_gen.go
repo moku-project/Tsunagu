@@ -502,6 +502,15 @@ type SubtitleTrack struct {
 	URL  string `json:"url"`
 }
 
+// Another Tsunagu advertising on the local network.
+type SyncNearbyDevice struct {
+	Node    string `json:"node"`
+	Name    string `json:"name"`
+	Address string `json:"address"`
+	// Already paired with this one.
+	Paired bool `json:"paired"`
+}
+
 type SyncPairingCode struct {
 	// Entered on the other device. Works once.
 	Code      string    `json:"code"`
@@ -525,6 +534,8 @@ type SyncStatus struct {
 	Peers []*SyncPeer `json:"peers"`
 	// Library titles synced here whose source hasn't been fetched yet.
 	PendingTitles int32 `json:"pendingTitles"`
+	// Where devices on the local network reach this one to pair. Empty when it only connects out.
+	Addresses []string `json:"addresses"`
 }
 
 type TagFacet struct {

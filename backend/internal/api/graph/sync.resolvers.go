@@ -60,3 +60,7 @@ func (r *mutationResolver) SyncNow(ctx context.Context) (*model.SyncStatus, erro
 func (r *queryResolver) SyncStatus(ctx context.Context) (*model.SyncStatus, error) {
 	return r.syncStatus(ctx)
 }
+
+func (r *queryResolver) SyncNearby(ctx context.Context) ([]*model.SyncNearbyDevice, error) {
+	return r.syncNearby(ctx)
+}
