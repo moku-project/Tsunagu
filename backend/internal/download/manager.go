@@ -53,6 +53,8 @@ type Manager struct {
 
 	pausedMu sync.RWMutex
 	paused   bool
+
+	videoEngine VideoDownloadEngine // nil: episodes are downloaded with ffmpeg
 }
 
 func New(q *sqlcgen.Queries, sc *sandbox.SupervisedClient, mediaDir, downloadsDir, imageFormat string) *Manager {
@@ -568,6 +570,13 @@ func (m *Manager) downloadAnime(ctx context.Context, jobID int64, client *sandbo
 		log.Printf("download: progress update failed for job %d: %v", jobID, err)
 	}
 
+	if m.videoEngine != nil {
+		if err := m.downloadWithEngine(ctx, jobID, streamURL, stream.GetHeaders(), outputPath); err != nil {
+			return err
+		}
+		return m.finishAnime(ctx, jobID, dctx, streamURL, outputPath)
+	}
+
 	inputArgs := []string{"-y"}
 
 	{
@@ -671,7 +680,11 @@ func (m *Manager) downloadAnime(ctx context.Context, jobID int64, client *sandbo
 	if _, err := os.Stat(outputPath); err != nil {
 		return fmt.Errorf("ffmpeg reported success but output file missing: %w", err)
 	}
+	return m.finishAnime(ctx, jobID, dctx, streamURL, outputPath)
+}
 
+// finishAnime records a downloaded episode so playback serves the local file.
+func (m *Manager) finishAnime(ctx context.Context, jobID int64, dctx sqlcgen.GetChapterDownloadContextRow, streamURL, outputPath string) error {
 	if err := m.q.UpsertAnimeEpisodeStream(ctx, sqlcgen.UpsertAnimeEpisodeStreamParams{
 		ChapterID: dctx.ChapterID,
 		StreamUrl: sql.NullString{String: streamURL, Valid: true},

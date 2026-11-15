@@ -17,14 +17,16 @@ import (
 	"sync"
 	"time"
 
+	"tsunagu/backend/internal/download"
 	"tsunagu/backend/internal/server"
 )
 
 var (
-	mu        sync.Mutex
-	running   *server.Server
-	apiToken  string
-	preferAPK = true
+	mu          sync.Mutex
+	running     *server.Server
+	apiToken    string
+	preferAPK   = true
+	videoEngine VideoEngine
 )
 
 // SetPreferAPK chooses which extension build the host is sent: APKs for hosts
@@ -64,6 +66,7 @@ func Start(dataDir, sandboxAddr, sandboxToken string) error {
 		SandboxAddr:     sandboxAddr,
 		SandboxToken:    sandboxToken,
 		PreferAPK:       preferAPK,
+		VideoEngine:     engineOption(),
 	})
 	if err != nil {
 		return err
@@ -140,4 +143,13 @@ func setupLog(dataDir string) {
 		return
 	}
 	log.SetOutput(io.MultiWriter(os.Stderr, f))
+}
+
+// engineOption returns nil when no engine is set: a nil VideoEngine wrapped
+// in videoAdapter would be a non-nil interface and disable ffmpeg.
+func engineOption() download.VideoDownloadEngine {
+	if videoEngine == nil {
+		return nil
+	}
+	return videoAdapter{videoEngine}
 }
