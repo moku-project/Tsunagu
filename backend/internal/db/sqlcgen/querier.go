@@ -27,6 +27,7 @@ type Querier interface {
 	ClearGenresForMedia(ctx context.Context, mediaID int64) error
 	ClearMediaCoverPaths(ctx context.Context) error
 	CompleteDownload(ctx context.Context, id int64) error
+	CountBookmarkedChaptersByMediaIDs(ctx context.Context, mediaIds []int64) ([]CountBookmarkedChaptersByMediaIDsRow, error)
 	CountChaptersByMediaIDs(ctx context.Context, mediaIds []int64) ([]CountChaptersByMediaIDsRow, error)
 	// Requires actual current file presence, not just a job row that once said
 	// "done" -- otherwise deleted/relocated downloads stay counted forever.

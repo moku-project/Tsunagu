@@ -242,6 +242,10 @@ func TestChapterBookmarkSurvivesRefreshAndMove(t *testing.T) {
 	if again := create("/c1"); again.ID != first.ID || !again.Bookmarked {
 		t.Fatalf("refresh dropped the bookmark: %+v", again)
 	}
+	counts, err := q.CountBookmarkedChaptersByMediaIDs(ctx, []int64{media.ID})
+	if err != nil || len(counts) != 1 || counts[0].BookmarkCount != 1 {
+		t.Fatalf("bookmark count = %+v (err=%v)", counts, err)
+	}
 	if _, err := q.SetChapterBookmarked(ctx, sqlcgen.SetChapterBookmarkedParams{Bookmarked: true, ID: first.ID, MediaID: media.ID + 1}); err == nil {
 		t.Fatal("bookmarked a chapter through another title")
 	}

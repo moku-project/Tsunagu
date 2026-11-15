@@ -32,6 +32,51 @@ func (q *Queries) ClearChapterFirstSeen(ctx context.Context, mediaID int64) erro
 	return err
 }
 
+const countBookmarkedChaptersByMediaIDs = `-- name: CountBookmarkedChaptersByMediaIDs :many
+SELECT media_id, COUNT(*) AS bookmark_count
+FROM chapters
+WHERE media_id IN (/*SLICE:media_ids*/?) AND bookmarked
+GROUP BY media_id
+`
+
+type CountBookmarkedChaptersByMediaIDsRow struct {
+	MediaID       int64 `json:"media_id"`
+	BookmarkCount int64 `json:"bookmark_count"`
+}
+
+func (q *Queries) CountBookmarkedChaptersByMediaIDs(ctx context.Context, mediaIds []int64) ([]CountBookmarkedChaptersByMediaIDsRow, error) {
+	query := countBookmarkedChaptersByMediaIDs
+	var queryParams []interface{}
+	if len(mediaIds) > 0 {
+		for _, v := range mediaIds {
+			queryParams = append(queryParams, v)
+		}
+		query = strings.Replace(query, "/*SLICE:media_ids*/?", strings.Repeat(",?", len(mediaIds))[1:], 1)
+	} else {
+		query = strings.Replace(query, "/*SLICE:media_ids*/?", "NULL", 1)
+	}
+	rows, err := q.db.QueryContext(ctx, query, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []CountBookmarkedChaptersByMediaIDsRow{}
+	for rows.Next() {
+		var i CountBookmarkedChaptersByMediaIDsRow
+		if err := rows.Scan(&i.MediaID, &i.BookmarkCount); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const countChaptersByMediaIDs = `-- name: CountChaptersByMediaIDs :many
 SELECT media_id, COUNT(*) AS chapter_count
 FROM chapters

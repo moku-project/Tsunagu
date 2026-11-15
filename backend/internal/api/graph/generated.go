@@ -233,6 +233,7 @@ type ComplexityRoot struct {
 		AddedAt            func(childComplexity int) int
 		Artist             func(childComplexity int) int
 		Author             func(childComplexity int) int
+		BookmarkedCount    func(childComplexity int) int
 		ChapterCount       func(childComplexity int) int
 		Chapters           func(childComplexity int) int
 		ContentType        func(childComplexity int) int
@@ -675,6 +676,7 @@ type MediaResolver interface {
 	ChapterCount(ctx context.Context, obj *model.Media) (int32, error)
 	UnreadCount(ctx context.Context, obj *model.Media) (int32, error)
 	DownloadedCount(ctx context.Context, obj *model.Media) (int32, error)
+	BookmarkedCount(ctx context.Context, obj *model.Media) (int32, error)
 	NextUnreadChapter(ctx context.Context, obj *model.Media) (*model.Chapter, error)
 	LatestChapter(ctx context.Context, obj *model.Media) (*model.Chapter, error)
 	ReadingProgress(ctx context.Context, obj *model.Media) ([]*model.ReadingProgress, error)
@@ -1644,6 +1646,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Media.Author(childComplexity), true
+	case "Media.bookmarkedCount":
+		if e.ComplexityRoot.Media.BookmarkedCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Media.BookmarkedCount(childComplexity), true
 	case "Media.chapterCount":
 		if e.ComplexityRoot.Media.ChapterCount == nil {
 			break
@@ -4516,6 +4524,8 @@ func (ec *executionContext) childFields_Media(ctx context.Context, field graphql
 		return ec.fieldContext_Media_unreadCount(ctx, field)
 	case "downloadedCount":
 		return ec.fieldContext_Media_downloadedCount(ctx, field)
+	case "bookmarkedCount":
+		return ec.fieldContext_Media_bookmarkedCount(ctx, field)
 	case "nextUnreadChapter":
 		return ec.fieldContext_Media_nextUnreadChapter(ctx, field)
 	case "latestChapter":
@@ -10615,6 +10625,29 @@ func (ec *executionContext) _Media_downloadedCount(ctx context.Context, field gr
 	)
 }
 func (ec *executionContext) fieldContext_Media_downloadedCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Media", field, true, true, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _Media_bookmarkedCount(ctx context.Context, field graphql.CollectedField, obj *model.Media) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Media_bookmarkedCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Media().BookmarkedCount(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Media_bookmarkedCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("Media", field, true, true, errors.New("field of type Int does not have child fields"))
 }
 
@@ -21006,7 +21039,7 @@ func (ec *executionContext) unmarshalInputLibraryFilter(ctx context.Context, obj
 		asMap["inLibrary"] = true
 	}
 
-	fieldsInOrder := [...]string{"contentType", "inLibrary", "unreadOnly", "downloadedOnly", "tagIds", "genreIds", "folderId", "query"}
+	fieldsInOrder := [...]string{"contentType", "inLibrary", "unreadOnly", "downloadedOnly", "bookmarkedOnly", "tagIds", "genreIds", "folderId", "query"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -21041,6 +21074,13 @@ func (ec *executionContext) unmarshalInputLibraryFilter(ctx context.Context, obj
 				return it, err
 			}
 			it.DownloadedOnly = data
+		case "bookmarkedOnly":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bookmarkedOnly"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BookmarkedOnly = data
 		case "tagIds":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tagIds"))
 			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
@@ -23234,6 +23274,44 @@ func (ec *executionContext) _Media(ctx context.Context, sel ast.SelectionSet, ob
 					}
 				}()
 				res = ec._Media_downloadedCount(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "bookmarkedCount":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Media_bookmarkedCount(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}

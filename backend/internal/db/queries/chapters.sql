@@ -280,3 +280,9 @@ RETURNING *;
 UPDATE chapters SET bookmarked = TRUE
 WHERE chapters.id = sqlc.arg(to_id)
   AND (SELECT f.bookmarked FROM chapters AS f WHERE f.id = sqlc.arg(from_id));
+
+-- name: CountBookmarkedChaptersByMediaIDs :many
+SELECT media_id, COUNT(*) AS bookmark_count
+FROM chapters
+WHERE media_id IN (sqlc.slice('media_ids')) AND bookmarked
+GROUP BY media_id;

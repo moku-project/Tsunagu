@@ -6,6 +6,8 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/hex"
+	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -81,8 +83,9 @@ func (h *CoverProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		destName += "-original"
 	}
 	var localPath string
+	var fetchErr error
 	for _, u := range candidates {
-		if localPath, err = image.DownloadToFile(u, h.CoverCacheDir, destName); err == nil {
+		if localPath, fetchErr = image.DownloadToFile(u, h.CoverCacheDir, destName); fetchErr == nil {
 			break
 		}
 	}
@@ -90,14 +93,17 @@ func (h *CoverProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if localPath == "" && h.Sc != nil && entry.ExtensionID.Valid {
 		if ext, extErr := h.Q.GetExtension(ctx, entry.ExtensionID.Int64); extErr == nil {
 			for _, u := range candidates {
-				if p, sbErr := h.fetchViaSandbox(ctx, ext.PackageName, u, destName); sbErr == nil {
+				p, sbErr := h.fetchViaSandbox(ctx, ext.PackageName, u, destName)
+				if sbErr == nil {
 					localPath = p
 					break
 				}
+				fetchErr = fmt.Errorf("%v; via extension: %w", fetchErr, sbErr)
 			}
 		}
 	}
 	if localPath == "" {
+		log.Printf("cover %d: %v", entryID, fetchErr)
 		http.Error(w, "fetching cover failed", http.StatusBadGateway)
 		return
 	}

@@ -128,6 +128,8 @@ type Media {
   chapterCount: Int! @goField(forceResolver: true)
   unreadCount: Int! @goField(forceResolver: true)
   downloadedCount: Int! @goField(forceResolver: true)
+  "Chapters of this title the reader bookmarked."
+  bookmarkedCount: Int! @goField(forceResolver: true)
   nextUnreadChapter: Chapter @goField(forceResolver: true)
   latestChapter: Chapter @goField(forceResolver: true)
   readingProgress: [ReadingProgress!]! @goField(forceResolver: true)
@@ -454,6 +456,8 @@ input LibraryFilter {
   inLibrary: Boolean = true
   unreadOnly: Boolean
   downloadedOnly: Boolean
+  "Titles with at least one bookmarked chapter."
+  bookmarkedOnly: Boolean
   tagIds: [ID!]
   genreIds: [ID!]
   folderId: ID

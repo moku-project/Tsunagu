@@ -16,6 +16,7 @@ type Loaders struct {
 	ChapterCountByMedia    *dataloadgen.Loader[int64, int32]
 	UnreadCountByMedia     *dataloadgen.Loader[int64, int32]
 	DownloadedCountByMedia *dataloadgen.Loader[int64, int32]
+	BookmarkedCountByMedia *dataloadgen.Loader[int64, int32]
 	TagsByMedia            *dataloadgen.Loader[int64, []string]
 	GenresByMedia          *dataloadgen.Loader[int64, []string]
 	ProgressByMedia        *dataloadgen.Loader[int64, []sqlcgen.ReadingProgress]
@@ -45,6 +46,7 @@ func NewLoaders(q *sqlcgen.Queries) *Loaders {
 		ChapterCountByMedia:      dataloadgen.NewLoader(chapterCountByMediaFn(q)),
 		UnreadCountByMedia:       dataloadgen.NewLoader(unreadCountByMediaFn(q)),
 		DownloadedCountByMedia:   dataloadgen.NewLoader(downloadedCountByMediaFn(q)),
+		BookmarkedCountByMedia:   dataloadgen.NewLoader(bookmarkedCountByMediaFn(q)),
 		TagsByMedia:              dataloadgen.NewLoader(tagsByMediaFn(q)),
 		GenresByMedia:            dataloadgen.NewLoader(genresByMediaFn(q)),
 		ProgressByMedia:          dataloadgen.NewLoader(progressByMediaFn(q)),
@@ -141,6 +143,24 @@ func downloadedCountByMediaFn(q *sqlcgen.Queries) func(context.Context, []int64)
 		m := make(map[int64]int32, len(rows))
 		for _, r := range rows {
 			m[r.MediaID] = int32(r.DownloadCount)
+		}
+		out := make([]int32, len(keys))
+		for i, k := range keys {
+			out[i] = m[k]
+		}
+		return out, nil
+	}
+}
+
+func bookmarkedCountByMediaFn(q *sqlcgen.Queries) func(context.Context, []int64) ([]int32, []error) {
+	return func(ctx context.Context, keys []int64) ([]int32, []error) {
+		rows, err := q.CountBookmarkedChaptersByMediaIDs(ctx, keys)
+		if err != nil {
+			return make([]int32, len(keys)), repeatErr(err, len(keys))
+		}
+		m := make(map[int64]int32, len(rows))
+		for _, r := range rows {
+			m[r.MediaID] = int32(r.BookmarkCount)
 		}
 		out := make([]int32, len(keys))
 		for i, k := range keys {

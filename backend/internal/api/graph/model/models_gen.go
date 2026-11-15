@@ -240,10 +240,12 @@ type LibraryFilter struct {
 	InLibrary      *bool        `json:"inLibrary,omitempty"`
 	UnreadOnly     *bool        `json:"unreadOnly,omitempty"`
 	DownloadedOnly *bool        `json:"downloadedOnly,omitempty"`
-	TagIds         []string     `json:"tagIds,omitempty"`
-	GenreIds       []string     `json:"genreIds,omitempty"`
-	FolderID       *string      `json:"folderId,omitempty"`
-	Query          *string      `json:"query,omitempty"`
+	// Titles with at least one bookmarked chapter.
+	BookmarkedOnly *bool    `json:"bookmarkedOnly,omitempty"`
+	TagIds         []string `json:"tagIds,omitempty"`
+	GenreIds       []string `json:"genreIds,omitempty"`
+	FolderID       *string  `json:"folderId,omitempty"`
+	Query          *string  `json:"query,omitempty"`
 }
 
 type LibrarySortInput struct {
@@ -263,28 +265,30 @@ type LibraryUpdateStatus struct {
 }
 
 type Media struct {
-	ID                 string             `json:"id"`
-	ExtensionID        *string            `json:"extensionId,omitempty"`
-	ExtensionName      string             `json:"extensionName"`
-	SourceName         string             `json:"sourceName"`
-	ExternalID         string             `json:"externalId"`
-	ContentType        ContentType        `json:"contentType"`
-	Title              string             `json:"title"`
-	ThumbnailURL       *string            `json:"thumbnailUrl,omitempty"`
-	HasCoverOverride   bool               `json:"hasCoverOverride"`
-	Description        *string            `json:"description,omitempty"`
-	Status             *string            `json:"status,omitempty"`
-	Author             *string            `json:"author,omitempty"`
-	Artist             *string            `json:"artist,omitempty"`
-	DetailsFetchedAt   *time.Time         `json:"detailsFetchedAt,omitempty"`
-	ExtensionRemovedAt *time.Time         `json:"extensionRemovedAt,omitempty"`
-	AddedAt            *time.Time         `json:"addedAt,omitempty"`
-	LastViewedAt       *time.Time         `json:"lastViewedAt,omitempty"`
-	InLibrary          bool               `json:"inLibrary"`
-	Chapters           []*Chapter         `json:"chapters"`
-	ChapterCount       int32              `json:"chapterCount"`
-	UnreadCount        int32              `json:"unreadCount"`
-	DownloadedCount    int32              `json:"downloadedCount"`
+	ID                 string      `json:"id"`
+	ExtensionID        *string     `json:"extensionId,omitempty"`
+	ExtensionName      string      `json:"extensionName"`
+	SourceName         string      `json:"sourceName"`
+	ExternalID         string      `json:"externalId"`
+	ContentType        ContentType `json:"contentType"`
+	Title              string      `json:"title"`
+	ThumbnailURL       *string     `json:"thumbnailUrl,omitempty"`
+	HasCoverOverride   bool        `json:"hasCoverOverride"`
+	Description        *string     `json:"description,omitempty"`
+	Status             *string     `json:"status,omitempty"`
+	Author             *string     `json:"author,omitempty"`
+	Artist             *string     `json:"artist,omitempty"`
+	DetailsFetchedAt   *time.Time  `json:"detailsFetchedAt,omitempty"`
+	ExtensionRemovedAt *time.Time  `json:"extensionRemovedAt,omitempty"`
+	AddedAt            *time.Time  `json:"addedAt,omitempty"`
+	LastViewedAt       *time.Time  `json:"lastViewedAt,omitempty"`
+	InLibrary          bool        `json:"inLibrary"`
+	Chapters           []*Chapter  `json:"chapters"`
+	ChapterCount       int32       `json:"chapterCount"`
+	UnreadCount        int32       `json:"unreadCount"`
+	DownloadedCount    int32       `json:"downloadedCount"`
+	// Chapters of this title the reader bookmarked.
+	BookmarkedCount    int32              `json:"bookmarkedCount"`
 	NextUnreadChapter  *Chapter           `json:"nextUnreadChapter,omitempty"`
 	LatestChapter      *Chapter           `json:"latestChapter,omitempty"`
 	ReadingProgress    []*ReadingProgress `json:"readingProgress"`

@@ -1315,6 +1315,7 @@ type LibraryQuery struct {
 	InLibrary      *bool
 	UnreadOnly     bool
 	DownloadedOnly bool
+	BookmarkedOnly bool
 	TagIDs         []int64
 	GenreIDs       []int64
 	FolderID       *int64
@@ -1376,6 +1377,9 @@ func (s *Syncer) QueryLibrary(ctx context.Context, q LibraryQuery) ([]sqlcgen.Me
 			SELECT 1 FROM chapters c
 			LEFT JOIN reading_progress rp ON rp.chapter_id = c.id AND rp.media_id = c.media_id
 			WHERE c.media_id = m.id AND (rp.completed IS NULL OR rp.completed = 0))`)
+	}
+	if q.BookmarkedOnly {
+		where = append(where, `EXISTS (SELECT 1 FROM chapters c WHERE c.media_id = m.id AND c.bookmarked)`)
 	}
 	if q.DownloadedOnly {
 		where = append(where, `EXISTS (

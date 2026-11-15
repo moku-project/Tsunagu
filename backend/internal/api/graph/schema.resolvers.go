@@ -206,6 +206,14 @@ func (r *mediaResolver) DownloadedCount(ctx context.Context, obj *model.Media) (
 	return LoadersFromContext(ctx).DownloadedCountByMedia.Load(ctx, id)
 }
 
+func (r *mediaResolver) BookmarkedCount(ctx context.Context, obj *model.Media) (int32, error) {
+	id, err := parseID(obj.ID)
+	if err != nil {
+		return 0, err
+	}
+	return LoadersFromContext(ctx).BookmarkedCountByMedia.Load(ctx, id)
+}
+
 func (r *mediaResolver) NextUnreadChapter(ctx context.Context, obj *model.Media) (*model.Chapter, error) {
 	id, err := parseID(obj.ID)
 	if err != nil {
@@ -1761,6 +1769,9 @@ func (r *queryResolver) Library(ctx context.Context, filter *model.LibraryFilter
 		}
 		if filter.DownloadedOnly != nil {
 			q.DownloadedOnly = *filter.DownloadedOnly
+		}
+		if filter.BookmarkedOnly != nil {
+			q.BookmarkedOnly = *filter.BookmarkedOnly
 		}
 		if filter.Query != nil {
 			q.Search = *filter.Query
