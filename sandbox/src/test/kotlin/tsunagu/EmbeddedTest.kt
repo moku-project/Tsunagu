@@ -33,8 +33,7 @@ class EmbeddedTest {
     }
 
     companion object {
-        // Embedded bootstraps Koin once per process; other test classes in this
-        // JVM start their own.
+        // Embedded bootstraps Koin once per process; other test classes start their own.
         @JvmStatic
         @AfterAll
         fun stopKoinAfterAll() = stopKoin()
@@ -73,8 +72,7 @@ class EmbeddedTest {
             assertEquals(Status.Code.UNAUTHENTICATED, err.status.code)
         }
 
-        // Backgrounding stops the host; coming back starts it on a new port
-        // without re-bootstrapping.
+        // Backgrounding stops the host; returning restarts it on a new port without re-bootstrapping.
         Embedded.stop()
         val again = Embedded.start(dir, token, novelEnabled = false)
         stub(again, token).listLoadedExtensions(Sandbox.Empty.getDefaultInstance())

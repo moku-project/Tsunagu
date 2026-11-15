@@ -353,9 +353,7 @@ func (sc *SupervisedClient) Restart() {
 // ErrHostNotAttached is returned while an external sandbox has no address yet.
 var ErrHostNotAttached = errors.New("extension host not attached yet")
 
-// Attach points an external sandbox at the embedder's extension host. It lets
-// an embedder start the core before its host is up (iOS boots its JVM later),
-// and re-attach after the host restarts on a new port.
+// Attach points an external sandbox at the embedder's host, which may start later or move ports.
 func (sc *SupervisedClient) Attach(addr, token string) error {
 	if !sc.external {
 		return errors.New("sandbox is not external")

@@ -183,8 +183,7 @@ func (c *Client) SetSourcePreference(ctx context.Context, extensionID, key, valu
 	return err
 }
 
-// BrowserCookies reads, or with apply first stores, the browser session
-// (cookies and User-Agent, as JSON) sources use for url's host.
+// BrowserCookies reads, or with apply stores, the cookies and User-Agent sources use for url's host.
 func (c *Client) BrowserCookies(ctx context.Context, url, stateJSON string, apply bool) (string, error) {
 	ctx, cancel := c.withTimeout(ctx)
 	defer cancel()

@@ -29,9 +29,7 @@ var (
 	videoEngine VideoEngine
 )
 
-// SetPreferAPK chooses which extension build the host is sent: APKs for hosts
-// that load them natively (Android, the default), JARs otherwise (iOS).
-// Takes effect on the next Start.
+// SetPreferAPK sends APKs to hosts that load them natively (Android) and JARs otherwise; applies on the next Start.
 func SetPreferAPK(v bool) {
 	mu.Lock()
 	defer mu.Unlock()
@@ -41,10 +39,7 @@ func SetPreferAPK(v bool) {
 // Version is set at build time with -ldflags.
 var Version = "dev"
 
-// Start runs the server on a random loopback port. The app's extension host
-// must be listening at sandboxAddr and accept sandboxToken. Pass an empty
-// sandboxAddr to start before the host is up, then call AttachSandbox; until
-// then, calls that need extensions fail and everything else works.
+// Start runs the server on a random loopback port; with an empty sandboxAddr, attach the host later with AttachSandbox.
 func Start(dataDir, sandboxAddr, sandboxToken string) error {
 	mu.Lock()
 	defer mu.Unlock()
@@ -75,9 +70,7 @@ func Start(dataDir, sandboxAddr, sandboxToken string) error {
 	return nil
 }
 
-// AttachSandbox connects the running server to the app's extension host, or
-// moves it to a new address after the host restarts. It returns once the host
-// answers, or with an error if it does not within 10 seconds.
+// AttachSandbox connects the server to the app's extension host and waits up to 10 seconds for it to answer.
 func AttachSandbox(sandboxAddr, sandboxToken string) error {
 	mu.Lock()
 	defer mu.Unlock()
@@ -89,9 +82,7 @@ func AttachSandbox(sandboxAddr, sandboxToken string) error {
 	return running.AttachSandbox(ctx, sandboxAddr, sandboxToken)
 }
 
-// LocalSourceDir is the folder Tsunagu scans for local media, laid out as
-// <dir>/<manga|novels|anime>/<series>/<chapter>/... Copy files there, then
-// run the rescanLocalMedia mutation. Empty when stopped.
+// LocalSourceDir is the local-media folder (<kind>/<series>/<chapter>/...), scanned by rescanLocalMedia; empty when stopped.
 func LocalSourceDir() string {
 	mu.Lock()
 	defer mu.Unlock()
@@ -157,8 +148,7 @@ func setupLog(dataDir string) {
 	log.SetOutput(io.MultiWriter(os.Stderr, f))
 }
 
-// engineOption returns nil when no engine is set: a nil VideoEngine wrapped
-// in videoAdapter would be a non-nil interface and disable ffmpeg.
+// engineOption returns a nil interface when unset, since a wrapped nil engine would disable ffmpeg.
 func engineOption() download.VideoDownloadEngine {
 	if videoEngine == nil {
 		return nil

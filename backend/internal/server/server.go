@@ -46,9 +46,7 @@ type Options struct {
 	HTTPAddr string
 	APIToken string
 
-	// ExternalSandbox means the embedder runs the extension host at SandboxAddr;
-	// the server connects to it and never spawns one. An empty SandboxAddr
-	// defers the host until AttachSandbox.
+	// ExternalSandbox: the embedder runs the host at SandboxAddr (empty until AttachSandbox); never spawn one.
 	ExternalSandbox bool
 	SandboxAddr     string
 	SandboxToken    string
@@ -71,14 +69,10 @@ type Server struct {
 	cleanups []func()
 }
 
-// LocalSourceDir is the folder scanned for local media
-// (<dir>/<manga|novels|anime>/<series>/...). Clients add files there, then
-// call the rescanLocalMedia mutation, as desktop Moku does.
+// LocalSourceDir is the local-media folder that rescanLocalMedia scans.
 func (s *Server) LocalSourceDir() string { return s.local.LocalDir() }
 
-// AttachSandbox points an external sandbox at the embedder's extension host
-// and waits until the host answers, so the embedder learns about a host that
-// failed to come up when it attaches rather than on the first extension call.
+// AttachSandbox attaches the embedder's host and waits for it, so a dead host fails here, not on first use.
 func (s *Server) AttachSandbox(ctx context.Context, addr, token string) error {
 	if err := s.sandbox.Attach(addr, token); err != nil {
 		return err
@@ -202,8 +196,7 @@ func Start(opts Options) (*Server, error) {
 
 	sandboxAddr := cfg.SandboxAddr
 	if opts.ExternalSandbox {
-		// Never fall back to the configured port: that would dial whatever
-		// else is listening there instead of waiting for AttachSandbox.
+		// No fallback to the configured port: it could dial an unrelated listener.
 		sandboxAddr = opts.SandboxAddr
 	}
 	supervised := sandbox.NewSupervised(sandbox.SupervisedConfig{
@@ -399,9 +392,7 @@ func Start(opts Options) (*Server, error) {
 }
 
 // Shutdown stops accepting requests, then stops the background services.
-// BrowserCookies reads, or with apply first stores, the browser session that
-// extensionID's requests to url use. Embedders call it around a challenge the
-// user passes in a real browser.
+// BrowserCookies reads, or with apply stores, the browser session extensionID uses for url.
 func (s *Server) BrowserCookies(ctx context.Context, extensionID, url, stateJSON string, apply bool) (string, error) {
 	if _, err := s.q.GetExtensionByPackageName(ctx, extensionID); err != nil {
 		return "", fmt.Errorf("unknown source %q", extensionID)
@@ -413,11 +404,7 @@ func (s *Server) BrowserCookies(ctx context.Context, extensionID, url, stateJSON
 	return client.BrowserCookies(ctx, url, stateJSON, apply)
 }
 
-// shutdownGrace bounds how long Shutdown waits for in-flight requests before
-// closing connections. http.Server.Shutdown otherwise waits up to 5 seconds
-// for any connection a client opened but has not sent a request on yet, and
-// streams (video, events) never finish on their own. iOS gives a backgrounded
-// app only a few seconds to stop.
+// shutdownGrace caps Shutdown's wait for idle and streaming connections; iOS allows a backgrounded app only seconds.
 const shutdownGrace = 2 * time.Second
 
 func (s *Server) Shutdown(ctx context.Context) error {

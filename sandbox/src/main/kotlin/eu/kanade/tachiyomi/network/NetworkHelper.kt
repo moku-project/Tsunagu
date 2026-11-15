@@ -80,8 +80,7 @@ class NetworkHelper(cookiesFile: File? = null) {
                     )
                     .addInterceptor(UncaughtExceptionInterceptor())
                     .addInterceptor(UserAgentInterceptor(::defaultUserAgentProvider))
-                    // A challenge clearance only works with the User-Agent that earned it,
-                    // so it overrides whatever the extension set.
+                    // A clearance only works with the User-Agent that earned it, so it overrides the extension's.
                     .addNetworkInterceptor { chain ->
                         val agent = cookieStore.userAgent(chain.request().url)
                         chain.proceed(

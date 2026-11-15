@@ -11,10 +11,7 @@ import (
 	"tsunagu/backend/internal/db/sqlcgen"
 )
 
-// VideoDownloadEngine downloads an episode in-process, for embedders that
-// cannot run an ffmpeg executable (iOS). It must write a complete, playable
-// MP4 to OutputPath, honour ctx cancellation, and never report success for
-// partial output. Without one, the manager runs ffmpeg.
+// VideoDownloadEngine replaces ffmpeg for embedders without it; it must write a complete MP4 or fail.
 type VideoDownloadEngine interface {
 	Download(ctx context.Context, req VideoRequest, progress func(VideoProgress)) error
 }
@@ -32,8 +29,7 @@ type VideoProgress struct {
 	BytesPerSecond float64
 }
 
-// SetVideoEngine routes episode downloads through engine instead of ffmpeg.
-// Call it before Start.
+// SetVideoEngine routes episode downloads through engine instead of ffmpeg; call before Start.
 func (m *Manager) SetVideoEngine(engine VideoDownloadEngine) { m.videoEngine = engine }
 
 func (m *Manager) downloadWithEngine(ctx context.Context, jobID int64, streamURL string, headers map[string]string, outputPath string) error {

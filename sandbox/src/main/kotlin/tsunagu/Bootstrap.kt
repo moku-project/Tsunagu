@@ -13,17 +13,12 @@ import tsunagu.source.GetSource
 
 /** Setup shared by the standalone sandbox ([main]) and the in-app one ([Embedded]). */
 internal fun bootstrap(extensionsDir: File, storageDir: File, novelEnabled: Boolean): ExtensionRegistry {
-    // JarURLConnection caches an open JarFile handle globally by default, outside
-    // any classloader's lifecycle — on Windows that keeps extension jars locked
-    // even after their classloader is closed, breaking updates/uninstalls.
+    // Cached JarFile handles keep extension jars locked on Windows after unload, breaking updates.
     URLConnection.setDefaultUseCaches("jar", false)
     startKoin {
         modules(
             module {
-                // explicitNulls = false matters independently of ignoreUnknownKeys: a
-                // nullable property with no `= null` default still throws
-                // MissingFieldException when its key is absent from the JSON unless
-                // this is set — several extensions (e.g. Flame Comics) rely on that.
+                // explicitNulls = false lets absent nullable keys decode; some extensions (Flame Comics) rely on it.
                 single { Json { ignoreUnknownKeys = true; explicitNulls = false } }
                 single { NetworkHelper(File(storageDir, "cookies.json")) }
                 single { android.app.Application() }

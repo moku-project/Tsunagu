@@ -210,8 +210,7 @@ func TestExportImportRoundTrip(t *testing.T) {
 	}
 }
 
-// A source refresh upserts chapters in place, and de-duplication moves state
-// to the surviving row: neither may drop a bookmark.
+// Source refreshes and chapter de-duplication must both keep bookmarks.
 func TestChapterBookmarkSurvivesRefreshAndMove(t *testing.T) {
 	ctx := context.Background()
 	q := openTestDB(t)

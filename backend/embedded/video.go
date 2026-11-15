@@ -7,24 +7,18 @@ import (
 	"tsunagu/backend/internal/download"
 )
 
-// VideoObserver lets a native engine report progress and notice cancellation.
-// Engines should check Cancelled from their I/O callbacks, not only between
-// packets, so a cancelled download stops promptly.
+// VideoObserver reports progress; engines should check Cancelled from their I/O callbacks to stop promptly.
 type VideoObserver interface {
 	Cancelled() bool
 	Progress(fraction float64, bytes int64, bytesPerSecond float64)
 }
 
-// VideoEngine downloads an episode in the app's process, for platforms that
-// cannot run ffmpeg as a program (iOS). headersJSON is a JSON object of HTTP
-// headers the stream must be fetched with. Process must write a complete MP4
-// to outputPath and return an error for anything less.
+// VideoEngine downloads an episode in-process (iOS has no ffmpeg executable) and must write a complete MP4 or fail.
 type VideoEngine interface {
 	Process(url, headersJSON, outputPath string, observer VideoObserver) error
 }
 
-// SetVideoEngine routes episode downloads through engine. Takes effect on
-// the next Start; pass nil to go back to ffmpeg.
+// SetVideoEngine routes episode downloads through engine from the next Start; nil restores ffmpeg.
 func SetVideoEngine(engine VideoEngine) {
 	mu.Lock()
 	defer mu.Unlock()

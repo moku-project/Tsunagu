@@ -43,11 +43,7 @@ object Embedded {
         // No JIT on iOS: GraalJS must run on Truffle's interpreter.
         System.setProperty("truffle.UseFallbackRuntime", "true")
         System.setProperty("polyglot.engine.WarnInterpreterOnly", "false")
-        // Truffle extracts and System.loads a native helper (truffleattach) when
-        // it runs from the class path. iOS cannot bind it, and the failure
-        // surfaces later as an UnsatisfiedLinkError that breaks every novel
-        // plugin. Point it at nothing so Truffle takes its supported no-attach
-        // path, which the interpreter-only runtime does not need.
+        // iOS can't load Truffle's native attach helper, so point it at nothing to take the no-attach path.
         System.setProperty("truffle.attach.library", File(data, "no-truffleattach").path)
         System.setProperty("polyglotimpl.AttachLibraryFailureAction", "ignore")
         System.getProperty("java.home")?.let { System.setProperty("org.graalvm.launcher.home", it) }

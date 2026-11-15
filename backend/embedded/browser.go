@@ -13,14 +13,7 @@ import (
 	"time"
 )
 
-// Browser verification: when a source sits behind a challenge (Cloudflare and
-// the like), the app shows the source's page in a real browser, the user
-// passes the challenge, and the browser's cookies and User-Agent are handed
-// to the sources.
-//
-// A session pins one source and one public URL, so the app can only ever
-// write cookies for the site the user was sent to. Session state never
-// leaves the app: these calls are not part of the HTTP API.
+// Browser verification sessions pin one source and one public URL, and are not exposed over HTTP.
 
 const (
 	maxBrowserSessions = 8
@@ -41,8 +34,7 @@ var (
 	browserSessions = map[string]*browserSession{}
 )
 
-// BeginBrowserVerification opens a session for extensionID's page at
-// target and returns {"id", "extensionId", "url", "state"} as JSON.
+// BeginBrowserVerification opens a session and returns {"id","extensionId","url","state"} as JSON.
 func BeginBrowserVerification(extensionID, target string) (string, error) {
 	parsed, err := url.Parse(target)
 	if err != nil || (parsed.Scheme != "https" && parsed.Scheme != "http") || parsed.Hostname() == "" || parsed.User != nil {
@@ -79,8 +71,7 @@ func BeginBrowserVerification(extensionID, target string) (string, error) {
 	return string(body), err
 }
 
-// BrowserCookies returns the session's current cookies and User-Agent as JSON,
-// to seed the browser before it loads the page.
+// BrowserCookies returns the session's cookies and User-Agent as JSON, to seed the browser.
 func BrowserCookies(sessionID string) (string, error) {
 	s, err := pendingSession(sessionID)
 	if err != nil {
@@ -89,8 +80,7 @@ func BrowserCookies(sessionID string) (string, error) {
 	return browserExchange(s.ExtensionID, s.URL, "", false)
 }
 
-// CompleteBrowserVerification stores the browser's state (cookies and
-// userAgent, as JSON) for the session's source and ends the session.
+// CompleteBrowserVerification stores the browser's cookies and User-Agent for the source and ends the session.
 func CompleteBrowserVerification(sessionID, stateJSON string) error {
 	if len(stateJSON) > maxBrowserState {
 		return errors.New("browser state is too large")
@@ -136,8 +126,7 @@ func browserExchange(extensionID, target, stateJSON string, apply bool) (string,
 	return srv.BrowserCookies(ctx, extensionID, target, stateJSON, apply)
 }
 
-// publicHost rejects hosts on this device or its network: a verification
-// session must not plant cookies for local services.
+// publicHost rejects local and private hosts so a session can't plant cookies for local services.
 func publicHost(host string) bool {
 	host = strings.TrimSuffix(strings.ToLower(host), ".")
 	if host == "localhost" || strings.HasSuffix(host, ".localhost") {
