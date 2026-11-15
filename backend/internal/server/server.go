@@ -66,6 +66,7 @@ type Server struct {
 
 	http     *http.Server
 	sandbox  *sandbox.SupervisedClient
+	q        *sqlcgen.Queries
 	cleanups []func()
 }
 
@@ -128,6 +129,7 @@ func Start(opts Options) (*Server, error) {
 	}
 	s.cleanups = append(s.cleanups, func() { _ = conn.Close() })
 	q := sqlcgen.New(conn)
+	s.q = q
 
 	fsDir, _ := filepath.Abs(filepath.Join(filepath.Dir(bootCfg.DBPath), "flaresolverr"))
 	fsMgr := flaresolverr.NewManager(fsDir)
@@ -390,6 +392,20 @@ func Start(opts Options) (*Server, error) {
 }
 
 // Shutdown stops accepting requests, then stops the background services.
+// BrowserCookies reads, or with apply first stores, the browser session that
+// extensionID's requests to url use. Embedders call it around a challenge the
+// user passes in a real browser.
+func (s *Server) BrowserCookies(ctx context.Context, extensionID, url, stateJSON string, apply bool) (string, error) {
+	if _, err := s.q.GetExtensionByPackageName(ctx, extensionID); err != nil {
+		return "", fmt.Errorf("unknown source %q", extensionID)
+	}
+	client, err := s.sandbox.Ensure(ctx)
+	if err != nil {
+		return "", err
+	}
+	return client.BrowserCookies(ctx, url, stateJSON, apply)
+}
+
 // shutdownGrace bounds how long Shutdown waits for in-flight requests before
 // closing connections. http.Server.Shutdown otherwise waits up to 5 seconds
 // for any connection a client opened but has not sent a request on yet, and

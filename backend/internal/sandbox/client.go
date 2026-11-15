@@ -183,6 +183,18 @@ func (c *Client) SetSourcePreference(ctx context.Context, extensionID, key, valu
 	return err
 }
 
+// BrowserCookies reads, or with apply first stores, the browser session
+// (cookies and User-Agent, as JSON) sources use for url's host.
+func (c *Client) BrowserCookies(ctx context.Context, url, stateJSON string, apply bool) (string, error) {
+	ctx, cancel := c.withTimeout(ctx)
+	defer cancel()
+	resp, err := c.rpc.BrowserCookies(ctx, &sandboxv1.BrowserCookiesRequest{Url: url, StateJson: stateJSON, Apply: apply})
+	if err != nil {
+		return "", err
+	}
+	return resp.GetStateJson(), nil
+}
+
 func (c *Client) PeekExtension(ctx context.Context, filePath string) (*sandboxv1.ExtensionMetadata, error) {
 	ctx, cancel := c.withTimeout(ctx)
 	defer cancel()
