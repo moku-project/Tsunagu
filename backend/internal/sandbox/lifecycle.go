@@ -186,10 +186,8 @@ func (sc *SupervisedClient) spawnLocked() error {
 		"-XX:+ExitOnOutOfMemoryError",
 		"-XX:+HeapDumpOnOutOfMemoryError",
 		"-XX:HeapDumpPath="+filepath.Join(sc.storageDir, "sandbox-oom.hprof"),
-		// Java's regex engine recurses per repetition, unlike Android's ICU, so
-		// extension patterns over large pages (Next.js payload scrapers) overflow
-		// small stacks, including on threads extensions start themselves. Stacks
-		// are reserved, not committed: memory is only used as deep calls touch it.
+		// Java's regex recurses per repetition (unlike Android's ICU), so large-page scrapers overflow small stacks.
+		// Stacks are reserved, not committed, so this costs memory only when deep calls touch it.
 		"-Xss64m",
 		"-cp", resolved.JarPath,
 		"tsunagu.MainKt",

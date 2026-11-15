@@ -23,12 +23,7 @@ import org.jsoup.nodes.TextNode
 
 object NovelJsBridge {
 
-    /**
-     * The client every source uses, so novel plugins share the cookie jar,
-     * Cloudflare handling and solved User-Agents with manga and anime
-     * extensions. A plain client never sent a site's cookies, so pages gated
-     * on a session (or a challenge clearance) came back 403.
-     */
+    /** The client every source uses, so plugins share cookies, Cloudflare handling and solved User-Agents. */
     internal val client: OkHttpClient by lazy {
         org.koin.core.context.GlobalContext.getOrNull()?.get<eu.kanade.tachiyomi.network.NetworkHelper>()?.client
             ?: OkHttpClient.Builder()
@@ -61,9 +56,8 @@ object NovelJsBridge {
         }
     """
 
-    // Web globals LNReader plugins expect from React Native that GraalJS lacks.
-    // Plugin calls run synchronously (fetch blocks), so timers sleep on the host
-    // and then fire as a microtask; there is no event loop to defer to.
+    // Web globals plugins expect from React Native that GraalJS lacks. Calls run synchronously,
+    // so timers sleep on the host and fire as a microtask.
     const val WEB_GLUE = """
         (function (g) {
             function enc(s) { return encodeURIComponent(s).replace(/%20/g, '+'); }
@@ -590,9 +584,7 @@ object NovelJsBridge {
         },
     ))
 
-    // @libs/aes mirrors @noble/ciphers/aes: gcm(key, nonce, aad?), cbc(key, iv, opts?),
-    // ctr(key, iv), ecb(key, opts?), each returning { encrypt, decrypt }. GCM output
-    // carries the 16-byte tag appended to the ciphertext, as noble's does.
+    // @libs/aes mirrors @noble/ciphers/aes (gcm, cbc, ctr, ecb with { encrypt, decrypt }); GCM appends the 16-byte tag.
     private fun aesModule(): ProxyObject {
         fun noPadding(opts: Value?) = opts != null && !opts.isNull && opts.hasMembers() && truthy(opts.getMember("disablePadding"))
         fun cipher(transform: String, key: Value, spec: java.security.spec.AlgorithmParameterSpec?, aad: Value? = null): ProxyObject {

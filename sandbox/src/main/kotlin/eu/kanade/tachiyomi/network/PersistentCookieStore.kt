@@ -18,16 +18,7 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-/**
- * Cookies and per-host User-Agents that sources send.
- *
- * Cookies are matched with OkHttp's own rules (domain, host-only, path,
- * expiry), so one host never receives another's cookies. A challenge
- * clearance (e.g. Cloudflare's cf_clearance) is bound to the User-Agent that
- * earned it, so that agent is stored for the host too.
- *
- * With [file], persistent cookies and agents survive restarts.
- */
+/** Cookies (matched by OkHttp's rules) and per-host User-Agents, since a clearance is bound to the agent that earned it; [file] persists both. */
 class PersistentCookieStore(private val file: File? = null) : CookieStore {
     private val cookies = mutableListOf<Cookie>()
     private val agents = mutableMapOf<String, String>()

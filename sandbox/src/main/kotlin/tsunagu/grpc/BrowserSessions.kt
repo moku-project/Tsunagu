@@ -6,11 +6,7 @@ import eu.kanade.tachiyomi.network.PersistentCookieStore
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
-/**
- * Moves a browser session between a real browser (where the user passed a
- * challenge) and the cookie store sources use. Only cookies that belong to
- * the URL's host go in or come out.
- */
+/** Moves a browser session between a real browser and the sources' cookie store, limited to the URL's host. */
 object BrowserSessions {
     private const val MAX_STATE_BYTES = 256 * 1024
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }

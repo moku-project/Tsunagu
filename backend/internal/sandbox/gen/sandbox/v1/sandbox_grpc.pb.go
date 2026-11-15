@@ -60,9 +60,8 @@ type ExtensionServiceClient interface {
 	GetLatestUpdates(ctx context.Context, in *BrowseRequest, opts ...grpc.CallOption) (*SearchResponse, error)
 	GetSourcePreferences(ctx context.Context, in *GetSourcePreferencesRequest, opts ...grpc.CallOption) (*GetSourcePreferencesResponse, error)
 	SetSourcePreference(ctx context.Context, in *SetSourcePreferenceRequest, opts ...grpc.CallOption) (*Empty, error)
-	// Reads, or with apply=true first stores, the browser session (cookies and
-	// User-Agent) sources use for url's host. Embedders call it after the user
-	// passes a challenge (e.g. Cloudflare) in a real browser.
+	// Reads, or with apply=true stores, the cookies and User-Agent sources use for url's host,
+	// after the user passes a challenge in a real browser.
 	BrowserCookies(ctx context.Context, in *BrowserCookiesRequest, opts ...grpc.CallOption) (*BrowserCookiesResponse, error)
 }
 
@@ -275,9 +274,8 @@ type ExtensionServiceServer interface {
 	GetLatestUpdates(context.Context, *BrowseRequest) (*SearchResponse, error)
 	GetSourcePreferences(context.Context, *GetSourcePreferencesRequest) (*GetSourcePreferencesResponse, error)
 	SetSourcePreference(context.Context, *SetSourcePreferenceRequest) (*Empty, error)
-	// Reads, or with apply=true first stores, the browser session (cookies and
-	// User-Agent) sources use for url's host. Embedders call it after the user
-	// passes a challenge (e.g. Cloudflare) in a real browser.
+	// Reads, or with apply=true stores, the cookies and User-Agent sources use for url's host,
+	// after the user passes a challenge in a real browser.
 	BrowserCookies(context.Context, *BrowserCookiesRequest) (*BrowserCookiesResponse, error)
 	mustEmbedUnimplementedExtensionServiceServer()
 }

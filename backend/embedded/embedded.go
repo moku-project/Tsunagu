@@ -1,8 +1,5 @@
-// Package embedded runs Tsunagu inside another app's process. Its API sticks to
-// types gomobile can bind, so Android calls it directly from Kotlin.
-//
-// The app provides the extension host: a gRPC server implementing the sandbox
-// service on loopback, checking the token it passes to Start.
+// Package embedded runs Tsunagu inside another app's process, using only gomobile-bindable types.
+// The app provides the extension host: a loopback gRPC sandbox server checking the token passed to Start.
 package embedded
 
 import (

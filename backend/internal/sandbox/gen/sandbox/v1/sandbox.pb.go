@@ -2696,9 +2696,8 @@ func (x *SortFilter) GetAscending() bool {
 	return false
 }
 
-// state_json: {"userAgent": "...", "cookies": [{"name", "value", "domain",
-// "path", "expiresAt" (epoch ms), "secure", "httpOnly", "hostOnly",
-// "persistent"}]}. Only cookies for url's host are accepted or returned.
+// state_json: {"userAgent", "cookies": [{name, value, domain, path, expiresAt (epoch ms), secure, httpOnly,
+// hostOnly, persistent}]}. Only cookies for url's host are accepted or returned.
 type BrowserCookiesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`

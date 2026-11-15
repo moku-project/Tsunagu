@@ -659,11 +659,7 @@ func contentPageURLs(mediaID, chapterID string, count int) []string {
 	return out
 }
 
-// pdfPageURLs builds sentinel page URLs for a PDF-backed chapter — the
-// frontend recognizes the /pdfpage/ segment and renders these client-side
-// via PDF.js instead of fetching them, since there's no server-rendered
-// image behind them (see content.go's /pdf route, which serves the raw
-// file once for the client to render from).
+// pdfPageURLs builds /pdfpage/ sentinel URLs; the client renders them with PDF.js from the raw file at /pdf.
 func pdfPageURLs(mediaID, chapterID string, count int) []string {
 	out := make([]string, 0, count)
 	for i := 1; i <= count; i++ {

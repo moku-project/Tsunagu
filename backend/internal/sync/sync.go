@@ -192,10 +192,8 @@ func (s *Syncer) runLibraryUpdate(sc *sandbox.SupervisedClient, ids []int64) {
 	}
 }
 
-// newChapterIDs returns the chapters in after that weren't known before. A
-// first-ever sync (nothing known) returns none: every chapter looking new is a
-// backlog, not new releases, and mustn't be counted or auto-downloaded. Nor
-// does a chapter that only replaced a known one under a new ID.
+// newChapterIDs returns chapters not known before. A first sync returns none (that's a backlog, not releases),
+// and neither does a chapter that only replaced a known one under a new ID.
 func newChapterIDs(before, after []sqlcgen.Chapter) []int64 {
 	if len(before) == 0 {
 		return nil
@@ -1159,10 +1157,7 @@ func (s *Syncer) upsertEntryFromDetails(ctx context.Context, c *sandbox.Client, 
 		}
 	}
 
-	// Backgrounded like the recompute call below -- AniList lookups can take
-	// up to the 15s timeout in maybeEnrich, and this runs inline in mutation
-	// resolvers (e.g. ResolveMedia), so leaving it synchronous stalls the
-	// HTTP response on every newly-added entry.
+	// Backgrounded: AniList lookups can take the full 15s timeout, and this runs inside mutation resolvers.
 	id := entry.ID
 	go s.maybeEnrich(context.Background(), id)
 	if s.recompute != nil {
@@ -1203,9 +1198,7 @@ func (s *Syncer) GetMedia(ctx context.Context, id int64) (sqlcgen.Medium, error)
 	return s.q.GetMedia(ctx, id)
 }
 
-// hydrateWait caps how long a request waits for a never-hydrated entry's
-// detail fetch; past that it serves what's in the DB and lets the fetch
-// keep running in the background for the next request to pick up.
+// hydrateWait caps the wait for a never-hydrated entry; past it the DB copy is served and the fetch keeps running.
 const hydrateWait = 400 * time.Millisecond
 
 func (s *Syncer) EnsureHydrated(ctx context.Context, sc *sandbox.SupervisedClient, id int64) (sqlcgen.Medium, error) {

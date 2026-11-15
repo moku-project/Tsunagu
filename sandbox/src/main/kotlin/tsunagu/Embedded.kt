@@ -18,15 +18,8 @@ import java.util.concurrent.TimeUnit
 import tsunagu.grpc.ExtensionServiceImpl
 import tsunagu.registry.ExtensionRegistry
 
-/**
- * Runs the sandbox inside a JVM the app hosts (iOS), as the extension host for
- * Go's embedded.Start. Unlike [main] it never exits the process, spawns
- * anything, or loads native code: no Conscrypt, and NIO instead of
- * epoll/kqueue transports.
- *
- * Any app on the device can reach loopback ports, so every call must carry
- * the token passed to [start].
- */
+/** The extension host inside an app-hosted JVM (iOS): never exits, spawns or loads native code (NIO, no Conscrypt).
+ * Any app can reach loopback ports, so every call must carry the token passed to [start]. */
 object Embedded {
     private var server: Server? = null
     private var groups: List<NioEventLoopGroup> = emptyList()
@@ -79,10 +72,7 @@ object Embedded {
         }
     }
 
-    /**
-     * Stops listening. Loaded extensions stay in memory, so a later [start]
-     * (say, after the app returns from the background) is fast.
-     */
+    /** Stops listening; loaded extensions stay in memory so a later [start] is fast. */
     @JvmStatic
     @Synchronized
     fun stop() {

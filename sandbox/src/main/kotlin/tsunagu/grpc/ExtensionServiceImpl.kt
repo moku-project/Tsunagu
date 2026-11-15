@@ -830,9 +830,7 @@ class ExtensionServiceImpl(
         Sandbox.ChapterSummary.newBuilder()
             .setSourceChapterId(chapter.url)
             .setName(chapter.name)
-            // chapter_number is a Float; toDouble() bit-widens it, turning clean
-            // values like 19.1f into noise like 19.100000381469727. Round-tripping
-            // through the Float's shortest string form recovers the intended value.
+            // toDouble() widens the Float (19.1f becomes 19.100000381...); its shortest string form keeps the intended value.
             .setNumber(chapter.chapter_number.toString().toDouble())
             .setUploadTimestamp(chapter.date_upload)
             .build()
@@ -863,12 +861,7 @@ class ExtensionServiceImpl(
             Sandbox.SubtitleTrack.newBuilder().setUrl(it.url).setLang(it.lang).build()
         }
 
-    /**
-     * The headers a player needs to fetch [video] the way the source would:
-     * the extension's own, plus the source's cookies for that URL and the
-     * User-Agent a solved challenge is bound to. Many video hosts refuse
-     * requests without them.
-     */
+    /** Headers to fetch [video] as the source would: its own, plus its cookies and solved User-Agent, which many hosts require. */
     private fun headerMap(video: Video, source: AnimeHttpSource): Map<String, String> {
         val headers = (video.headers?.let { h -> h.names().associateWith { h[it] ?: "" } } ?: emptyMap()).toMutableMap()
         val url = video.videoUrl.toHttpUrlOrNull() ?: return headers

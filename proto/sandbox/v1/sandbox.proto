@@ -22,9 +22,8 @@ service ExtensionService {
   rpc GetLatestUpdates(BrowseRequest) returns (SearchResponse);
   rpc GetSourcePreferences(GetSourcePreferencesRequest) returns (GetSourcePreferencesResponse);
   rpc SetSourcePreference(SetSourcePreferenceRequest) returns (Empty);
-  // Reads, or with apply=true first stores, the browser session (cookies and
-  // User-Agent) sources use for url's host. Embedders call it after the user
-  // passes a challenge (e.g. Cloudflare) in a real browser.
+  // Reads, or with apply=true stores, the cookies and User-Agent sources use for url's host,
+  // after the user passes a challenge in a real browser.
   rpc BrowserCookies(BrowserCookiesRequest) returns (BrowserCookiesResponse);
 }
 
@@ -290,9 +289,8 @@ message SortFilter {
   bool ascending = 4;
 }
 
-// state_json: {"userAgent": "...", "cookies": [{"name", "value", "domain",
-// "path", "expiresAt" (epoch ms), "secure", "httpOnly", "hostOnly",
-// "persistent"}]}. Only cookies for url's host are accepted or returned.
+// state_json: {"userAgent", "cookies": [{name, value, domain, path, expiresAt (epoch ms), secure, httpOnly,
+// hostOnly, persistent}]}. Only cookies for url's host are accepted or returned.
 message BrowserCookiesRequest {
   string url = 1;
   string state_json = 2;

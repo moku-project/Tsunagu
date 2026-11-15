@@ -42,10 +42,7 @@ func (h *CoverProxyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
-	// "original" bypasses any user-set cover_override and serves the source
-	// extension's own cover, so the picker UI can show/restore it even after
-	// an override has been applied (overrides and originals share the same
-	// entry id, so they need distinct cache slots below).
+	// "original" skips cover_override so the picker can show and restore the source's cover; it shares the entry id, so it needs its own cache slot.
 	original := r.URL.Query().Get("source") == "original"
 
 	entry, err := h.Q.GetMedia(ctx, entryID)

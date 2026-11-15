@@ -904,9 +904,7 @@ type runningJob struct {
 	done   chan struct{}
 }
 
-// Cancel stops the chapter's running job and waits for its cleanup, so a
-// caller that re-enqueues the chapter right after can't have the new row or
-// files deleted by the old worker.
+// Cancel stops the chapter's job and waits for its cleanup, so a re-enqueue right after isn't deleted by the old worker.
 func (m *Manager) Cancel(ctx context.Context, chapterID int64) error {
 	m.runningMu.Lock()
 	run, ok := m.running[chapterID]
@@ -1117,9 +1115,7 @@ func (m *Manager) DeleteChapterFiles(ctx context.Context, chapterID int64) error
 		return fmt.Errorf("unsupported content type for delete: %s", contentType)
 	}
 
-	// The job-history row would otherwise still say status "done" forever,
-	// making downloadedCount (and anything derived from it) permanently
-	// stale once the actual files are gone.
+	// Otherwise the history row stays "done" and downloadedCount stays stale after the files are gone.
 	if err := m.q.DeleteDownloadByChapter(ctx, chapterID); err != nil {
 		log.Printf("download: failed clearing job row for chapter %d: %v", chapterID, err)
 	}
