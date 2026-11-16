@@ -323,6 +323,7 @@ type ComplexityRoot struct {
 		BindTrack                  func(childComplexity int, mediaID string, trackerKey string, remoteID string) int
 		ClearDownloads             func(childComplexity int, status []model.DownloadStatus) int
 		ClearImageCache            func(childComplexity int) int
+		ClearReadingHistory        func(childComplexity int, mediaID *string) int
 		ClearStorageCategory       func(childComplexity int, key string) int
 		ConnectSyncPeer            func(childComplexity int, address string, code string, node string) int
 		CreateDatabaseBackup       func(childComplexity int) int
@@ -339,6 +340,7 @@ type ComplexityRoot struct {
 		EnqueueDownload            func(childComplexity int, mediaID string, chapterIds []string) int
 		ExportMihonBackup          func(childComplexity int) int
 		ImportMihonBackup          func(childComplexity int, name string) int
+		ImportReadingHistory       func(childComplexity int, source string, sessions []*model.ReadingSessionInput, days []*model.ReadingDayInput) int
 		InstallCloudflareSolver    func(childComplexity int) int
 		InstallExtension           func(childComplexity int, packageName string) int
 		InstallExternalExtension   func(childComplexity int, url string) int
@@ -350,6 +352,7 @@ type ComplexityRoot struct {
 		PreviewSyncPeer            func(childComplexity int, address string, code string) int
 		PullTracker                func(childComplexity int, mediaID string) int
 		RecomputeContentFilter     func(childComplexity int) int
+		RecordReadingSession       func(childComplexity int, input model.ReadingSessionInput) int
 		RefetchMediaCover          func(childComplexity int, mediaID string) int
 		RefreshFolder              func(childComplexity int, folderID string) int
 		RefreshMetadata            func(childComplexity int, mediaID string, syncChapters *bool) int
@@ -367,6 +370,7 @@ type ComplexityRoot struct {
 		RescanLocalMedia           func(childComplexity int) int
 		ResetContentFilterRules    func(childComplexity int) int
 		ResetMediaAutomation       func(childComplexity int, mediaID *string) int
+		ResetReadingStats          func(childComplexity int) int
 		ResyncTrack                func(childComplexity int, linkID string) int
 		RetryDownload              func(childComplexity int, mediaID string, chapterID string) int
 		SetChaptersBookmarked      func(childComplexity int, mediaID string, chapterIds []string, bookmarked bool) int
@@ -428,6 +432,8 @@ type ComplexityRoot struct {
 		MediaInFolder            func(childComplexity int, folderID string) int
 		PopularManga             func(childComplexity int, extensionID string, page *int32) int
 		ReadingProgress          func(childComplexity int, mediaID string) int
+		ReadingSessions          func(childComplexity int, limit *int32, before *time.Time, mediaID *string) int
+		ReadingStats             func(childComplexity int, timeZone *string) int
 		RecentChapters           func(childComplexity int, since *time.Time, limit *int32) int
 		Repositories             func(childComplexity int) int
 		ResolveMedia             func(childComplexity int, extensionID string, externalID string, syncChapters *bool) int
@@ -444,6 +450,17 @@ type ComplexityRoot struct {
 		Trackers                 func(childComplexity int) int
 	}
 
+	ReadingDay struct {
+		Chapters func(childComplexity int) int
+		Date     func(childComplexity int) int
+		Seconds  func(childComplexity int) int
+	}
+
+	ReadingHistoryImport struct {
+		Imported func(childComplexity int) int
+		Skipped  func(childComplexity int) int
+	}
+
 	ReadingProgress struct {
 		ChapterID       func(childComplexity int) int
 		Completed       func(childComplexity int) int
@@ -453,6 +470,32 @@ type ComplexityRoot struct {
 		PositionSeconds func(childComplexity int) int
 		Progress        func(childComplexity int) int
 		UpdatedAt       func(childComplexity int) int
+	}
+
+	ReadingSession struct {
+		Chapters     func(childComplexity int) int
+		DurationMs   func(childComplexity int) int
+		EndChapter   func(childComplexity int) int
+		EndPage      func(childComplexity int) int
+		EndedAt      func(childComplexity int) int
+		ID           func(childComplexity int) int
+		Media        func(childComplexity int) int
+		StartChapter func(childComplexity int) int
+		StartPage    func(childComplexity int) int
+		StartedAt    func(childComplexity int) int
+	}
+
+	ReadingStats struct {
+		ChaptersThisWeek  func(childComplexity int) int
+		CurrentStreakDays func(childComplexity int) int
+		Days              func(childComplexity int) int
+		FirstReadAt       func(childComplexity int) int
+		LastReadAt        func(childComplexity int) int
+		LastStreakDate    func(childComplexity int) int
+		LongestStreakDays func(childComplexity int) int
+		TotalChaptersRead func(childComplexity int) int
+		TotalMinutesRead  func(childComplexity int) int
+		TotalTitlesRead   func(childComplexity int) int
 	}
 
 	RecentChapter struct {
@@ -826,6 +869,10 @@ type MutationResolver interface {
 	ApplyMetadataMatch(ctx context.Context, mediaID string, providerID string, provider *string) (*model.Media, error)
 	UnlinkMetadata(ctx context.Context, mediaID string) (bool, error)
 	RefreshMetadataMatch(ctx context.Context, mediaID string) (*model.Media, error)
+	RecordReadingSession(ctx context.Context, input model.ReadingSessionInput) (*model.ReadingSession, error)
+	ImportReadingHistory(ctx context.Context, source string, sessions []*model.ReadingSessionInput, days []*model.ReadingDayInput) (*model.ReadingHistoryImport, error)
+	ClearReadingHistory(ctx context.Context, mediaID *string) (int32, error)
+	ResetReadingStats(ctx context.Context) (bool, error)
 	CreateSyncPairingCode(ctx context.Context) (*model.SyncPairingCode, error)
 	PreviewSyncPeer(ctx context.Context, address string, code string) (*model.SyncPairPreview, error)
 	ConnectSyncPeer(ctx context.Context, address string, code string, node string) (*model.SyncPeer, error)
@@ -876,6 +923,8 @@ type QueryResolver interface {
 	TrackerLibrary(ctx context.Context, trackerKey string, contentType model.ContentType, statuses []string) ([]*model.TrackerLibraryEntry, error)
 	SearchMetadata(ctx context.Context, query string, contentType model.ContentType, provider *string) ([]*model.MetadataCandidate, error)
 	SkipTimestamps(ctx context.Context, chapterID string, episodeLengthMs *int32) ([]*model.SkipMarker, error)
+	ReadingSessions(ctx context.Context, limit *int32, before *time.Time, mediaID *string) ([]*model.ReadingSession, error)
+	ReadingStats(ctx context.Context, timeZone *string) (*model.ReadingStats, error)
 	SyncStatus(ctx context.Context) (*model.SyncStatus, error)
 	SyncNearby(ctx context.Context) ([]*model.SyncNearbyDevice, error)
 }
@@ -2183,6 +2232,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.ClearImageCache(childComplexity), true
+	case "Mutation.clearReadingHistory":
+		if e.ComplexityRoot.Mutation.ClearReadingHistory == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_clearReadingHistory_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.ClearReadingHistory(childComplexity, args["mediaId"].(*string)), true
 	case "Mutation.clearStorageCategory":
 		if e.ComplexityRoot.Mutation.ClearStorageCategory == nil {
 			break
@@ -2339,6 +2399,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.ImportMihonBackup(childComplexity, args["name"].(string)), true
+	case "Mutation.importReadingHistory":
+		if e.ComplexityRoot.Mutation.ImportReadingHistory == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_importReadingHistory_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.ImportReadingHistory(childComplexity, args["source"].(string), args["sessions"].([]*model.ReadingSessionInput), args["days"].([]*model.ReadingDayInput)), true
 	case "Mutation.installCloudflareSolver":
 		if e.ComplexityRoot.Mutation.InstallCloudflareSolver == nil {
 			break
@@ -2450,6 +2521,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.RecomputeContentFilter(childComplexity), true
+	case "Mutation.recordReadingSession":
+		if e.ComplexityRoot.Mutation.RecordReadingSession == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_recordReadingSession_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.RecordReadingSession(childComplexity, args["input"].(model.ReadingSessionInput)), true
 	case "Mutation.refetchMediaCover":
 		if e.ComplexityRoot.Mutation.RefetchMediaCover == nil {
 			break
@@ -2627,6 +2709,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.ResetMediaAutomation(childComplexity, args["mediaId"].(*string)), true
+	case "Mutation.resetReadingStats":
+		if e.ComplexityRoot.Mutation.ResetReadingStats == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Mutation.ResetReadingStats(childComplexity), true
 	case "Mutation.resyncTrack":
 		if e.ComplexityRoot.Mutation.ResyncTrack == nil {
 			break
@@ -3182,6 +3270,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.ReadingProgress(childComplexity, args["mediaId"].(string)), true
+	case "Query.readingSessions":
+		if e.ComplexityRoot.Query.ReadingSessions == nil {
+			break
+		}
+
+		args, err := ec.field_Query_readingSessions_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.ReadingSessions(childComplexity, args["limit"].(*int32), args["before"].(*time.Time), args["mediaId"].(*string)), true
+	case "Query.readingStats":
+		if e.ComplexityRoot.Query.ReadingStats == nil {
+			break
+		}
+
+		args, err := ec.field_Query_readingStats_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.ReadingStats(childComplexity, args["timeZone"].(*string)), true
 	case "Query.recentChapters":
 		if e.ComplexityRoot.Query.RecentChapters == nil {
 			break
@@ -3307,6 +3417,38 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.Query.Trackers(childComplexity), true
 
+	case "ReadingDay.chapters":
+		if e.ComplexityRoot.ReadingDay.Chapters == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReadingDay.Chapters(childComplexity), true
+	case "ReadingDay.date":
+		if e.ComplexityRoot.ReadingDay.Date == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReadingDay.Date(childComplexity), true
+	case "ReadingDay.seconds":
+		if e.ComplexityRoot.ReadingDay.Seconds == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReadingDay.Seconds(childComplexity), true
+
+	case "ReadingHistoryImport.imported":
+		if e.ComplexityRoot.ReadingHistoryImport.Imported == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReadingHistoryImport.Imported(childComplexity), true
+	case "ReadingHistoryImport.skipped":
+		if e.ComplexityRoot.ReadingHistoryImport.Skipped == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReadingHistoryImport.Skipped(childComplexity), true
+
 	case "ReadingProgress.chapterId":
 		if e.ComplexityRoot.ReadingProgress.ChapterID == nil {
 			break
@@ -3355,6 +3497,128 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.ReadingProgress.UpdatedAt(childComplexity), true
+
+	case "ReadingSession.chapters":
+		if e.ComplexityRoot.ReadingSession.Chapters == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReadingSession.Chapters(childComplexity), true
+	case "ReadingSession.durationMs":
+		if e.ComplexityRoot.ReadingSession.DurationMs == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReadingSession.DurationMs(childComplexity), true
+	case "ReadingSession.endChapter":
+		if e.ComplexityRoot.ReadingSession.EndChapter == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReadingSession.EndChapter(childComplexity), true
+	case "ReadingSession.endPage":
+		if e.ComplexityRoot.ReadingSession.EndPage == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReadingSession.EndPage(childComplexity), true
+	case "ReadingSession.endedAt":
+		if e.ComplexityRoot.ReadingSession.EndedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReadingSession.EndedAt(childComplexity), true
+	case "ReadingSession.id":
+		if e.ComplexityRoot.ReadingSession.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReadingSession.ID(childComplexity), true
+	case "ReadingSession.media":
+		if e.ComplexityRoot.ReadingSession.Media == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReadingSession.Media(childComplexity), true
+	case "ReadingSession.startChapter":
+		if e.ComplexityRoot.ReadingSession.StartChapter == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReadingSession.StartChapter(childComplexity), true
+	case "ReadingSession.startPage":
+		if e.ComplexityRoot.ReadingSession.StartPage == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReadingSession.StartPage(childComplexity), true
+	case "ReadingSession.startedAt":
+		if e.ComplexityRoot.ReadingSession.StartedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReadingSession.StartedAt(childComplexity), true
+
+	case "ReadingStats.chaptersThisWeek":
+		if e.ComplexityRoot.ReadingStats.ChaptersThisWeek == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReadingStats.ChaptersThisWeek(childComplexity), true
+	case "ReadingStats.currentStreakDays":
+		if e.ComplexityRoot.ReadingStats.CurrentStreakDays == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReadingStats.CurrentStreakDays(childComplexity), true
+	case "ReadingStats.days":
+		if e.ComplexityRoot.ReadingStats.Days == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReadingStats.Days(childComplexity), true
+	case "ReadingStats.firstReadAt":
+		if e.ComplexityRoot.ReadingStats.FirstReadAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReadingStats.FirstReadAt(childComplexity), true
+	case "ReadingStats.lastReadAt":
+		if e.ComplexityRoot.ReadingStats.LastReadAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReadingStats.LastReadAt(childComplexity), true
+	case "ReadingStats.lastStreakDate":
+		if e.ComplexityRoot.ReadingStats.LastStreakDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReadingStats.LastStreakDate(childComplexity), true
+	case "ReadingStats.longestStreakDays":
+		if e.ComplexityRoot.ReadingStats.LongestStreakDays == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReadingStats.LongestStreakDays(childComplexity), true
+	case "ReadingStats.totalChaptersRead":
+		if e.ComplexityRoot.ReadingStats.TotalChaptersRead == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReadingStats.TotalChaptersRead(childComplexity), true
+	case "ReadingStats.totalMinutesRead":
+		if e.ComplexityRoot.ReadingStats.TotalMinutesRead == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReadingStats.TotalMinutesRead(childComplexity), true
+	case "ReadingStats.totalTitlesRead":
+		if e.ComplexityRoot.ReadingStats.TotalTitlesRead == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ReadingStats.TotalTitlesRead(childComplexity), true
 
 	case "RecentChapter.chapter":
 		if e.ComplexityRoot.RecentChapter.Chapter == nil {
@@ -4386,6 +4650,8 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputLibraryFilter,
 		ec.unmarshalInputLibrarySortInput,
 		ec.unmarshalInputMediaAutomationInput,
+		ec.unmarshalInputReadingDayInput,
+		ec.unmarshalInputReadingSessionInput,
 		ec.unmarshalInputSelectFilterInput,
 		ec.unmarshalInputSortFilterInput,
 		ec.unmarshalInputTextFilterInput,
@@ -4464,7 +4730,7 @@ func newExecutionContext(
 	}
 }
 
-//go:embed "schema.graphqls" "sync.graphqls"
+//go:embed "history.graphqls" "schema.graphqls" "sync.graphqls"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {
@@ -4476,6 +4742,7 @@ func sourceData(filename string) string {
 }
 
 var sources = []*ast.Source{
+	{Name: "history.graphqls", Input: sourceData("history.graphqls"), BuiltIn: false},
 	{Name: "schema.graphqls", Input: sourceData("schema.graphqls"), BuiltIn: false},
 	{Name: "sync.graphqls", Input: sourceData("sync.graphqls"), BuiltIn: false},
 }
@@ -5003,6 +5270,28 @@ func (ec *executionContext) childFields_MigrateMangaFormatResult(ctx context.Con
 	return nil, fmt.Errorf("no field named %q was found under type MigrateMangaFormatResult", field.Name)
 }
 
+func (ec *executionContext) childFields_ReadingDay(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "date":
+		return ec.fieldContext_ReadingDay_date(ctx, field)
+	case "seconds":
+		return ec.fieldContext_ReadingDay_seconds(ctx, field)
+	case "chapters":
+		return ec.fieldContext_ReadingDay_chapters(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ReadingDay", field.Name)
+}
+
+func (ec *executionContext) childFields_ReadingHistoryImport(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "imported":
+		return ec.fieldContext_ReadingHistoryImport_imported(ctx, field)
+	case "skipped":
+		return ec.fieldContext_ReadingHistoryImport_skipped(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ReadingHistoryImport", field.Name)
+}
+
 func (ec *executionContext) childFields_ReadingProgress(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "id":
@@ -5023,6 +5312,58 @@ func (ec *executionContext) childFields_ReadingProgress(ctx context.Context, fie
 		return ec.fieldContext_ReadingProgress_updatedAt(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type ReadingProgress", field.Name)
+}
+
+func (ec *executionContext) childFields_ReadingSession(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_ReadingSession_id(ctx, field)
+	case "media":
+		return ec.fieldContext_ReadingSession_media(ctx, field)
+	case "startChapter":
+		return ec.fieldContext_ReadingSession_startChapter(ctx, field)
+	case "endChapter":
+		return ec.fieldContext_ReadingSession_endChapter(ctx, field)
+	case "startPage":
+		return ec.fieldContext_ReadingSession_startPage(ctx, field)
+	case "endPage":
+		return ec.fieldContext_ReadingSession_endPage(ctx, field)
+	case "startedAt":
+		return ec.fieldContext_ReadingSession_startedAt(ctx, field)
+	case "endedAt":
+		return ec.fieldContext_ReadingSession_endedAt(ctx, field)
+	case "durationMs":
+		return ec.fieldContext_ReadingSession_durationMs(ctx, field)
+	case "chapters":
+		return ec.fieldContext_ReadingSession_chapters(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ReadingSession", field.Name)
+}
+
+func (ec *executionContext) childFields_ReadingStats(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "totalChaptersRead":
+		return ec.fieldContext_ReadingStats_totalChaptersRead(ctx, field)
+	case "totalTitlesRead":
+		return ec.fieldContext_ReadingStats_totalTitlesRead(ctx, field)
+	case "totalMinutesRead":
+		return ec.fieldContext_ReadingStats_totalMinutesRead(ctx, field)
+	case "chaptersThisWeek":
+		return ec.fieldContext_ReadingStats_chaptersThisWeek(ctx, field)
+	case "firstReadAt":
+		return ec.fieldContext_ReadingStats_firstReadAt(ctx, field)
+	case "lastReadAt":
+		return ec.fieldContext_ReadingStats_lastReadAt(ctx, field)
+	case "currentStreakDays":
+		return ec.fieldContext_ReadingStats_currentStreakDays(ctx, field)
+	case "longestStreakDays":
+		return ec.fieldContext_ReadingStats_longestStreakDays(ctx, field)
+	case "lastStreakDate":
+		return ec.fieldContext_ReadingStats_lastStreakDate(ctx, field)
+	case "days":
+		return ec.fieldContext_ReadingStats_days(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ReadingStats", field.Name)
 }
 
 func (ec *executionContext) childFields_RecentChapter(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -5763,6 +6104,20 @@ func (ec *executionContext) field_Mutation_clearDownloads_args(ctx context.Conte
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_clearReadingHistory_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "mediaId",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOID2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["mediaId"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_clearStorageCategory_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -6011,6 +6366,36 @@ func (ec *executionContext) field_Mutation_importMihonBackup_args(ctx context.Co
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_importReadingHistory_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "source",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["source"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "sessions",
+		func(ctx context.Context, v any) ([]*model.ReadingSessionInput, error) {
+			return ec.unmarshalNReadingSessionInput2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐReadingSessionInputᚄ(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["sessions"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "days",
+		func(ctx context.Context, v any) ([]*model.ReadingDayInput, error) {
+			return ec.unmarshalNReadingDayInput2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐReadingDayInputᚄ(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["days"] = arg2
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_installExtension_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -6182,6 +6567,20 @@ func (ec *executionContext) field_Mutation_pullTracker_args(ctx context.Context,
 		return nil, err
 	}
 	args["mediaId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_recordReadingSession_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (model.ReadingSessionInput, error) {
+			return ec.unmarshalNReadingSessionInput2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐReadingSessionInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -7348,6 +7747,50 @@ func (ec *executionContext) field_Query_readingProgress_args(ctx context.Context
 		return nil, err
 	}
 	args["mediaId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_readingSessions_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "limit",
+		func(ctx context.Context, v any) (*int32, error) {
+			return ec.unmarshalOInt2ᚖint32(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "before",
+		func(ctx context.Context, v any) (*time.Time, error) {
+			return ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "mediaId",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOID2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["mediaId"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_readingStats_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "timeZone",
+		func(ctx context.Context, v any) (*string, error) {
+			return ec.unmarshalOString2ᚖstring(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["timeZone"] = arg0
 	return args, nil
 }
 
@@ -15321,6 +15764,161 @@ func (ec *executionContext) fieldContext_Mutation_refreshMetadataMatch(ctx conte
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_recordReadingSession(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_recordReadingSession(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().RecordReadingSession(ctx, fc.Args["input"].(model.ReadingSessionInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.ReadingSession) graphql.Marshaler {
+			return ec.marshalNReadingSession2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐReadingSession(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_recordReadingSession(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ReadingSession(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_recordReadingSession_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_importReadingHistory(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_importReadingHistory(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().ImportReadingHistory(ctx, fc.Args["source"].(string), fc.Args["sessions"].([]*model.ReadingSessionInput), fc.Args["days"].([]*model.ReadingDayInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.ReadingHistoryImport) graphql.Marshaler {
+			return ec.marshalNReadingHistoryImport2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐReadingHistoryImport(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_importReadingHistory(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ReadingHistoryImport(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_importReadingHistory_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_clearReadingHistory(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_clearReadingHistory(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().ClearReadingHistory(ctx, fc.Args["mediaId"].(*string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_clearReadingHistory(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_clearReadingHistory_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_resetReadingStats(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_resetReadingStats(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Mutation().ResetReadingStats(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_resetReadingStats(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("Mutation", field, true, true, errors.New("field of type Boolean does not have child fields"))
+}
+
 func (ec *executionContext) _Mutation_createSyncPairingCode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -17217,6 +17815,94 @@ func (ec *executionContext) fieldContext_Query_skipTimestamps(ctx context.Contex
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_readingSessions(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_readingSessions(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().ReadingSessions(ctx, fc.Args["limit"].(*int32), fc.Args["before"].(*time.Time), fc.Args["mediaId"].(*string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.ReadingSession) graphql.Marshaler {
+			return ec.marshalNReadingSession2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐReadingSessionᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_readingSessions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ReadingSession(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_readingSessions_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_readingStats(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_readingStats(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().ReadingStats(ctx, fc.Args["timeZone"].(*string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.ReadingStats) graphql.Marshaler {
+			return ec.marshalNReadingStats2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐReadingStats(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_readingStats(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ReadingStats(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_readingStats_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_syncStatus(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -17355,6 +18041,121 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 		},
 	}
 	return fc, nil
+}
+
+func (ec *executionContext) _ReadingDay_date(ctx context.Context, field graphql.CollectedField, obj *model.ReadingDay) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ReadingDay_date(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Date, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ReadingDay_date(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ReadingDay", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ReadingDay_seconds(ctx context.Context, field graphql.CollectedField, obj *model.ReadingDay) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ReadingDay_seconds(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Seconds, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ReadingDay_seconds(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ReadingDay", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _ReadingDay_chapters(ctx context.Context, field graphql.CollectedField, obj *model.ReadingDay) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ReadingDay_chapters(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Chapters, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ReadingDay_chapters(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ReadingDay", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _ReadingHistoryImport_imported(ctx context.Context, field graphql.CollectedField, obj *model.ReadingHistoryImport) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ReadingHistoryImport_imported(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Imported, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ReadingHistoryImport_imported(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ReadingHistoryImport", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _ReadingHistoryImport_skipped(ctx context.Context, field graphql.CollectedField, obj *model.ReadingHistoryImport) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ReadingHistoryImport_skipped(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Skipped, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ReadingHistoryImport_skipped(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ReadingHistoryImport", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
 func (ec *executionContext) _ReadingProgress_id(ctx context.Context, field graphql.CollectedField, obj *model.ReadingProgress) (ret graphql.Marshaler) {
@@ -17539,6 +18340,502 @@ func (ec *executionContext) _ReadingProgress_updatedAt(ctx context.Context, fiel
 }
 func (ec *executionContext) fieldContext_ReadingProgress_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("ReadingProgress", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
+func (ec *executionContext) _ReadingSession_id(ctx context.Context, field graphql.CollectedField, obj *model.ReadingSession) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ReadingSession_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ReadingSession_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ReadingSession", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _ReadingSession_media(ctx context.Context, field graphql.CollectedField, obj *model.ReadingSession) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ReadingSession_media(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Media, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.Media) graphql.Marshaler {
+			return ec.marshalNMedia2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐMedia(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ReadingSession_media(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ReadingSession",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Media(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ReadingSession_startChapter(ctx context.Context, field graphql.CollectedField, obj *model.ReadingSession) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ReadingSession_startChapter(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.StartChapter, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.Chapter) graphql.Marshaler {
+			return ec.marshalOChapter2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐChapter(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ReadingSession_startChapter(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ReadingSession",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Chapter(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ReadingSession_endChapter(ctx context.Context, field graphql.CollectedField, obj *model.ReadingSession) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ReadingSession_endChapter(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EndChapter, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.Chapter) graphql.Marshaler {
+			return ec.marshalOChapter2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐChapter(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ReadingSession_endChapter(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ReadingSession",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Chapter(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ReadingSession_startPage(ctx context.Context, field graphql.CollectedField, obj *model.ReadingSession) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ReadingSession_startPage(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.StartPage, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ReadingSession_startPage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ReadingSession", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _ReadingSession_endPage(ctx context.Context, field graphql.CollectedField, obj *model.ReadingSession) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ReadingSession_endPage(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EndPage, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ReadingSession_endPage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ReadingSession", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _ReadingSession_startedAt(ctx context.Context, field graphql.CollectedField, obj *model.ReadingSession) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ReadingSession_startedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.StartedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v time.Time) graphql.Marshaler {
+			return ec.marshalNTime2timeᚐTime(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ReadingSession_startedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ReadingSession", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
+func (ec *executionContext) _ReadingSession_endedAt(ctx context.Context, field graphql.CollectedField, obj *model.ReadingSession) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ReadingSession_endedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EndedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v time.Time) graphql.Marshaler {
+			return ec.marshalNTime2timeᚐTime(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ReadingSession_endedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ReadingSession", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
+func (ec *executionContext) _ReadingSession_durationMs(ctx context.Context, field graphql.CollectedField, obj *model.ReadingSession) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ReadingSession_durationMs(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DurationMs, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ReadingSession_durationMs(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ReadingSession", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _ReadingSession_chapters(ctx context.Context, field graphql.CollectedField, obj *model.ReadingSession) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ReadingSession_chapters(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Chapters, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ReadingSession_chapters(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ReadingSession", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _ReadingStats_totalChaptersRead(ctx context.Context, field graphql.CollectedField, obj *model.ReadingStats) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ReadingStats_totalChaptersRead(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TotalChaptersRead, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ReadingStats_totalChaptersRead(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ReadingStats", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _ReadingStats_totalTitlesRead(ctx context.Context, field graphql.CollectedField, obj *model.ReadingStats) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ReadingStats_totalTitlesRead(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TotalTitlesRead, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ReadingStats_totalTitlesRead(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ReadingStats", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _ReadingStats_totalMinutesRead(ctx context.Context, field graphql.CollectedField, obj *model.ReadingStats) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ReadingStats_totalMinutesRead(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TotalMinutesRead, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ReadingStats_totalMinutesRead(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ReadingStats", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _ReadingStats_chaptersThisWeek(ctx context.Context, field graphql.CollectedField, obj *model.ReadingStats) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ReadingStats_chaptersThisWeek(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ChaptersThisWeek, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ReadingStats_chaptersThisWeek(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ReadingStats", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _ReadingStats_firstReadAt(ctx context.Context, field graphql.CollectedField, obj *model.ReadingStats) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ReadingStats_firstReadAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FirstReadAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *time.Time) graphql.Marshaler {
+			return ec.marshalOTime2ᚖtimeᚐTime(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ReadingStats_firstReadAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ReadingStats", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
+func (ec *executionContext) _ReadingStats_lastReadAt(ctx context.Context, field graphql.CollectedField, obj *model.ReadingStats) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ReadingStats_lastReadAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LastReadAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *time.Time) graphql.Marshaler {
+			return ec.marshalOTime2ᚖtimeᚐTime(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ReadingStats_lastReadAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ReadingStats", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
+func (ec *executionContext) _ReadingStats_currentStreakDays(ctx context.Context, field graphql.CollectedField, obj *model.ReadingStats) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ReadingStats_currentStreakDays(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CurrentStreakDays, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ReadingStats_currentStreakDays(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ReadingStats", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _ReadingStats_longestStreakDays(ctx context.Context, field graphql.CollectedField, obj *model.ReadingStats) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ReadingStats_longestStreakDays(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LongestStreakDays, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int32) graphql.Marshaler {
+			return ec.marshalNInt2int32(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ReadingStats_longestStreakDays(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ReadingStats", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _ReadingStats_lastStreakDate(ctx context.Context, field graphql.CollectedField, obj *model.ReadingStats) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ReadingStats_lastStreakDate(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LastStreakDate, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ReadingStats_lastStreakDate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ReadingStats", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _ReadingStats_days(ctx context.Context, field graphql.CollectedField, obj *model.ReadingStats) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ReadingStats_days(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Days, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.ReadingDay) graphql.Marshaler {
+			return ec.marshalNReadingDay2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐReadingDayᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ReadingStats_days(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ReadingStats",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ReadingDay(ctx, field)
+		},
+	}
+	return fc, nil
 }
 
 func (ec *executionContext) _RecentChapter_chapter(ctx context.Context, field graphql.CollectedField, obj *model.RecentChapter) (ret graphql.Marshaler) {
@@ -22904,6 +24201,143 @@ func (ec *executionContext) unmarshalInputMediaAutomationInput(ctx context.Conte
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputReadingDayInput(ctx context.Context, obj any) (model.ReadingDayInput, error) {
+	var it model.ReadingDayInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"date", "seconds", "chapters"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "date":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("date"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Date = data
+		case "seconds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("seconds"))
+			data, err := ec.unmarshalNInt2int32(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Seconds = data
+		case "chapters":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chapters"))
+			data, err := ec.unmarshalNInt2int32(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Chapters = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputReadingSessionInput(ctx context.Context, obj any) (model.ReadingSessionInput, error) {
+	var it model.ReadingSessionInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "mediaId", "startChapterId", "endChapterId", "startPage", "endPage", "startedAt", "endedAt", "durationMs", "chapters"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "mediaId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mediaId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MediaID = data
+		case "startChapterId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startChapterId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StartChapterID = data
+		case "endChapterId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endChapterId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EndChapterID = data
+		case "startPage":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startPage"))
+			data, err := ec.unmarshalNInt2int32(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StartPage = data
+		case "endPage":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endPage"))
+			data, err := ec.unmarshalNInt2int32(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EndPage = data
+		case "startedAt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startedAt"))
+			data, err := ec.unmarshalNTime2timeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StartedAt = data
+		case "endedAt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endedAt"))
+			data, err := ec.unmarshalNTime2timeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EndedAt = data
+		case "durationMs":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("durationMs"))
+			data, err := ec.unmarshalNInt2int32(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DurationMs = data
+		case "chapters":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("chapters"))
+			data, err := ec.unmarshalNInt2int32(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Chapters = data
+		}
+	}
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputSelectFilterInput(ctx context.Context, obj any) (model.SelectFilterInput, error) {
 	var it model.SelectFilterInput
 	if obj == nil {
@@ -26352,6 +27786,34 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "recordReadingSession":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_recordReadingSession(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "importReadingHistory":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_importReadingHistory(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "clearReadingHistory":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_clearReadingHistory(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "resetReadingStats":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_resetReadingStats(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "createSyncPairingCode":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createSyncPairingCode(ctx, field)
@@ -27344,6 +28806,50 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "readingSessions":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_readingSessions(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "readingStats":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_readingStats(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "syncStatus":
 			field := field
 
@@ -27423,6 +28929,97 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 	return out
 }
 
+var readingDayImplementors = []string{"ReadingDay"}
+
+func (ec *executionContext) _ReadingDay(ctx context.Context, sel ast.SelectionSet, obj *model.ReadingDay) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, readingDayImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ReadingDay")
+		case "date":
+			out.Values[i] = ec._ReadingDay_date(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "seconds":
+			out.Values[i] = ec._ReadingDay_seconds(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "chapters":
+			out.Values[i] = ec._ReadingDay_chapters(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var readingHistoryImportImplementors = []string{"ReadingHistoryImport"}
+
+func (ec *executionContext) _ReadingHistoryImport(ctx context.Context, sel ast.SelectionSet, obj *model.ReadingHistoryImport) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, readingHistoryImportImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ReadingHistoryImport")
+		case "imported":
+			out.Values[i] = ec._ReadingHistoryImport_imported(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "skipped":
+			out.Values[i] = ec._ReadingHistoryImport_skipped(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var readingProgressImplementors = []string{"ReadingProgress"}
 
 func (ec *executionContext) _ReadingProgress(ctx context.Context, sel ast.SelectionSet, obj *model.ReadingProgress) graphql.Marshaler {
@@ -27472,6 +29069,172 @@ func (ec *executionContext) _ReadingProgress(ctx context.Context, sel ast.Select
 			}
 		case "updatedAt":
 			out.Values[i] = ec._ReadingProgress_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var readingSessionImplementors = []string{"ReadingSession"}
+
+func (ec *executionContext) _ReadingSession(ctx context.Context, sel ast.SelectionSet, obj *model.ReadingSession) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, readingSessionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ReadingSession")
+		case "id":
+			out.Values[i] = ec._ReadingSession_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "media":
+			out.Values[i] = ec._ReadingSession_media(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "startChapter":
+			out.Values[i] = ec._ReadingSession_startChapter(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "endChapter":
+			out.Values[i] = ec._ReadingSession_endChapter(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "startPage":
+			out.Values[i] = ec._ReadingSession_startPage(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "endPage":
+			out.Values[i] = ec._ReadingSession_endPage(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "startedAt":
+			out.Values[i] = ec._ReadingSession_startedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "endedAt":
+			out.Values[i] = ec._ReadingSession_endedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "durationMs":
+			out.Values[i] = ec._ReadingSession_durationMs(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "chapters":
+			out.Values[i] = ec._ReadingSession_chapters(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var readingStatsImplementors = []string{"ReadingStats"}
+
+func (ec *executionContext) _ReadingStats(ctx context.Context, sel ast.SelectionSet, obj *model.ReadingStats) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, readingStatsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ReadingStats")
+		case "totalChaptersRead":
+			out.Values[i] = ec._ReadingStats_totalChaptersRead(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalTitlesRead":
+			out.Values[i] = ec._ReadingStats_totalTitlesRead(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalMinutesRead":
+			out.Values[i] = ec._ReadingStats_totalMinutesRead(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "chaptersThisWeek":
+			out.Values[i] = ec._ReadingStats_chaptersThisWeek(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "firstReadAt":
+			out.Values[i] = ec._ReadingStats_firstReadAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "lastReadAt":
+			out.Values[i] = ec._ReadingStats_lastReadAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "currentStreakDays":
+			out.Values[i] = ec._ReadingStats_currentStreakDays(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "longestStreakDays":
+			out.Values[i] = ec._ReadingStats_longestStreakDays(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "lastStreakDate":
+			out.Values[i] = ec._ReadingStats_lastStreakDate(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "days":
+			out.Values[i] = ec._ReadingStats_days(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -30329,6 +32092,61 @@ func (ec *executionContext) marshalNMigrateMangaFormatResult2ᚖtsunaguᚋbacken
 	return ec._MigrateMangaFormatResult(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNReadingDay2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐReadingDayᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ReadingDay) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNReadingDay2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐReadingDay(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNReadingDay2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐReadingDay(ctx context.Context, sel ast.SelectionSet, v *model.ReadingDay) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ReadingDay(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNReadingDayInput2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐReadingDayInputᚄ(ctx context.Context, v any) ([]*model.ReadingDayInput, error) {
+	vSlice := graphql.CoerceList(v)
+	var err error
+	res := make([]*model.ReadingDayInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNReadingDayInput2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐReadingDayInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalNReadingDayInput2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐReadingDayInput(ctx context.Context, v any) (*model.ReadingDayInput, error) {
+	res, err := ec.unmarshalInputReadingDayInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNReadingHistoryImport2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐReadingHistoryImport(ctx context.Context, sel ast.SelectionSet, v *model.ReadingHistoryImport) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ReadingHistoryImport(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNReadingProgress2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐReadingProgressᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ReadingProgress) graphql.Marshaler {
 	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
 		fc := graphql.GetFieldContext(ctx)
@@ -30353,6 +32171,66 @@ func (ec *executionContext) marshalNReadingProgress2ᚖtsunaguᚋbackendᚋinter
 		return graphql.Null
 	}
 	return ec._ReadingProgress(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNReadingSession2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐReadingSessionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ReadingSession) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 0, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNReadingSession2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐReadingSession(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNReadingSession2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐReadingSession(ctx context.Context, sel ast.SelectionSet, v *model.ReadingSession) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ReadingSession(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNReadingSessionInput2tsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐReadingSessionInput(ctx context.Context, v any) (model.ReadingSessionInput, error) {
+	res, err := ec.unmarshalInputReadingSessionInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNReadingSessionInput2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐReadingSessionInputᚄ(ctx context.Context, v any) ([]*model.ReadingSessionInput, error) {
+	vSlice := graphql.CoerceList(v)
+	var err error
+	res := make([]*model.ReadingSessionInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNReadingSessionInput2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐReadingSessionInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalNReadingSessionInput2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐReadingSessionInput(ctx context.Context, v any) (*model.ReadingSessionInput, error) {
+	res, err := ec.unmarshalInputReadingSessionInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNReadingStats2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐReadingStats(ctx context.Context, sel ast.SelectionSet, v *model.ReadingStats) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ReadingStats(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNRecentChapter2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐRecentChapterᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.RecentChapter) graphql.Marshaler {

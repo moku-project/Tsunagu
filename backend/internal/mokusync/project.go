@@ -380,6 +380,10 @@ func projectTarget(ctx context.Context, tx *sql.Tx, t target) (bool, error) {
 		return projectTitleFolders(ctx, tx, t.field)
 	case KindFolder:
 		return projectFolder(ctx, tx, t.key)
+	case KindSession:
+		return projectSession(ctx, tx, t.key)
+	case KindReadingDay:
+		return projectReadingDay(ctx, tx, t.key)
 	}
 	return true, nil
 }

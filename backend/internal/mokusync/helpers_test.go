@@ -190,6 +190,8 @@ func (n *node) libraryState() []string {
 		ORDER BY m.external_id, c.external_id`)...)
 	out = append(out, n.strings(`SELECT 'folder ' || sync_id || ' ' || name || ' order=' || sort_order || ' types=' || content_types
 		|| ' update=' || include_in_update || ' download=' || include_in_download FROM folders ORDER BY sync_id`)...)
+	out = append(out, n.strings(`SELECT 'session ' || s.id || ' ' || m.external_id || COALESCE(c.external_id, '-') || ' hidden=' || s.hidden
+		FROM reading_sessions s JOIN media m ON m.id = s.media_id LEFT JOIN chapters c ON c.id = s.end_chapter_id ORDER BY s.id`)...)
 	out = append(out, n.strings(`SELECT 'member ' || f.sync_id || ' ' || m.external_id FROM media_folders mf
 		JOIN folders f ON f.id = mf.folder_id JOIN media m ON m.id = mf.media_id ORDER BY 1`)...)
 	return out

@@ -1,0 +1,87 @@
+"One stretch of reading a title: from opening it until the reader stops for an hour or moves to another title."
+type ReadingSession {
+  id: ID!
+  media: Media!
+  startChapter: Chapter
+  endChapter: Chapter
+  startPage: Int!
+  endPage: Int!
+  startedAt: Time!
+  endedAt: Time!
+  "Time spent reading, at most an hour."
+  durationMs: Int!
+  "Chapters opened during the session."
+  chapters: Int!
+}
+
+"Reading done on one date in the reader's time zone."
+type ReadingDay {
+  "YYYY-MM-DD."
+  date: String!
+  seconds: Int!
+  chapters: Int!
+}
+
+type ReadingStats {
+  "Chapters marked read."
+  totalChaptersRead: Int!
+  totalTitlesRead: Int!
+  totalMinutesRead: Int!
+  "Chapters opened in the last 7 days."
+  chaptersThisWeek: Int!
+  firstReadAt: Time
+  lastReadAt: Time
+  "Days in a row with reading, counting today or yesterday. 0 once a day is missed."
+  currentStreakDays: Int!
+  longestStreakDays: Int!
+  "Last date with reading; empty when there's none."
+  lastStreakDate: String!
+  days: [ReadingDay!]!
+}
+
+input ReadingSessionInput {
+  "Chosen by the app, so sending a session twice doesn't record it twice."
+  id: ID!
+  mediaId: ID!
+  startChapterId: ID
+  endChapterId: ID
+  startPage: Int!
+  endPage: Int!
+  startedAt: Time!
+  endedAt: Time!
+  durationMs: Int!
+  chapters: Int!
+}
+
+input ReadingDayInput {
+  date: String!
+  seconds: Int!
+  chapters: Int!
+}
+
+type ReadingHistoryImport {
+  imported: Int!
+  "Sessions for titles this server doesn't have, or already imported."
+  skipped: Int!
+}
+
+extend type Query {
+  "Reading history, newest first. Synced between paired devices."
+  readingSessions(limit: Int, before: Time, mediaId: ID): [ReadingSession!]!
+  "Stats with days counted in timeZone, an IANA name like Europe/Berlin; the server's own zone when omitted."
+  readingStats(timeZone: String): ReadingStats!
+}
+
+extend type Mutation {
+  "Saves a finished reading session; sending the same id again updates it."
+  recordReadingSession(input: ReadingSessionInput!): ReadingSession!
+  """
+  Takes in history an app kept on its own, once. source names that app's install, so a retried import replaces
+  rather than adds its days. When days are sent they carry the stats, and the sessions only fill the history.
+  """
+  importReadingHistory(source: String!, sessions: [ReadingSessionInput!]!, days: [ReadingDayInput!]!): ReadingHistoryImport!
+  "Hides history for one title or all; stats keep counting it. Returns how many sessions were hidden."
+  clearReadingHistory(mediaId: ID): Int!
+  "Deletes all history and stats, on every paired device."
+  resetReadingStats: Boolean!
+}

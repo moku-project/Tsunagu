@@ -368,6 +368,26 @@ type Mutation struct {
 type Query struct {
 }
 
+// Reading done on one date in the reader's time zone.
+type ReadingDay struct {
+	// YYYY-MM-DD.
+	Date     string `json:"date"`
+	Seconds  int32  `json:"seconds"`
+	Chapters int32  `json:"chapters"`
+}
+
+type ReadingDayInput struct {
+	Date     string `json:"date"`
+	Seconds  int32  `json:"seconds"`
+	Chapters int32  `json:"chapters"`
+}
+
+type ReadingHistoryImport struct {
+	Imported int32 `json:"imported"`
+	// Sessions for titles this server doesn't have, or already imported.
+	Skipped int32 `json:"skipped"`
+}
+
 type ReadingProgress struct {
 	ID              string    `json:"id"`
 	MediaID         string    `json:"mediaId"`
@@ -377,6 +397,53 @@ type ReadingProgress struct {
 	PositionSeconds *float64  `json:"positionSeconds,omitempty"`
 	DurationSeconds *float64  `json:"durationSeconds,omitempty"`
 	UpdatedAt       time.Time `json:"updatedAt"`
+}
+
+// One stretch of reading a title: from opening it until the reader stops for an hour or moves to another title.
+type ReadingSession struct {
+	ID           string    `json:"id"`
+	Media        *Media    `json:"media"`
+	StartChapter *Chapter  `json:"startChapter,omitempty"`
+	EndChapter   *Chapter  `json:"endChapter,omitempty"`
+	StartPage    int32     `json:"startPage"`
+	EndPage      int32     `json:"endPage"`
+	StartedAt    time.Time `json:"startedAt"`
+	EndedAt      time.Time `json:"endedAt"`
+	// Time spent reading, at most an hour.
+	DurationMs int32 `json:"durationMs"`
+	// Chapters opened during the session.
+	Chapters int32 `json:"chapters"`
+}
+
+type ReadingSessionInput struct {
+	// Chosen by the app, so sending a session twice doesn't record it twice.
+	ID             string    `json:"id"`
+	MediaID        string    `json:"mediaId"`
+	StartChapterID *string   `json:"startChapterId,omitempty"`
+	EndChapterID   *string   `json:"endChapterId,omitempty"`
+	StartPage      int32     `json:"startPage"`
+	EndPage        int32     `json:"endPage"`
+	StartedAt      time.Time `json:"startedAt"`
+	EndedAt        time.Time `json:"endedAt"`
+	DurationMs     int32     `json:"durationMs"`
+	Chapters       int32     `json:"chapters"`
+}
+
+type ReadingStats struct {
+	// Chapters marked read.
+	TotalChaptersRead int32 `json:"totalChaptersRead"`
+	TotalTitlesRead   int32 `json:"totalTitlesRead"`
+	TotalMinutesRead  int32 `json:"totalMinutesRead"`
+	// Chapters opened in the last 7 days.
+	ChaptersThisWeek int32      `json:"chaptersThisWeek"`
+	FirstReadAt      *time.Time `json:"firstReadAt,omitempty"`
+	LastReadAt       *time.Time `json:"lastReadAt,omitempty"`
+	// Days in a row with reading, counting today or yesterday. 0 once a day is missed.
+	CurrentStreakDays int32 `json:"currentStreakDays"`
+	LongestStreakDays int32 `json:"longestStreakDays"`
+	// Last date with reading; empty when there's none.
+	LastStreakDate string        `json:"lastStreakDate"`
+	Days           []*ReadingDay `json:"days"`
 }
 
 type RecentChapter struct {

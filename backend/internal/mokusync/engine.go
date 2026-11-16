@@ -305,7 +305,7 @@ func (e *Engine) capture(ctx context.Context, tx *sql.Tx) (int, error) {
 	seen := map[target]bool{}
 	for i := len(dirty) - 1; i >= 0; i-- {
 		d := dirty[i]
-		if d.kind != KindChapter && d.kind != KindFolder {
+		if d.kind != KindChapter && d.kind != KindFolder && d.kind != KindSession && d.kind != KindReadingDay {
 			continue
 		}
 		t := target{d.kind, d.key, d.field}
@@ -328,6 +328,10 @@ func (e *Engine) capture(ctx context.Context, tx *sql.Tx) (int, error) {
 			made, err = e.captureChapter(ctx, tx, d, wall)
 		case d.kind == KindFolder:
 			made, err = e.captureFolder(ctx, tx, d, wall)
+		case d.kind == KindSession:
+			made, err = e.captureSession(ctx, tx, d.key, wall)
+		case d.kind == KindReadingDay:
+			made, err = e.captureReadingDay(ctx, tx, d.key, wall)
 		case d.kind == KindLibrary || d.kind == KindFolderMember:
 			made, err = e.captureMember(ctx, tx, d, wall)
 			if err == nil && d.kind == KindLibrary {

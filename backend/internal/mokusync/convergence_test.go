@@ -159,6 +159,14 @@ func randomEdit(r *rand.Rand, n *node) string {
 		name := fmt.Sprintf("F%d", r.Intn(folderNames))
 		n.renameFolder(id, name)
 		return fmt.Sprintf("rename %s=%s", id[:6], name)
+	case k == 9 && r.Intn(3) == 0:
+		id := fmt.Sprintf("s%d", r.Intn(6))
+		if len(n.strings(`SELECT id FROM reading_sessions WHERE id = ?`, id)) > 0 {
+			n.exec(`UPDATE reading_sessions SET hidden = 1 - hidden WHERE id = ?`, id)
+			return "toggle session " + id
+		}
+		n.addSession(id, m, c, n.wall)
+		return fmt.Sprintf("session %s on %d/%d", id, m, c)
 	case k == 8 && r.Intn(3) == 0:
 		id := folders[r.Intn(len(folders))]
 		n.deleteFolder(id)
