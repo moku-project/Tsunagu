@@ -23,6 +23,12 @@ import (
 // errUnauthorized means the peer no longer accepts this instance's token.
 var errUnauthorized = errors.New("this device is not paired there")
 
+// errWrongDevice means another instance answers at a peer's address, as when DHCP or NAT hands it to someone else.
+var errWrongDevice = errors.New("a different device answers at this address")
+
+// nodeHeader names the instance answering a peer request, so a refusal can be told apart from a stranger's.
+const nodeHeader = "X-Moku-Node"
+
 // defaultClient gives up on an unreachable address quickly, since a moved device is then looked for on the LAN.
 var defaultClient = &http.Client{
 	Timeout:   60 * time.Second,
@@ -54,6 +60,9 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if h.PeerOnly && !strings.HasPrefix(r.URL.Path, PeerPrefix) {
 		http.NotFound(w, r)
 		return
+	}
+	if strings.HasPrefix(r.URL.Path, PeerPrefix) {
+		w.Header().Set(nodeHeader, h.E.node)
 	}
 	switch {
 	case r.URL.Path == exchangePath && r.Method == http.MethodPost:
@@ -339,15 +348,17 @@ type HTTPPeer struct {
 	Address string
 	Token   string
 	Client  *http.Client
+	// Node is the instance expected at Address; another one answering there isn't taken as unpairing.
+	Node string
 }
 
 func (p HTTPPeer) Exchange(ctx context.Context, req ExchangeRequest) (ExchangeResponse, error) {
 	var resp ExchangeResponse
-	err := postJSON(ctx, p.Client, strings.TrimRight(p.Address, "/")+exchangePath, p.Token, req, &resp)
+	err := postJSON(ctx, p.Client, strings.TrimRight(p.Address, "/")+exchangePath, p.Token, req, &resp, p.Node)
 	return resp, err
 }
 
-func postJSON(ctx context.Context, client *http.Client, url, token string, body, out any) error {
+func postJSON(ctx context.Context, client *http.Client, url, token string, body, out any, expect ...string) error {
 	if client == nil {
 		client = defaultClient
 	}
@@ -382,6 +393,9 @@ func postJSON(ctx context.Context, client *http.Client, url, token string, body,
 		}
 		defer gz.Close()
 		rd = gz
+	}
+	if node := res.Header.Get(nodeHeader); len(expect) > 0 && expect[0] != "" && node != "" && node != expect[0] {
+		return errWrongDevice
 	}
 	if res.StatusCode == http.StatusUnauthorized && token != "" {
 		return errUnauthorized
@@ -433,6 +447,7 @@ func (e *Engine) dialPeers(ctx context.Context) ([]HTTPPeer, []string, error) {
 		if err := rows.Scan(&node, &p.Address, &p.Token); err != nil {
 			return nil, nil, err
 		}
+		p.Node = node
 		peers = append(peers, p)
 		nodes = append(nodes, node)
 	}

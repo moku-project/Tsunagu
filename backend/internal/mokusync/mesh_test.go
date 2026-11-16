@@ -2,6 +2,7 @@ package mokusync
 
 import (
 	"context"
+	"errors"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -268,4 +269,27 @@ func holding(n, peer *node) bool {
 	defer n.e.watchers.mu.Unlock()
 	w := n.e.watchers.m[peer.e.Node()]
 	return w != nil && w.holding > 0
+}
+
+func TestAStrangerAtAPeersAddressDoesNotUnpairIt(t *testing.T) {
+	shortWatch(t)
+	hub := newNode(t, "desktop", nil)
+	phone := newNode(t, "phone", nil)
+	srv := listen(t, hub)
+	code, _, _ := hub.e.PairingCode(hub.ctx)
+	if _, err := phone.e.Connect(phone.ctx, nil, srv.URL, code); err != nil {
+		t.Fatal(err)
+	}
+	// Another Tsunagu now answers at the desktop's address and refuses the phone's token.
+	stranger := listen(t, newNode(t, "someone else", nil))
+	phone.exec(`UPDATE sync_peers SET address = ? WHERE node = ?`, stranger.URL, hub.e.Node())
+	peers, nodes, _ := phone.e.dialPeers(phone.ctx)
+	if err := phone.e.SyncWith(phone.ctx, peers[0], nodes[0]); !errors.Is(err, errWrongDevice) {
+		t.Fatalf("syncing with a stranger: %v, want errWrongDevice", err)
+	}
+	run(t, phone)
+	time.Sleep(3 * unpairedAfter)
+	if got, _ := phone.e.Peers(phone.ctx); len(got) != 1 {
+		t.Fatalf("a stranger's refusal unpaired the desktop: %+v", got)
+	}
 }
