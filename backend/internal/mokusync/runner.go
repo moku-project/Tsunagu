@@ -124,10 +124,10 @@ func (e *Engine) watch(ctx context.Context, p HTTPPeer, node string, interval ti
 	backoff := interval
 	failing := false
 	var refusedSince time.Time
+	// The failing mark outlives this watcher: dropping it when a yield stops the watcher would start another at once.
 	defer func() {
 		if failing {
 			e.unreachable.Add(-1)
-			e.failing.Delete(node)
 		}
 	}()
 	for ctx.Err() == nil {

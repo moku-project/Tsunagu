@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strconv"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -291,5 +292,31 @@ func TestAStrangerAtAPeersAddressDoesNotUnpairIt(t *testing.T) {
 	time.Sleep(3 * unpairedAfter)
 	if got, _ := phone.e.Peers(phone.ctx); len(got) != 1 {
 		t.Fatalf("a stranger's refusal unpaired the desktop: %+v", got)
+	}
+}
+
+func TestAnUnreachablePeerWatchingUsIsLeftAlone(t *testing.T) {
+	shortWatch(t)
+	a := newNode(t, "phone", nil)
+	b := newNode(t, "desktop", nil)
+	srvB := listen(t, b)
+	listen(t, a)
+	code, _, _ := b.e.PairingCode(b.ctx)
+	if _, err := a.e.ConnectTo(a.ctx, nil, srvB.URL, code, b.e.Node()); err != nil {
+		t.Fatal(err)
+	}
+	// b can't reach a (NAT), but a watches b; b should stop dialing instead of retrying every tick.
+	dead, _ := net.Listen("tcp", "127.0.0.1:0")
+	deadAddr := "http://" + dead.Addr().String()
+	dead.Close()
+	b.exec(`UPDATE sync_peers SET address = ? WHERE node = ?`, deadAddr, a.e.Node())
+	var attempts atomic.Int32
+	b.e.SetDiscovery(func(context.Context, string) ([]Nearby, error) { attempts.Add(1); return nil, nil })
+	run(t, a, b)
+	a.setInLibrary(2, true)
+	eventually(t, "a's change reaching b", 3*time.Second, func() bool { return b.inLibrary(2) })
+	time.Sleep(2 * time.Second)
+	if _, failing := b.e.failing.Load(a.e.Node()); !failing || !b.e.yields(a.e.Node()) {
+		t.Fatal("b kept dialing a peer it can't reach while that peer watches it")
 	}
 }
