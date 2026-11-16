@@ -15,6 +15,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -275,13 +276,35 @@ func (e *Engine) Connect(ctx context.Context, client *http.Client, address, code
 }
 
 // ConnectTo pairs only if the instance at address is node, the one a preview showed; "" skips the check.
+// DefaultSyncPort is where pairing is served unless sync_addr says otherwise.
+const DefaultSyncPort = "6008"
+
+// peerAddress accepts what people type: a bare host, host:port or a full URL, and returns scheme://host:port.
+func peerAddress(raw string) (string, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return "", errors.New("missing address")
+	}
+	if !strings.Contains(raw, "://") {
+		raw = "http://" + raw
+	}
+	u, err := url.Parse(raw)
+	if err != nil || u.Hostname() == "" || (u.Scheme != "http" && u.Scheme != "https") {
+		return "", fmt.Errorf("%q isn't an address like 192.168.1.20", strings.TrimPrefix(raw, "http://"))
+	}
+	if u.Port() == "" {
+		u.Host = net.JoinHostPort(u.Hostname(), DefaultSyncPort)
+	}
+	return u.Scheme + "://" + u.Host, nil
+}
+
 func (e *Engine) ConnectTo(ctx context.Context, client *http.Client, address, code, node string) (string, error) {
 	if !e.Named() {
 		return "", ErrUnnamed
 	}
-	address = strings.TrimRight(strings.TrimSpace(address), "/")
-	if address == "" {
-		return "", errors.New("missing address")
+	address, err := peerAddress(address)
+	if err != nil {
+		return "", err
 	}
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {
@@ -299,7 +322,7 @@ func (e *Engine) ConnectTo(ctx context.Context, client *http.Client, address, co
 	if node != "" && resp.Node != node {
 		return "", errors.New("a different device answered than the one previewed")
 	}
-	_, err := e.db.ExecContext(ctx, `INSERT INTO sync_peers (node, name, address, dial_token, token_hash) VALUES (?, ?, ?, ?, ?)
+	_, err = e.db.ExecContext(ctx, `INSERT INTO sync_peers (node, name, address, dial_token, token_hash) VALUES (?, ?, ?, ?, ?)
 		ON CONFLICT(node) DO UPDATE SET name = excluded.name, address = excluded.address, dial_token = excluded.dial_token,
 		token_hash = excluded.token_hash`, resp.Node, resp.Name, address, resp.Token, hashSecret(back))
 	return resp.Node, err

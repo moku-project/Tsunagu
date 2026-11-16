@@ -126,9 +126,9 @@ func (e *Engine) Preview(ctx context.Context, client *http.Client, address, code
 	if !e.Named() {
 		return PairPreview{}, ErrUnnamed
 	}
-	address = strings.TrimRight(strings.TrimSpace(address), "/")
-	if address == "" {
-		return PairPreview{}, errors.New("missing address")
+	address, err := peerAddress(address)
+	if err != nil {
+		return PairPreview{}, err
 	}
 	var theirs previewResponse
 	if err := postJSON(ctx, client, address+previewPath, "", previewRequest{Code: code}, &theirs); err != nil {
