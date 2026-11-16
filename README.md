@@ -15,7 +15,7 @@ GraphQL at `http://localhost:6007/api/graphql` (playground at `/api/graphql/play
 
 ## Packaging
 
-- **Arch** — [`packaging/tsunagu`](packaging/tsunagu/PKGBUILD) (latest tagged release) or [`packaging/tsunagu-git`](packaging/tsunagu-git/PKGBUILD) (latest commit). Either installs `/usr/bin/tsunagu` plus the sandbox jar it needs. [Moku](https://github.com/moku-project/Moku)'s default `moku`/`moku-git` PKGBUILDs depend on these to bundle the backend automatically.
+- **Arch** — [`packaging/tsunagu`](packaging/tsunagu/PKGBUILD) (latest tagged release) or [`packaging/tsunagu-git`](packaging/tsunagu-git/PKGBUILD) (latest commit), built with `makepkg -si` since neither is on the AUR yet. Either installs `/usr/bin/tsunagu` plus the sandbox jar it needs. [Moku](https://github.com/moku-project/Moku)'s default `moku`/`moku-git` PKGBUILDs depend on these to bundle the backend automatically.
 - **Nix** — `nix build .#tsunagu` (see `nix/packages.nix`).
 
 ## Auth
