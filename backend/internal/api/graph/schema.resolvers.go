@@ -1885,6 +1885,22 @@ func (r *queryResolver) Chapter(ctx context.Context, id string) (*model.Chapter,
 	return toChapter(ch), nil
 }
 
+func (r *queryResolver) Chapters(ctx context.Context, mediaID string) ([]*model.Chapter, error) {
+	mid, err := parseID(mediaID)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := r.Q.ListChaptersByMedia(ctx, mid)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*model.Chapter, 0, len(rows))
+	for _, ch := range rows {
+		out = append(out, toChapter(ch))
+	}
+	return out, nil
+}
+
 func (r *queryResolver) ResolveMedia(ctx context.Context, extensionID string, externalID string, syncChapters *bool) (*model.Media, error) {
 	ext, err := r.resolveExtension(ctx, extensionID)
 	if err != nil {

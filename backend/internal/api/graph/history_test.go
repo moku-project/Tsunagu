@@ -3,6 +3,7 @@ package graph
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -87,5 +88,33 @@ func TestResumePointIsTheLatestChapterRead(t *testing.T) {
 	}
 	if rp, err := resumePoint(ctx, conn, 2); err != nil || rp != nil {
 		t.Fatalf("a title never read: %+v %v", rp, err)
+	}
+}
+
+func TestChaptersDoNotCountAsAView(t *testing.T) {
+	conn, err := db.Open(filepath.Join(t.TempDir(), "t.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+	ctx := context.Background()
+	for _, q := range []string{
+		`INSERT INTO repositories (index_url, name) VALUES ('https://example.com/index.json', 'Example')`,
+		`INSERT INTO extensions (repository_id, package_name, name, version, content_type, lang, apk_url, installed) VALUES (1, 'example.source', 'Example', '1', 'manga', 'en', 'x.apk', 1)`,
+		`INSERT INTO media (id, extension_id, external_id, content_type, title) VALUES (1, 1, '/a', 'manga', 'A')`,
+		`INSERT INTO chapters (id, media_id, external_id, number, source_order) VALUES (10, 1, '/a/1', 1, 0), (11, 1, '/a/2', 2, 1)`,
+	} {
+		if _, err := conn.ExecContext(ctx, q); err != nil {
+			t.Fatal(err)
+		}
+	}
+	r := &queryResolver{&Resolver{DB: conn, Q: sqlcgen.New(conn)}}
+	got, err := r.Chapters(ctx, "1")
+	if err != nil || len(got) != 2 || got[0].ExternalID != "/a/1" {
+		t.Fatalf("chapters %+v %v", got, err)
+	}
+	var viewed sql.NullString
+	if err := conn.QueryRowContext(ctx, `SELECT last_viewed_at FROM media WHERE id = 1`).Scan(&viewed); err != nil || viewed.Valid {
+		t.Fatalf("listing chapters counted as a view: %v %v", viewed, err)
 	}
 }

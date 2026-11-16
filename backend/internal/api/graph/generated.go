@@ -410,6 +410,7 @@ type ComplexityRoot struct {
 		AvailableExtensions      func(childComplexity int, repositoryID string) int
 		Chapter                  func(childComplexity int, id string) int
 		ChapterUpdates           func(childComplexity int, since *time.Time, limit *int32) int
+		Chapters                 func(childComplexity int, mediaID string) int
 		CloudflareSolver         func(childComplexity int) int
 		ContentFilterRules       func(childComplexity int) int
 		DatabaseBackups          func(childComplexity int) int
@@ -912,6 +913,7 @@ type QueryResolver interface {
 	Library(ctx context.Context, filter *model.LibraryFilter, sort *model.LibrarySortInput, limit *int32, offset *int32) (*model.MediaPage, error)
 	Media(ctx context.Context, id string) (*model.Media, error)
 	Chapter(ctx context.Context, id string) (*model.Chapter, error)
+	Chapters(ctx context.Context, mediaID string) ([]*model.Chapter, error)
 	ResolveMedia(ctx context.Context, extensionID string, externalID string, syncChapters *bool) (*model.Media, error)
 	ReadingProgress(ctx context.Context, mediaID string) ([]*model.ReadingProgress, error)
 	Search(ctx context.Context, extensionID string, query string, page *int32, filters []*model.FilterInput) (*model.SearchResponse, error)
@@ -3077,6 +3079,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.ChapterUpdates(childComplexity, args["since"].(*time.Time), args["limit"].(*int32)), true
+	case "Query.chapters":
+		if e.ComplexityRoot.Query.Chapters == nil {
+			break
+		}
+
+		args, err := ec.field_Query_chapters_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.Chapters(childComplexity, args["mediaId"].(string)), true
 	case "Query.cloudflareSolver":
 		if e.ComplexityRoot.Query.CloudflareSolver == nil {
 			break
@@ -7520,6 +7533,20 @@ func (ec *executionContext) field_Query_chapter_args(ctx context.Context, rawArg
 		return nil, err
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_chapters_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "mediaId",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["mediaId"] = arg0
 	return args, nil
 }
 
@@ -17062,6 +17089,50 @@ func (ec *executionContext) fieldContext_Query_chapter(ctx context.Context, fiel
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_chapter_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_chapters(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_chapters(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Query().Chapters(ctx, fc.Args["mediaId"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*model.Chapter) graphql.Marshaler {
+			return ec.marshalNChapter2ᚕᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐChapterᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_chapters(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_Chapter(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_chapters_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -28591,6 +28662,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}()
 				res = ec._Query_chapter(ctx, field)
 				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "chapters":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_chapters(ctx, field)
+				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res

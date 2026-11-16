@@ -496,6 +496,8 @@ type Query {
   media(id: ID!): Media
 
   chapter(id: ID!): Chapter
+  "The chapters already stored for a title, without asking its source or counting as a view the way media(id) does."
+  chapters(mediaId: ID!): [Chapter!]!
 
   resolveMedia(extensionId: ID!, externalId: String!, syncChapters: Boolean = true): Media!
 
