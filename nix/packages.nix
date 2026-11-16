@@ -1,7 +1,7 @@
 { pkgs, lib }:
 
 let
-  version = "0.6.0";
+  version = "0.8.0";
   jdk = pkgs.jdk21;
 
   repoSrc = fileset: lib.fileset.toSource {
@@ -41,7 +41,7 @@ let
 
     src = repoSrc (lib.fileset.unions [ ../backend ]);
     modRoot = "backend";
-    vendorHash = "sha256-v4FlhUvrE6T6OTwVAfufTlS1GDLkCV/XvJGBAr7jfJs=";
+    vendorHash = "sha256-K6hyZH91WVJ1gRhaDdDklMqMjuKTWJPu6N5Y7tGEQ/Y=";
 
     subPackages = [ "cmd/server" ];
     env.CGO_ENABLED = "0";
@@ -86,7 +86,7 @@ let
 
     installPhase = ''
       runHook preInstall
-      install -Dm644 build/libs/sandbox-${version}-all.jar \
+      install -Dm644 build/libs/sandbox-*-all.jar \
         $out/share/tsunagu/sandbox.jar
       runHook postInstall
     '';
