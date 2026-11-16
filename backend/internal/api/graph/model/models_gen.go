@@ -299,6 +299,7 @@ type Media struct {
 	Metadata           *MetadataMatch     `json:"metadata,omitempty"`
 	Source             *Extension         `json:"source,omitempty"`
 	DownloadFolderPath *string            `json:"downloadFolderPath,omitempty"`
+	ResumePoint        *ResumePoint       `json:"resumePoint,omitempty"`
 }
 
 type MediaAutomation struct {
@@ -474,6 +475,16 @@ type Repository struct {
 	ContentType  ContentType `json:"contentType"`
 	AddedAt      time.Time   `json:"addedAt"`
 	LastSyncedAt *time.Time  `json:"lastSyncedAt,omitempty"`
+}
+
+// Where to pick a title back up: the chapter read most recently, and the page reached in it.
+type ResumePoint struct {
+	ChapterID string `json:"chapterId"`
+	// Absent when the app that read it didn't send a page.
+	Page      *int32    `json:"page,omitempty"`
+	Progress  float64   `json:"progress"`
+	Completed bool      `json:"completed"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 type SearchResponse struct {

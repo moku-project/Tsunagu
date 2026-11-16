@@ -2,6 +2,7 @@ package graph
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"strconv"
@@ -127,4 +128,28 @@ func optionalID(id *string) (*int64, error) {
 		return nil, err
 	}
 	return &n, nil
+}
+
+func resumePoint(ctx context.Context, db *sql.DB, mediaID int64) (*model.ResumePoint, error) {
+	var chapterID int64
+	var progress float64
+	var completed bool
+	var updated time.Time
+	var page sql.NullInt64
+	err := db.QueryRowContext(ctx, `SELECT rp.chapter_id, rp.progress, rp.completed, rp.updated_at, pg.page FROM reading_progress rp
+		LEFT JOIN reading_pages pg ON pg.chapter_id = rp.chapter_id
+		WHERE rp.media_id = ? ORDER BY rp.updated_at DESC, rp.id DESC LIMIT 1`, mediaID).
+		Scan(&chapterID, &progress, &completed, &updated, &page)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	out := &model.ResumePoint{ChapterID: strconv.FormatInt(chapterID, 10), Progress: progress, Completed: completed, UpdatedAt: updated}
+	if page.Valid {
+		p := int32(page.Int64)
+		out.Page = &p
+	}
+	return out, nil
 }

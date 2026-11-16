@@ -69,3 +69,22 @@ func TestSessionsWaitForTheirTitle(t *testing.T) {
 		t.Fatalf("applying a synced session made %d new ops", got)
 	}
 }
+
+func TestResumePageSyncs(t *testing.T) {
+	a := newNode(t, "a", nil)
+	b := newNode(t, "b", []int{5, 4, 3, 2, 1, 0})
+	a.setPosition(1, 2, 0.4)
+	a.exec(`INSERT INTO reading_pages (chapter_id, page) VALUES (`+chapterIDs+`, 12)`, mediaExt(1), chapterExt(2))
+	a.capture()
+	a.syncWith(b)
+	if got := b.strings(`SELECT page FROM reading_pages WHERE chapter_id = `+chapterIDs, mediaExt(1), chapterExt(2)); len(got) != 1 || got[0] != "12" {
+		t.Fatalf("page on b: %v", got)
+	}
+	b.wall++
+	b.exec(`UPDATE reading_pages SET page = 15 WHERE chapter_id = `+chapterIDs, mediaExt(1), chapterExt(2))
+	b.capture()
+	b.syncWith(a)
+	if got := a.strings(`SELECT page FROM reading_pages WHERE chapter_id = `+chapterIDs, mediaExt(1), chapterExt(2)); len(got) != 1 || got[0] != "15" {
+		t.Fatalf("page back on a: %v", got)
+	}
+}

@@ -61,3 +61,31 @@ func TestReadingHistoryThroughGraphQL(t *testing.T) {
 		t.Fatalf("bad time zone: %s", out)
 	}
 }
+
+func TestResumePointIsTheLatestChapterRead(t *testing.T) {
+	conn, err := db.Open(filepath.Join(t.TempDir(), "t.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+	ctx := context.Background()
+	for _, q := range []string{
+		`INSERT INTO repositories (index_url, name) VALUES ('https://example.com/index.json', 'Example')`,
+		`INSERT INTO extensions (repository_id, package_name, name, version, content_type, lang, apk_url, installed) VALUES (1, 'example.source', 'Example', '1', 'manga', 'en', 'x.apk', 1)`,
+		`INSERT INTO media (id, extension_id, external_id, content_type, title) VALUES (1, 1, '/a', 'manga', 'A')`,
+		`INSERT INTO chapters (id, media_id, external_id, number) VALUES (10, 1, '/a/1', 1), (11, 1, '/a/2', 2)`,
+		`INSERT INTO reading_progress (media_id, chapter_id, progress, completed, updated_at) VALUES (1, 10, 1, 1, '2026-11-10 10:00:00'), (1, 11, 0.5, 0, '2026-11-10 11:00:00')`,
+		`INSERT INTO reading_pages (chapter_id, page) VALUES (11, 9)`,
+	} {
+		if _, err := conn.ExecContext(ctx, q); err != nil {
+			t.Fatal(err)
+		}
+	}
+	rp, err := resumePoint(ctx, conn, 1)
+	if err != nil || rp == nil || rp.ChapterID != "11" || rp.Page == nil || *rp.Page != 9 || rp.Completed {
+		t.Fatalf("resume point %+v %v", rp, err)
+	}
+	if rp, err := resumePoint(ctx, conn, 2); err != nil || rp != nil {
+		t.Fatalf("a title never read: %+v %v", rp, err)
+	}
+}

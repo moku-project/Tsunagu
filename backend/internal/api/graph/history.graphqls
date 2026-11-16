@@ -85,3 +85,17 @@ extend type Mutation {
   "Deletes all history and stats, on every paired device."
   resetReadingStats: Boolean!
 }
+
+"Where to pick a title back up: the chapter read most recently, and the page reached in it."
+type ResumePoint {
+  chapterId: ID!
+  "Absent when the app that read it didn't send a page."
+  page: Int
+  progress: Float!
+  completed: Boolean!
+  updatedAt: Time!
+}
+
+extend type Media {
+  resumePoint: ResumePoint @goField(forceResolver: true)
+}

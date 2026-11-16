@@ -13,6 +13,14 @@ import (
 	"tsunagu/backend/internal/history"
 )
 
+func (r *mediaResolver) ResumePoint(ctx context.Context, obj *model.Media) (*model.ResumePoint, error) {
+	mediaID, err := parseID(obj.ID)
+	if err != nil {
+		return nil, err
+	}
+	return resumePoint(ctx, r.DB, mediaID)
+}
+
 func (r *mutationResolver) RecordReadingSession(ctx context.Context, input model.ReadingSessionInput) (*model.ReadingSession, error) {
 	s, err := toHistorySession(&input)
 	if err != nil {

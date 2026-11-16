@@ -818,7 +818,7 @@ func (r *mutationResolver) SyncChapters(ctx context.Context, mediaID string) ([]
 	return out, nil
 }
 
-func (r *mutationResolver) UpdateReadingProgress(ctx context.Context, mediaID string, chapterID string, progress float64, completed *bool, positionSeconds *float64, durationSeconds *float64) (*model.ReadingProgress, error) {
+func (r *mutationResolver) UpdateReadingProgress(ctx context.Context, mediaID string, chapterID string, progress float64, completed *bool, positionSeconds *float64, durationSeconds *float64, page *int32) (*model.ReadingProgress, error) {
 	mID, err := parseID(mediaID)
 	if err != nil {
 		return nil, err
@@ -834,6 +834,12 @@ func (r *mutationResolver) UpdateReadingProgress(ctx context.Context, mediaID st
 	prog, err := r.Sy.RecordProgress(ctx, mID, chID, progress, comp, positionSeconds, durationSeconds)
 	if err != nil {
 		return nil, err
+	}
+	if page != nil && *page > 0 {
+		if _, err := r.DB.ExecContext(ctx, `INSERT INTO reading_pages (chapter_id, page) VALUES (?, ?)
+			ON CONFLICT(chapter_id) DO UPDATE SET page = excluded.page`, chID, *page); err != nil {
+			return nil, err
+		}
 	}
 	if comp {
 		r.afterChaptersMarked(mID, []int64{chID}, true)

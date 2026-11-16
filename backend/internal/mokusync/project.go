@@ -15,6 +15,7 @@ type position struct {
 	Progress float64  `json:"p"`
 	Seconds  *float64 `json:"s,omitempty"`
 	Duration *float64 `json:"d,omitempty"`
+	Page     *int64   `json:"pg,omitempty"`
 }
 
 var folderFields = []string{"name", "sort_order", "include_in_update", "include_in_download", "content_types"}
@@ -78,6 +79,14 @@ func readChapter(ctx context.Context, q querier, key string) (map[string]json.Ra
 	}
 	if duration.Valid {
 		pos.Duration = &duration.Float64
+	}
+	var page int64
+	err = q.QueryRowContext(ctx, `SELECT page FROM reading_pages WHERE chapter_id = ?`, chapterID).Scan(&page)
+	switch {
+	case err == nil:
+		pos.Page = &page
+	case !errors.Is(err, sql.ErrNoRows):
+		return nil, false, err
 	}
 	return map[string]json.RawMessage{
 		"completed":  mustJSON(completed),
@@ -419,6 +428,10 @@ func projectChapter(ctx context.Context, tx *sql.Tx, t target) (bool, error) {
 			position_seconds = excluded.position_seconds, duration_seconds = excluded.duration_seconds,
 			updated_at = MAX(reading_progress.updated_at, excluded.updated_at)`,
 			mediaID, chapterID, p.Progress, p.Seconds, p.Duration, at)
+		if err == nil && p.Page != nil {
+			_, err = tx.ExecContext(ctx, `INSERT INTO reading_pages (chapter_id, page) VALUES (?, ?)
+				ON CONFLICT(chapter_id) DO UPDATE SET page = excluded.page`, chapterID, *p.Page)
+		}
 	case "bookmarked":
 		var b bool
 		if err := json.Unmarshal(v, &b); err != nil {

@@ -255,6 +255,7 @@ type ComplexityRoot struct {
 		Metadata           func(childComplexity int) int
 		NextUnreadChapter  func(childComplexity int) int
 		ReadingProgress    func(childComplexity int) int
+		ResumePoint        func(childComplexity int) int
 		Source             func(childComplexity int) int
 		SourceName         func(childComplexity int) int
 		Status             func(childComplexity int) int
@@ -397,7 +398,7 @@ type ComplexityRoot struct {
 		UpdateAutomationSettings   func(childComplexity int, input model.AutomationSettingsInput) int
 		UpdateExtension            func(childComplexity int, packageName string) int
 		UpdateFolderFlags          func(childComplexity int, folderID string, includeInUpdate *bool, includeInDownload *bool) int
-		UpdateReadingProgress      func(childComplexity int, mediaID string, chapterID string, progress float64, completed *bool, positionSeconds *float64, durationSeconds *float64) int
+		UpdateReadingProgress      func(childComplexity int, mediaID string, chapterID string, progress float64, completed *bool, positionSeconds *float64, durationSeconds *float64, page *int32) int
 		UpdateServerSetting        func(childComplexity int, key string, value string) int
 		UpdateTrack                func(childComplexity int, linkID string, status *int32, score *float64, lastChapterRead *float64) int
 	}
@@ -525,6 +526,14 @@ type ComplexityRoot struct {
 		IndexURL     func(childComplexity int) int
 		LastSyncedAt func(childComplexity int) int
 		Name         func(childComplexity int) int
+	}
+
+	ResumePoint struct {
+		ChapterID func(childComplexity int) int
+		Completed func(childComplexity int) int
+		Page      func(childComplexity int) int
+		Progress  func(childComplexity int) int
+		UpdatedAt func(childComplexity int) int
 	}
 
 	SearchResponse struct {
@@ -790,6 +799,7 @@ type MediaResolver interface {
 	Metadata(ctx context.Context, obj *model.Media) (*model.MetadataMatch, error)
 	Source(ctx context.Context, obj *model.Media) (*model.Extension, error)
 	DownloadFolderPath(ctx context.Context, obj *model.Media) (*string, error)
+	ResumePoint(ctx context.Context, obj *model.Media) (*model.ResumePoint, error)
 }
 type MetadataMatchResolver interface {
 	MalID(ctx context.Context, obj *model.MetadataMatch) (*int32, error)
@@ -824,7 +834,7 @@ type MutationResolver interface {
 	SetInLibrary(ctx context.Context, mediaID string, inLibrary bool) (*model.Media, error)
 	MigrateMedia(ctx context.Context, fromMediaID string, toExtensionID string, toExternalID string) (*model.Media, error)
 	SyncChapters(ctx context.Context, mediaID string) ([]*model.Chapter, error)
-	UpdateReadingProgress(ctx context.Context, mediaID string, chapterID string, progress float64, completed *bool, positionSeconds *float64, durationSeconds *float64) (*model.ReadingProgress, error)
+	UpdateReadingProgress(ctx context.Context, mediaID string, chapterID string, progress float64, completed *bool, positionSeconds *float64, durationSeconds *float64, page *int32) (*model.ReadingProgress, error)
 	MarkChapterRead(ctx context.Context, mediaID string, chapterID string) (*model.ReadingProgress, error)
 	EnqueueDownload(ctx context.Context, mediaID string, chapterIds []string) ([]*model.Download, error)
 	RetryDownload(ctx context.Context, mediaID string, chapterID string) (*model.Download, error)
@@ -1896,6 +1906,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Media.ReadingProgress(childComplexity), true
+	case "Media.resumePoint":
+		if e.ComplexityRoot.Media.ResumePoint == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Media.ResumePoint(childComplexity), true
 	case "Media.source":
 		if e.ComplexityRoot.Media.Source == nil {
 			break
@@ -2986,7 +3002,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Mutation.UpdateReadingProgress(childComplexity, args["mediaId"].(string), args["chapterId"].(string), args["progress"].(float64), args["completed"].(*bool), args["positionSeconds"].(*float64), args["durationSeconds"].(*float64)), true
+		return e.ComplexityRoot.Mutation.UpdateReadingProgress(childComplexity, args["mediaId"].(string), args["chapterId"].(string), args["progress"].(float64), args["completed"].(*bool), args["positionSeconds"].(*float64), args["durationSeconds"].(*float64), args["page"].(*int32)), true
 	case "Mutation.updateServerSetting":
 		if e.ComplexityRoot.Mutation.UpdateServerSetting == nil {
 			break
@@ -3725,6 +3741,37 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Repository.Name(childComplexity), true
+
+	case "ResumePoint.chapterId":
+		if e.ComplexityRoot.ResumePoint.ChapterID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ResumePoint.ChapterID(childComplexity), true
+	case "ResumePoint.completed":
+		if e.ComplexityRoot.ResumePoint.Completed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ResumePoint.Completed(childComplexity), true
+	case "ResumePoint.page":
+		if e.ComplexityRoot.ResumePoint.Page == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ResumePoint.Page(childComplexity), true
+	case "ResumePoint.progress":
+		if e.ComplexityRoot.ResumePoint.Progress == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ResumePoint.Progress(childComplexity), true
+	case "ResumePoint.updatedAt":
+		if e.ComplexityRoot.ResumePoint.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.ResumePoint.UpdatedAt(childComplexity), true
 
 	case "SearchResponse.hasNextPage":
 		if e.ComplexityRoot.SearchResponse.HasNextPage == nil {
@@ -5166,6 +5213,8 @@ func (ec *executionContext) childFields_Media(ctx context.Context, field graphql
 		return ec.fieldContext_Media_source(ctx, field)
 	case "downloadFolderPath":
 		return ec.fieldContext_Media_downloadFolderPath(ctx, field)
+	case "resumePoint":
+		return ec.fieldContext_Media_resumePoint(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type Media", field.Name)
 }
@@ -5422,6 +5471,22 @@ func (ec *executionContext) childFields_Repository(ctx context.Context, field gr
 		return ec.fieldContext_Repository_lastSyncedAt(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type Repository", field.Name)
+}
+
+func (ec *executionContext) childFields_ResumePoint(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "chapterId":
+		return ec.fieldContext_ResumePoint_chapterId(ctx, field)
+	case "page":
+		return ec.fieldContext_ResumePoint_page(ctx, field)
+	case "progress":
+		return ec.fieldContext_ResumePoint_progress(ctx, field)
+	case "completed":
+		return ec.fieldContext_ResumePoint_completed(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_ResumePoint_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type ResumePoint", field.Name)
 }
 
 func (ec *executionContext) childFields_SearchResponse(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -7323,6 +7388,14 @@ func (ec *executionContext) field_Mutation_updateReadingProgress_args(ctx contex
 		return nil, err
 	}
 	args["durationSeconds"] = arg5
+	arg6, err := graphql.ProcessArgField(ctx, rawArgs, "page",
+		func(ctx context.Context, v any) (*int32, error) {
+			return ec.unmarshalOInt2ᚖint32(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["page"] = arg6
 	return args, nil
 }
 
@@ -11936,6 +12009,38 @@ func (ec *executionContext) fieldContext_Media_downloadFolderPath(_ context.Cont
 	return graphql.NewScalarFieldContext("Media", field, true, true, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _Media_resumePoint(ctx context.Context, field graphql.CollectedField, obj *model.Media) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Media_resumePoint(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Media().ResumePoint(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *model.ResumePoint) graphql.Marshaler {
+			return ec.marshalOResumePoint2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐResumePoint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_Media_resumePoint(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Media",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_ResumePoint(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _MediaAutomation_mediaId(ctx context.Context, field graphql.CollectedField, obj *model.MediaAutomation) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -13914,7 +14019,7 @@ func (ec *executionContext) _Mutation_updateReadingProgress(ctx context.Context,
 		},
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Mutation().UpdateReadingProgress(ctx, fc.Args["mediaId"].(string), fc.Args["chapterId"].(string), fc.Args["progress"].(float64), fc.Args["completed"].(*bool), fc.Args["positionSeconds"].(*float64), fc.Args["durationSeconds"].(*float64))
+			return ec.Resolvers.Mutation().UpdateReadingProgress(ctx, fc.Args["mediaId"].(string), fc.Args["chapterId"].(string), fc.Args["progress"].(float64), fc.Args["completed"].(*bool), fc.Args["positionSeconds"].(*float64), fc.Args["durationSeconds"].(*float64), fc.Args["page"].(*int32))
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v *model.ReadingProgress) graphql.Marshaler {
@@ -19245,6 +19350,121 @@ func (ec *executionContext) _Repository_lastSyncedAt(ctx context.Context, field 
 }
 func (ec *executionContext) fieldContext_Repository_lastSyncedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("Repository", field, false, false, errors.New("field of type Time does not have child fields"))
+}
+
+func (ec *executionContext) _ResumePoint_chapterId(ctx context.Context, field graphql.CollectedField, obj *model.ResumePoint) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ResumePoint_chapterId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ChapterID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ResumePoint_chapterId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ResumePoint", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _ResumePoint_page(ctx context.Context, field graphql.CollectedField, obj *model.ResumePoint) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ResumePoint_page(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Page, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int32) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint32(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_ResumePoint_page(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ResumePoint", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _ResumePoint_progress(ctx context.Context, field graphql.CollectedField, obj *model.ResumePoint) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ResumePoint_progress(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Progress, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v float64) graphql.Marshaler {
+			return ec.marshalNFloat2float64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ResumePoint_progress(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ResumePoint", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _ResumePoint_completed(ctx context.Context, field graphql.CollectedField, obj *model.ResumePoint) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ResumePoint_completed(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Completed, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ResumePoint_completed(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ResumePoint", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _ResumePoint_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.ResumePoint) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_ResumePoint_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v time.Time) graphql.Marshaler {
+			return ec.marshalNTime2timeᚐTime(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_ResumePoint_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("ResumePoint", field, false, false, errors.New("field of type Time does not have child fields"))
 }
 
 func (ec *executionContext) _SearchResponse_results(ctx context.Context, field graphql.CollectedField, obj *model.SearchResponse) (ret graphql.Marshaler) {
@@ -26828,6 +27048,44 @@ func (ec *executionContext) _Media(ctx context.Context, sel ast.SelectionSet, ob
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "resumePoint":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Media_resumePoint(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -29453,6 +29711,64 @@ func (ec *executionContext) _Repository(ctx context.Context, sel ast.SelectionSe
 		case "lastSyncedAt":
 			out.Values[i] = ec._Repository_lastSyncedAt(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var resumePointImplementors = []string{"ResumePoint"}
+
+func (ec *executionContext) _ResumePoint(ctx context.Context, sel ast.SelectionSet, obj *model.ResumePoint) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, resumePointImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ResumePoint")
+		case "chapterId":
+			out.Values[i] = ec._ResumePoint_chapterId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "page":
+			out.Values[i] = ec._ResumePoint_page(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "progress":
+			out.Values[i] = ec._ResumePoint_progress(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "completed":
+			out.Values[i] = ec._ResumePoint_completed(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._ResumePoint_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		default:
@@ -33334,6 +33650,13 @@ func (ec *executionContext) marshalORefreshInterval2ᚖtsunaguᚋbackendᚋinter
 		return graphql.Null
 	}
 	return v
+}
+
+func (ec *executionContext) marshalOResumePoint2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐResumePoint(ctx context.Context, sel ast.SelectionSet, v *model.ResumePoint) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ResumePoint(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOSelectFilterInput2ᚖtsunaguᚋbackendᚋinternalᚋapiᚋgraphᚋmodelᚐSelectFilterInput(ctx context.Context, v any) (*model.SelectFilterInput, error) {

@@ -64,3 +64,23 @@ BEGIN
     INSERT INTO sync_dirty (kind, key, field, op, recorded_at)
     VALUES ('reading_day', OLD.source || char(31) || OLD.day, 'totals', 'set', CAST((julianday('now') - 2440587.5) * 86400000 AS INTEGER));
 END;
+
+-- The page a reader stopped on in each chapter, so resuming lands on it on any device; progress alone can't name a page.
+CREATE TABLE reading_pages (
+    chapter_id INTEGER PRIMARY KEY REFERENCES chapters(id) ON DELETE CASCADE,
+    page INTEGER NOT NULL
+);
+
+CREATE TRIGGER sync_reading_page_insert AFTER INSERT ON reading_pages
+BEGIN
+    INSERT INTO sync_dirty (kind, key, field, op, recorded_at)
+    SELECT 'chapter', key, 'position', 'set', CAST((julianday('now') - 2440587.5) * 86400000 AS INTEGER)
+    FROM sync_chapter_keys WHERE chapter_id = NEW.chapter_id;
+END;
+
+CREATE TRIGGER sync_reading_page_update AFTER UPDATE OF page ON reading_pages WHEN OLD.page IS NOT NEW.page
+BEGIN
+    INSERT INTO sync_dirty (kind, key, field, op, recorded_at)
+    SELECT 'chapter', key, 'position', 'set', CAST((julianday('now') - 2440587.5) * 86400000 AS INTEGER)
+    FROM sync_chapter_keys WHERE chapter_id = NEW.chapter_id;
+END;
