@@ -50,6 +50,13 @@ func pageListPut(key string, urls []string) {
 	pageListMu.Unlock()
 }
 
+// clearPageLists forgets every cached list; a restarted sandbox no longer knows the requests behind them.
+func clearPageLists() {
+	pageListMu.Lock()
+	clear(pageListStore)
+	pageListMu.Unlock()
+}
+
 // InvalidatePageList drops any cached page URLs for a chapter.
 func InvalidatePageList(extensionID, sourceEntryID, sourceChapterID string) {
 	key := pageListKey(extensionID, sourceEntryID, sourceChapterID)

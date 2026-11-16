@@ -160,8 +160,8 @@ abstract class HttpSource : CatalogueSource {
 
     protected open fun imageRequest(page: Page): Request = GET(page.imageUrl!!, headers)
 
-    // Some sources only build the real image URL inside their protected imageRequest; this exposes it.
-    fun resolveImageUrl(page: Page): String = imageRequest(page).url.toString()
+    // Some sources only build the real image URL, or headers it needs, inside their protected imageRequest.
+    fun resolveImageRequest(page: Page): Request = imageRequest(page)
 
     fun SChapter.setUrlWithoutDomain(url: String) {
         this.url = getUrlWithoutDomain(url)

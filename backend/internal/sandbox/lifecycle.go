@@ -245,6 +245,7 @@ func (sc *SupervisedClient) waitReadyLocked(ctx context.Context) error {
 			cancel()
 			if pingErr == nil {
 				sc.client = client
+				clearPageLists()
 				log.Printf("sandbox: ready at %s", sc.addr)
 				return nil
 			}

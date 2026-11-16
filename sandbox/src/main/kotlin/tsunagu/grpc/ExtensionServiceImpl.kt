@@ -515,7 +515,7 @@ class ExtensionServiceImpl(
                 val urls = resolvePageURLs(pageList) { source.getImageUrl(it) }
                 pageList.zip(urls).map { (page, url) ->
                     page.imageUrl = url
-                    source.resolveImageUrl(page)
+                    PageRequests.remember(request.extensionId, source.resolveImageRequest(page))
                 }
             }
             val builder = Sandbox.PageList.newBuilder()
@@ -616,7 +616,8 @@ class ExtensionServiceImpl(
         }
         try {
             val response = runBlocking {
-                client.newCall(GET(request.imageUrl, headers)).awaitSuccess()
+                val pageRequest = PageRequests.get(request.extensionId, request.imageUrl)
+                client.newCall(pageRequest ?: GET(request.imageUrl, headers)).awaitSuccess()
             }
             val data = response.use { resp ->
                 val bytes = resp.body.bytes()
