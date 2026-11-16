@@ -398,6 +398,10 @@ func (r *mutationResolver) CreateFolder(ctx context.Context, name string, parent
 		}
 		parentID = sql.NullInt64{Int64: pid, Valid: true}
 	}
+	name, err := folderName(name)
+	if err != nil {
+		return nil, err
+	}
 	row, err := r.Q.CreateFolder(ctx, sqlcgen.CreateFolderParams{Name: name, ParentFolderID: parentID})
 	if err != nil {
 		return nil, err
@@ -408,6 +412,9 @@ func (r *mutationResolver) CreateFolder(ctx context.Context, name string, parent
 func (r *mutationResolver) RenameFolder(ctx context.Context, folderID string, name string) (*model.Folder, error) {
 	fid, err := parseID(folderID)
 	if err != nil {
+		return nil, err
+	}
+	if name, err = folderName(name); err != nil {
 		return nil, err
 	}
 	row, err := r.Q.RenameFolder(ctx, sqlcgen.RenameFolderParams{Name: name, ID: fid})

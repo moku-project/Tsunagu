@@ -23,7 +23,17 @@ type extensionInfo struct {
 	Repository  string `json:"repository,omitempty"`
 }
 
-func (e *Engine) captureTitleInfo(ctx context.Context, tx *sql.Tx, mediaKey string, wall int64) (int, error) {
+// captureTitleInfo shares a title's info when it joins the library and clears it once it has left everywhere.
+func (e *Engine) captureTitleInfo(ctx context.Context, tx *sql.Tx, mediaKey string, added bool, wall int64) (int, error) {
+	if !added {
+		if in, err := present(ctx, tx, KindLibrary, "", mediaKey); err != nil || in {
+			return 0, err
+		}
+		if _, _, ok, err := register(ctx, tx, KindTitle, mediaKey, "info"); err != nil || !ok {
+			return 0, err
+		}
+		return e.emitSet(ctx, tx, KindTitle, mediaKey, "info", json.RawMessage("null"), wall)
+	}
 	var info titleInfo
 	err := tx.QueryRowContext(ctx, `SELECT m.title, e.name, e.lang, e.content_type, COALESCE(r.index_url, '')
 		FROM sync_media_keys mk JOIN media m ON m.id = mk.media_id JOIN extensions e ON e.id = m.extension_id
@@ -44,6 +54,9 @@ func readTitleInfo(ctx context.Context, q querier, mediaKey string) (titleInfo, 
 		return titleInfo{}, false, err
 	}
 	var info titleInfo
+	if string(v) == "null" {
+		return info, false, nil
+	}
 	return info, json.Unmarshal(v, &info) == nil, nil
 }
 

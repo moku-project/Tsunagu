@@ -29,8 +29,9 @@ func (r syncResolver) Resolve(ctx context.Context, packageName, externalID strin
 	return err
 }
 
-// listenForPeers serves pairing and sync on addr, apart from the rest of the API, and advertises it over mDNS.
-func (s *Server) listenForPeers(ctx context.Context, e *mokusync.Engine, addr string) error {
+// listenForPeers serves pairing and sync on addr, apart from the rest of the API, and advertises it over mDNS
+// unless the embedder advertises it natively.
+func (s *Server) listenForPeers(ctx context.Context, e *mokusync.Engine, addr string, advertise bool) error {
 	if !strings.Contains(addr, ":") {
 		addr = ":" + addr
 	}
@@ -56,6 +57,9 @@ func (s *Server) listenForPeers(ctx context.Context, e *mokusync.Engine, addr st
 	port := ln.Addr().(*net.TCPAddr).Port
 	e.SetSyncPort(port)
 	log.Printf("moku-sync: other devices pair and sync on port %d", port)
+	if !advertise {
+		return nil
+	}
 	go func() {
 		if err := e.Advertise(ctx, port); err != nil {
 			log.Printf("moku-sync: not advertised on the local network: %v", err)

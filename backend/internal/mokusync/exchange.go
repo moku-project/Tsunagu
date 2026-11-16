@@ -23,6 +23,15 @@ type ExchangeRequest struct {
 	Complete bool          `json:"complete"`
 	// WaitMillis holds the reply until the receiver has something new or the time runs out.
 	WaitMillis int64 `json:"wait,omitempty"`
+	// Port is the caller's own sync port, so the receiver can dial it back at its current address.
+	Port int             `json:"port,omitempty"`
+	Seen map[string]Seen `json:"seen,omitempty"`
+}
+
+// Seen is what a device last said it holds, and when.
+type Seen struct {
+	VV VersionVector `json:"vv"`
+	At int64         `json:"at"`
 }
 
 // maxWait bounds a held exchange below common proxy and client timeouts.
@@ -30,11 +39,12 @@ const maxWait = 30 * time.Second
 
 // ExchangeResponse carries every op the caller lacks (up to batchLimit) and the receiver's version vector.
 type ExchangeResponse struct {
-	Node string        `json:"node"`
-	Name string        `json:"name"`
-	VV   VersionVector `json:"vv"`
-	Ops  []Op          `json:"ops"`
-	More bool          `json:"more"`
+	Node string          `json:"node"`
+	Name string          `json:"name"`
+	VV   VersionVector   `json:"vv"`
+	Ops  []Op            `json:"ops"`
+	More bool            `json:"more"`
+	Seen map[string]Seen `json:"seen,omitempty"`
 }
 
 // Peer is another Tsunagu this instance can exchange ops with.
@@ -46,6 +56,10 @@ type Peer interface {
 func (e *Engine) Serve(ctx context.Context, req ExchangeRequest) (ExchangeResponse, error) {
 	// Taken before reading, so a change that lands while we read still wakes a held reply.
 	changed := e.notify.wait()
+	if req.WaitMillis > 0 {
+		e.watchers.begin(req.Node)
+		defer e.watchers.end(req.Node)
+	}
 	resp, err := e.serve(ctx, req)
 	if err != nil || req.WaitMillis <= 0 || len(resp.Ops) > 0 || resp.More {
 		return resp, err
@@ -76,6 +90,9 @@ func (e *Engine) serve(ctx context.Context, req ExchangeRequest) (ExchangeRespon
 		if err := e.apply(ctx, tx, req.Ops); err != nil {
 			return err
 		}
+		if err := e.mergeSeen(ctx, tx, req.Node, req.VV, req.Seen); err != nil {
+			return err
+		}
 		if complete {
 			if err := mergeVV(ctx, tx, req.VV); err != nil {
 				return err
@@ -91,6 +108,9 @@ func (e *Engine) serve(ctx context.Context, req ExchangeRequest) (ExchangeRespon
 		known := resp.VV
 		if resp.More {
 			known = req.VV
+		}
+		if resp.Seen, err = e.seenMatrix(ctx, tx); err != nil {
+			return err
 		}
 		return savePeer(ctx, tx, req.Node, req.Name, known)
 	})
@@ -120,7 +140,12 @@ func (e *Engine) syncWith(ctx context.Context, peer Peer, peerNode string, wait 
 		if err != nil {
 			return err
 		}
-		req := ExchangeRequest{Node: e.node, Name: e.Name(), VV: mine, Base: known, Ops: ops, Complete: !more}
+		seen, err := e.seenMatrix(ctx, e.db)
+		if err != nil {
+			return err
+		}
+		req := ExchangeRequest{Node: e.node, Name: e.Name(), VV: mine, Base: known, Ops: ops, Complete: !more,
+			Port: int(e.syncPort.Load()), Seen: seen}
 		if round == 0 {
 			req.WaitMillis = wait.Milliseconds()
 		}
@@ -136,6 +161,9 @@ func (e *Engine) syncWith(ctx context.Context, peer Peer, peerNode string, wait 
 		}
 		err = e.write(ctx, func(tx *sql.Tx) error {
 			if err := e.apply(ctx, tx, resp.Ops); err != nil {
+				return err
+			}
+			if err := e.mergeSeen(ctx, tx, resp.Node, resp.VV, resp.Seen); err != nil {
 				return err
 			}
 			// The response held everything we lacked, so its version vector now describes us too.

@@ -342,8 +342,6 @@ func (e *Engine) Advertise(ctx context.Context, port int) error {
 	// RFC 6762 §8.3: announce at least twice, a second apart.
 	announce(ad, interfaces())
 	again := time.After(time.Second)
-	tick := time.NewTicker(5 * time.Second)
-	defer tick.Stop()
 	rejoin := time.NewTicker(30 * time.Second)
 	defer rejoin.Stop()
 	for {
@@ -354,7 +352,7 @@ func (e *Engine) Advertise(ctx context.Context, port int) error {
 			return nil
 		case <-again:
 			announce(*current.Load(), interfaces())
-		case <-tick.C:
+		case <-e.renamed.wait():
 			old := *current.Load()
 			if name := e.Name(); name != old.name {
 				next := newAdvert(e.node, name, port)
@@ -484,19 +482,27 @@ func Browse(ctx context.Context, wait time.Duration, self string) ([]Nearby, err
 	_ = pc.SetMulticastTTL(255)
 	_ = pc.SetMulticastLoopback(true)
 	q := browseQuery()
-	sent := false
-	for _, ifi := range multicastInterfaces() {
-		if pc.SetMulticastInterface(&ifi) == nil {
-			if _, err := pc.WriteTo(q, nil, mdnsGroup); err == nil {
-				sent = true
+	query := func() error {
+		sent := false
+		for _, ifi := range multicastInterfaces() {
+			if pc.SetMulticastInterface(&ifi) == nil {
+				if _, err := pc.WriteTo(q, nil, mdnsGroup); err == nil {
+					sent = true
+				}
 			}
 		}
-	}
-	if !sent {
-		if _, err := c.WriteTo(q, mdnsGroup); err != nil {
-			return nil, err
+		if sent {
+			return nil
 		}
+		_, err := c.WriteTo(q, mdnsGroup)
+		return err
 	}
+	if err := query(); err != nil {
+		return nil, err
+	}
+	// Multicast is easily dropped on Wi-Fi, so ask once more partway through.
+	retry := time.AfterFunc(wait/3, func() { _ = query() })
+	defer retry.Stop()
 	deadline := time.Now().Add(wait)
 	if d, ok := ctx.Deadline(); ok && d.Before(deadline) {
 		deadline = d

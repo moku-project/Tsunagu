@@ -125,3 +125,12 @@ func TestMissingExtensionsInStatus(t *testing.T) {
 		t.Fatalf("installing an extension no device described: %s", errs)
 	}
 }
+
+func TestFolderNamesAreTrimmed(t *testing.T) {
+	if got, err := folderName("  Reading \t"); err != nil || got != "Reading" {
+		t.Fatalf("got %q, %v", got, err)
+	}
+	if _, err := folderName("   "); err == nil {
+		t.Fatal("accepted a blank folder name")
+	}
+}

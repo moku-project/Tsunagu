@@ -552,9 +552,11 @@ type SyncPairingCode struct {
 type SyncPeer struct {
 	Node string `json:"node"`
 	Name string `json:"name"`
-	// Where this instance reaches the peer. Empty when only the peer connects here.
+	// Where this instance reaches the peer. Empty when only the peer can connect, like a device that doesn't listen.
 	Address    *string    `json:"address,omitempty"`
 	LastSeenAt *time.Time `json:"lastSeenAt,omitempty"`
+	// Connected now, so a change on either device reaches the other within seconds.
+	Online bool `json:"online"`
 }
 
 type SyncStatus struct {

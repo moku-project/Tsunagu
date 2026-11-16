@@ -2,9 +2,11 @@
 type SyncPeer {
   node: ID!
   name: String!
-  "Where this instance reaches the peer. Empty when only the peer connects here."
+  "Where this instance reaches the peer. Empty when only the peer can connect, like a device that doesn't listen."
   address: String
   lastSeenAt: Time
+  "Connected now, so a change on either device reaches the other within seconds."
+  online: Boolean!
 }
 
 type SyncStatus {

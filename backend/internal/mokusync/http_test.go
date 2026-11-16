@@ -1,6 +1,7 @@
 package mokusync
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -85,7 +86,7 @@ func TestExchangeRejectsUnknownTokens(t *testing.T) {
 		"wrong token": {Address: srv.URL, Token: "deadbeef", Client: srv.Client()},
 	} {
 		err := stranger.e.SyncWith(stranger.ctx, peer, hub.e.Node())
-		if err == nil || !strings.Contains(err.Error(), "401") {
+		if err == nil || (!strings.Contains(err.Error(), "401") && !errors.Is(err, errUnauthorized)) {
 			t.Errorf("%s: got %v, want 401", name, err)
 		}
 	}

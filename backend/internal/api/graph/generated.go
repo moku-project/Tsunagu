@@ -600,6 +600,7 @@ type ComplexityRoot struct {
 		LastSeenAt func(childComplexity int) int
 		Name       func(childComplexity int) int
 		Node       func(childComplexity int) int
+		Online     func(childComplexity int) int
 	}
 
 	SyncStatus struct {
@@ -3913,6 +3914,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.SyncPeer.Node(childComplexity), true
+	case "SyncPeer.online":
+		if e.ComplexityRoot.SyncPeer.Online == nil {
+			break
+		}
+
+		return e.ComplexityRoot.SyncPeer.Online(childComplexity), true
 
 	case "SyncStatus.addresses":
 		if e.ComplexityRoot.SyncStatus.Addresses == nil {
@@ -5272,6 +5279,8 @@ func (ec *executionContext) childFields_SyncPeer(ctx context.Context, field grap
 		return ec.fieldContext_SyncPeer_address(ctx, field)
 	case "lastSeenAt":
 		return ec.fieldContext_SyncPeer_lastSeenAt(ctx, field)
+	case "online":
+		return ec.fieldContext_SyncPeer_online(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type SyncPeer", field.Name)
 }
@@ -19638,6 +19647,29 @@ func (ec *executionContext) fieldContext_SyncPeer_lastSeenAt(_ context.Context, 
 	return graphql.NewScalarFieldContext("SyncPeer", field, false, false, errors.New("field of type Time does not have child fields"))
 }
 
+func (ec *executionContext) _SyncPeer_online(ctx context.Context, field graphql.CollectedField, obj *model.SyncPeer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_SyncPeer_online(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Online, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_SyncPeer_online(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("SyncPeer", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
 func (ec *executionContext) _SyncStatus_node(ctx context.Context, field graphql.CollectedField, obj *model.SyncStatus) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -28518,6 +28550,11 @@ func (ec *executionContext) _SyncPeer(ctx context.Context, sel ast.SelectionSet,
 		case "lastSeenAt":
 			out.Values[i] = ec._SyncPeer_lastSeenAt(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "online":
+			out.Values[i] = ec._SyncPeer_online(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		default:

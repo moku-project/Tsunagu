@@ -87,6 +87,14 @@ func runHistory(t *testing.T, seed int64, devices, steps int, reach func(i, j, n
 			}
 			continue
 		}
+		if r.Intn(12) == 0 {
+			k, err := n.e.Compact(n.ctx)
+			if err != nil {
+				t.Fatal(err)
+			}
+			log = append(log, fmt.Sprintf("%d: d%d drops %d deletion records", step, i, k))
+			continue
+		}
 		n.wall = now + skew[i]
 		log = append(log, fmt.Sprintf("%d: d%d %s", step, i, randomEdit(r, n)))
 		n.capture()

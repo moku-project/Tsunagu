@@ -60,6 +60,10 @@ type Options struct {
 
 	// NoSyncListener: this instance only dials out to paired devices and never listens on the LAN.
 	NoSyncListener bool
+
+	// SyncDiscovery finds devices through the platform's own service discovery instead of mDNS sockets, which
+	// iOS doesn't allow without a special entitlement. The embedder then also advertises this instance.
+	SyncDiscovery func(ctx context.Context, self string) ([]mokusync.Nearby, error)
 }
 
 type Server struct {
@@ -71,6 +75,8 @@ type Server struct {
 	q        *sqlcgen.Queries
 	local    *localsource.Scanner
 	cleanups []func()
+
+	Sync *mokusync.Engine
 }
 
 // LocalSourceDir is the local-media folder that rescanLocalMedia scans.
@@ -360,9 +366,13 @@ func Start(opts Options) (*Server, error) {
 	syncEngine.SetResolver(syncResolver{sy: syncer, sc: supervised})
 	syncCtx, stopSync := context.WithCancel(context.Background())
 	s.cleanups = append(s.cleanups, stopSync)
+	s.Sync = syncEngine
 	syncEngine.SetDiscovery(mokusync.BrowseLAN)
+	if opts.SyncDiscovery != nil {
+		syncEngine.SetDiscovery(opts.SyncDiscovery)
+	}
 	if !opts.NoSyncListener && cfg.SyncAddr != "" {
-		if err := s.listenForPeers(syncCtx, syncEngine, cfg.SyncAddr); err != nil {
+		if err := s.listenForPeers(syncCtx, syncEngine, cfg.SyncAddr, opts.SyncDiscovery == nil); err != nil {
 			log.Printf("moku-sync: other devices can't reach this one: %v", err)
 		}
 	}

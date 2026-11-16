@@ -41,6 +41,11 @@ type Engine struct {
 	// unreachable counts dialed peers whose watcher is failing; discovery then looks for their new address.
 	unreachable  atomic.Int32
 	pairFailures atomic.Int32
+	// watchers are peers holding exchanges open with this instance; failing are peers this one can't reach.
+	watchers inbound
+	failing  sync.Map
+	wake     notifier
+	renamed  notifier
 }
 
 // notifier wakes everyone waiting for the next change; each change replaces the channel.
@@ -72,6 +77,9 @@ func (e *Engine) SetResolver(r Resolver) { e.resolver = r }
 
 // SetSyncPort records the port the peer listener took, for status and the mDNS advert.
 func (e *Engine) SetSyncPort(port int) { e.syncPort.Store(int32(port)) }
+
+// SyncPort is the port peers reach this instance on, or 0 when it only dials out.
+func (e *Engine) SyncPort() int { return int(e.syncPort.Load()) }
 
 // SetDiscovery turns on finding instances on the local network; call before Run.
 func (e *Engine) SetDiscovery(find func(ctx context.Context, self string) ([]Nearby, error)) {
@@ -133,6 +141,7 @@ func (e *Engine) SetName(ctx context.Context, name string) error {
 	e.nameMu.Lock()
 	e.name = name
 	e.nameMu.Unlock()
+	e.renamed.broadcast()
 	return nil
 }
 
@@ -309,9 +318,9 @@ func (e *Engine) capture(ctx context.Context, tx *sql.Tx) (int, error) {
 			made, err = e.captureFolder(ctx, tx, d, wall)
 		case d.kind == KindLibrary || d.kind == KindFolderMember:
 			made, err = e.captureMember(ctx, tx, d, wall)
-			if err == nil && d.kind == KindLibrary && d.op == "add" {
+			if err == nil && d.kind == KindLibrary {
 				var info int
-				info, err = e.captureTitleInfo(ctx, tx, d.field, wall)
+				info, err = e.captureTitleInfo(ctx, tx, d.field, d.op == "add", wall)
 				made += info
 			}
 		}

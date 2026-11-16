@@ -2,7 +2,9 @@ package graph
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"tsunagu/backend/internal/api/graph/model"
@@ -22,7 +24,7 @@ func (r *Resolver) syncStatus(ctx context.Context) (*model.SyncStatus, error) {
 }
 
 func toSyncPeer(p mokusync.PeerStatus) *model.SyncPeer {
-	out := &model.SyncPeer{Node: p.Node, Name: p.Name}
+	out := &model.SyncPeer{Node: p.Node, Name: p.Name, Online: p.Online}
 	if p.Address != "" {
 		out.Address = &p.Address
 	}
@@ -85,4 +87,13 @@ func (r *Resolver) installSyncExtension(ctx context.Context, pkg string) (*model
 		}
 	}
 	return (&mutationResolver{r}).InstallExtension(ctx, pkg)
+}
+
+// folderName trims what the user typed, so "Reading " and "Reading" merge across devices and look the same.
+func folderName(name string) (string, error) {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return "", errors.New("folder name can't be empty")
+	}
+	return name, nil
 }

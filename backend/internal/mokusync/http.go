@@ -7,15 +7,27 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"crypto/subtle"
+	"database/sql"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
+
+// errUnauthorized means the peer no longer accepts this instance's token.
+var errUnauthorized = errors.New("this device is not paired there")
+
+// defaultClient gives up on an unreachable address quickly, since a moved device is then looked for on the LAN.
+var defaultClient = &http.Client{
+	Timeout:   60 * time.Second,
+	Transport: &http.Transport{DialContext: (&net.Dialer{Timeout: 5 * time.Second}).DialContext, IdleConnTimeout: 90 * time.Second},
+}
 
 // Routes under PeerPrefix authenticate with peer tokens instead of the user's session.
 const (
@@ -76,6 +88,10 @@ func (h *Handler) exchange(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "unknown peer or token", http.StatusUnauthorized)
 		return
 	}
+	if err := h.E.learnAddress(r.Context(), req.Node, callerHost(r), req.Port); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	resp, err := h.E.Serve(r.Context(), req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -115,11 +131,14 @@ func (e *Engine) PairingCode(ctx context.Context) (string, time.Time, error) {
 	return string(code), expires, nil
 }
 
+// pairRequest also hands over a token for dialing the caller back, so either device can start a sync.
 type pairRequest struct {
 	Code   string `json:"code"`
 	Node   string `json:"node"`
 	Name   string `json:"name"`
 	Expect string `json:"expect,omitempty"`
+	Token  string `json:"token,omitempty"`
+	Port   int    `json:"port,omitempty"`
 }
 
 type pairResponse struct {
@@ -128,8 +147,9 @@ type pairResponse struct {
 	Token string `json:"token"`
 }
 
-// acceptPairing spends a pairing code and returns a fresh token for the new peer.
-func (e *Engine) acceptPairing(ctx context.Context, req pairRequest) (string, error) {
+// acceptPairing spends a pairing code and returns a fresh token for the new peer. host is where the request
+// came from, used with the caller's port to dial it back.
+func (e *Engine) acceptPairing(ctx context.Context, req pairRequest, host string) (string, error) {
 	if req.Node == "" || req.Node == e.node {
 		return "", errors.New("invalid peer node")
 	}
@@ -145,9 +165,55 @@ func (e *Engine) acceptPairing(ctx context.Context, req pairRequest) (string, er
 		return "", err
 	}
 	token := hex.EncodeToString(b)
-	_, err := e.db.ExecContext(ctx, `INSERT INTO sync_peers (node, name, token_hash) VALUES (?, ?, ?)
-		ON CONFLICT(node) DO UPDATE SET name = excluded.name, token_hash = excluded.token_hash`, req.Node, req.Name, hashSecret(token))
+	address := ""
+	if req.Token != "" {
+		address = dialBack(host, req.Port)
+	}
+	_, err := e.db.ExecContext(ctx, `INSERT INTO sync_peers (node, name, token_hash, dial_token, address) VALUES (?, ?, ?, ?, ?)
+		ON CONFLICT(node) DO UPDATE SET name = excluded.name, token_hash = excluded.token_hash,
+		dial_token = excluded.dial_token, address = excluded.address`, req.Node, req.Name, hashSecret(token), req.Token, address)
 	return token, err
+}
+
+// callerHost is the IP a request came from, or "" when a proxy sits between, since that IP isn't the device's.
+func callerHost(r *http.Request) string {
+	for _, h := range []string{"Forwarded", "X-Forwarded-For", "X-Real-Ip"} {
+		if r.Header.Get(h) != "" {
+			return ""
+		}
+	}
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return ""
+	}
+	return host
+}
+
+// dialBack is the address a caller at host listens on, or "" when it can't be reached that way.
+func dialBack(host string, port int) string {
+	ip := net.ParseIP(host)
+	if ip == nil || port <= 0 || port > 65535 || ip.IsLinkLocalUnicast() || ip.IsUnspecified() {
+		return ""
+	}
+	return "http://" + net.JoinHostPort(ip.String(), strconv.Itoa(port))
+}
+
+// learnAddress follows a peer that dialed in from a new address, the way DHCP moves phones around.
+func (e *Engine) learnAddress(ctx context.Context, node, host string, port int) error {
+	address := dialBack(host, port)
+	if address == "" {
+		return nil
+	}
+	var old string
+	err := e.db.QueryRowContext(ctx, `SELECT address FROM sync_peers WHERE node = ? AND dial_token != ''`, node).Scan(&old)
+	if errors.Is(err, sql.ErrNoRows) || old == address || (old != "" && !replaceable(old)) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	_, err = e.db.ExecContext(ctx, `UPDATE sync_peers SET address = ? WHERE node = ?`, address, node)
+	return err
 }
 
 func (h *Handler) pair(w http.ResponseWriter, r *http.Request) {
@@ -156,7 +222,7 @@ func (h *Handler) pair(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	token, err := h.E.acceptPairing(r.Context(), req)
+	token, err := h.E.acceptPairing(r.Context(), req, callerHost(r))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusForbidden)
 		return
@@ -202,8 +268,14 @@ func (e *Engine) ConnectTo(ctx context.Context, client *http.Client, address, co
 	if address == "" {
 		return "", errors.New("missing address")
 	}
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	back := hex.EncodeToString(b)
+	req := pairRequest{Code: code, Node: e.node, Name: e.Name(), Expect: node, Token: back, Port: int(e.syncPort.Load())}
 	var resp pairResponse
-	if err := postJSON(ctx, client, address+pairPath, "", pairRequest{Code: code, Node: e.node, Name: e.Name(), Expect: node}, &resp); err != nil {
+	if err := postJSON(ctx, client, address+pairPath, "", req, &resp); err != nil {
 		return "", fmt.Errorf("pair with %s: %w", address, err)
 	}
 	if resp.Node == "" || resp.Token == "" {
@@ -212,9 +284,9 @@ func (e *Engine) ConnectTo(ctx context.Context, client *http.Client, address, co
 	if node != "" && resp.Node != node {
 		return "", errors.New("a different device answered than the one previewed")
 	}
-	_, err := e.db.ExecContext(ctx, `INSERT INTO sync_peers (node, name, address, dial_token) VALUES (?, ?, ?, ?)
-		ON CONFLICT(node) DO UPDATE SET name = excluded.name, address = excluded.address, dial_token = excluded.dial_token`,
-		resp.Node, resp.Name, address, resp.Token)
+	_, err := e.db.ExecContext(ctx, `INSERT INTO sync_peers (node, name, address, dial_token, token_hash) VALUES (?, ?, ?, ?, ?)
+		ON CONFLICT(node) DO UPDATE SET name = excluded.name, address = excluded.address, dial_token = excluded.dial_token,
+		token_hash = excluded.token_hash`, resp.Node, resp.Name, address, resp.Token, hashSecret(back))
 	return resp.Node, err
 }
 
@@ -224,6 +296,8 @@ type PeerStatus struct {
 	Name       string `json:"name"`
 	Address    string `json:"address,omitempty"`
 	LastSeenAt int64  `json:"lastSeenAt,omitempty"`
+	// Online means the two are connected now, so changes on either reach the other within seconds.
+	Online bool `json:"online"`
 }
 
 func (e *Engine) Peers(ctx context.Context) ([]PeerStatus, error) {
@@ -238,6 +312,8 @@ func (e *Engine) Peers(ctx context.Context) ([]PeerStatus, error) {
 		if err := rows.Scan(&p.Node, &p.Name, &p.Address, &p.LastSeenAt); err != nil {
 			return nil, err
 		}
+		_, failing := e.failing.Load(p.Node)
+		p.Online = e.watchers.watching(p.Node) || (!failing && nowMillis()-p.LastSeenAt < (watchWait+20*time.Second).Milliseconds())
 		out = append(out, p)
 	}
 	return out, rows.Err()
@@ -267,7 +343,7 @@ func (p HTTPPeer) Exchange(ctx context.Context, req ExchangeRequest) (ExchangeRe
 
 func postJSON(ctx context.Context, client *http.Client, url, token string, body, out any) error {
 	if client == nil {
-		client = &http.Client{Timeout: 60 * time.Second}
+		client = defaultClient
 	}
 	var buf bytes.Buffer
 	zw := gzip.NewWriter(&buf)
@@ -300,6 +376,9 @@ func postJSON(ctx context.Context, client *http.Client, url, token string, body,
 		}
 		defer gz.Close()
 		rd = gz
+	}
+	if res.StatusCode == http.StatusUnauthorized && token != "" {
+		return errUnauthorized
 	}
 	if res.StatusCode != http.StatusOK {
 		msg, _ := io.ReadAll(io.LimitReader(rd, 4096))
