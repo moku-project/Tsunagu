@@ -246,6 +246,8 @@ type LibraryFilter struct {
 	GenreIds       []string `json:"genreIds,omitempty"`
 	FolderID       *string  `json:"folderId,omitempty"`
 	Query          *string  `json:"query,omitempty"`
+	// False skips the server's content filter, for clients that apply their own.
+	ContentFilter *bool `json:"contentFilter,omitempty"`
 }
 
 type LibrarySortInput struct {

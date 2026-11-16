@@ -1780,6 +1780,9 @@ func (r *queryResolver) Library(ctx context.Context, filter *model.LibraryFilter
 		if filter.InLibrary != nil {
 			q.InLibrary = filter.InLibrary
 		}
+		if filter.ContentFilter != nil && !*filter.ContentFilter {
+			q.ContentFilterRank = 0
+		}
 		if filter.UnreadOnly != nil {
 			q.UnreadOnly = *filter.UnreadOnly
 		}

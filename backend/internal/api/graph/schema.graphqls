@@ -462,6 +462,8 @@ input LibraryFilter {
   genreIds: [ID!]
   folderId: ID
   query: String
+  "False skips the server's content filter, for clients that apply their own."
+  contentFilter: Boolean = true
 }
 
 type Query {

@@ -13,8 +13,11 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/handler"
 
+	"tsunagu/backend/internal/api/graph/model"
+	"tsunagu/backend/internal/contentfilter"
 	"tsunagu/backend/internal/db"
 	"tsunagu/backend/internal/db/sqlcgen"
+	syncpkg "tsunagu/backend/internal/sync"
 )
 
 func TestReadingHistoryThroughGraphQL(t *testing.T) {
@@ -116,5 +119,39 @@ func TestChaptersDoNotCountAsAView(t *testing.T) {
 	var viewed sql.NullString
 	if err := conn.QueryRowContext(ctx, `SELECT last_viewed_at FROM media WHERE id = 1`).Scan(&viewed); err != nil || viewed.Valid {
 		t.Fatalf("listing chapters counted as a view: %v %v", viewed, err)
+	}
+}
+
+func TestLibraryCanSkipTheContentFilter(t *testing.T) {
+	conn, err := db.Open(filepath.Join(t.TempDir(), "t.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+	ctx := context.Background()
+	for _, q := range []string{
+		`INSERT INTO repositories (index_url, name) VALUES ('https://example.com/index.json', 'Example')`,
+		`INSERT INTO extensions (repository_id, package_name, name, version, content_type, lang, apk_url, installed) VALUES (1, 'example.source', 'Example', '1', 'manga', 'en', 'x.apk', 1)`,
+		`INSERT INTO media (id, extension_id, external_id, content_type, title, added_at, content_block_rank) VALUES (1, 1, '/a', 'manga', 'A', CURRENT_TIMESTAMP, NULL), (2, 1, '/b', 'manga', 'B', CURRENT_TIMESTAMP, 1)`,
+	} {
+		if _, err := conn.ExecContext(ctx, q); err != nil {
+			t.Fatal(err)
+		}
+	}
+	q := sqlcgen.New(conn)
+	cf, err := contentfilter.New(q)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cf.SetLevel(contentfilter.Moderate)
+	r := &queryResolver{&Resolver{DB: conn, Q: q, Cf: cf, Sy: syncpkg.New(conn, q, t.TempDir(), t.TempDir())}}
+	filtered, err := r.Library(ctx, nil, nil, nil, nil)
+	if err != nil || filtered.Total != 1 {
+		t.Fatalf("filtered library %+v %v", filtered, err)
+	}
+	off := false
+	all, err := r.Library(ctx, &model.LibraryFilter{ContentFilter: &off}, nil, nil, nil)
+	if err != nil || all.Total != 2 {
+		t.Fatalf("unfiltered library %+v %v", all, err)
 	}
 }

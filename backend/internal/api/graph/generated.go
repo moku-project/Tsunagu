@@ -24300,8 +24300,11 @@ func (ec *executionContext) unmarshalInputLibraryFilter(ctx context.Context, obj
 	if _, present := asMap["inLibrary"]; !present {
 		asMap["inLibrary"] = true
 	}
+	if _, present := asMap["contentFilter"]; !present {
+		asMap["contentFilter"] = true
+	}
 
-	fieldsInOrder := [...]string{"contentType", "inLibrary", "unreadOnly", "downloadedOnly", "bookmarkedOnly", "tagIds", "genreIds", "folderId", "query"}
+	fieldsInOrder := [...]string{"contentType", "inLibrary", "unreadOnly", "downloadedOnly", "bookmarkedOnly", "tagIds", "genreIds", "folderId", "query", "contentFilter"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -24371,6 +24374,13 @@ func (ec *executionContext) unmarshalInputLibraryFilter(ctx context.Context, obj
 				return it, err
 			}
 			it.Query = data
+		case "contentFilter":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contentFilter"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ContentFilter = data
 		}
 	}
 	return it, nil
