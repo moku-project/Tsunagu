@@ -14,6 +14,7 @@ type Config struct {
 	ServerName        string
 	DataDir           string
 	HTTPAddr          string
+	SyncAddr          string
 	DBPath            string
 	JarCacheDir       string
 	MediaDir          string
@@ -56,6 +57,7 @@ func Defaults() Config {
 	return Config{
 		ServerName:           "Tsunagu",
 		HTTPAddr:             "127.0.0.1:6007",
+		SyncAddr:             ":6008",
 		DBPath:               "tsunagu.db",
 		JarCacheDir:          "jar-cache",
 		MediaDir:             "media",
@@ -126,6 +128,9 @@ func Load(opts Options) (*Config, string, map[string]bool, error) {
 
 	if addr := os.Getenv("TSUNAGU_ADDR"); addr != "" {
 		c.HTTPAddr = addr
+	}
+	if addr, ok := os.LookupEnv("TSUNAGU_SYNC_ADDR"); ok {
+		c.SyncAddr = addr
 	}
 
 	c.rebaseDataDir(opts.DataDir)

@@ -76,6 +76,15 @@ var migration0021 string
 //go:embed migrations/0022_extension_base_url.sql
 var migration0022 string
 
+//go:embed migrations/0023_moku_sync.sql
+var migration0023 string
+
+//go:embed migrations/0024_sync_seen.sql
+var migration0024 string
+
+//go:embed migrations/0025_reading_history.sql
+var migration0025 string
+
 var migrations = []struct {
 	name string
 	sql  string
@@ -102,6 +111,9 @@ var migrations = []struct {
 	{"0020_automation.sql", migration0020},
 	{"0021_chapter_bookmarks.sql", migration0021},
 	{"0022_extension_base_url.sql", migration0022},
+	{"0023_moku_sync.sql", migration0023},
+	{"0024_sync_seen.sql", migration0024},
+	{"0025_reading_history.sql", migration0025},
 }
 
 func Open(path string) (*sql.DB, error) {

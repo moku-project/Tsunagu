@@ -24,6 +24,7 @@ var (
 	apiToken    string
 	preferAPK   = true
 	videoEngine VideoEngine
+	discovery   SyncDiscovery
 )
 
 // SetPreferAPK sends APKs to hosts that load them natively (Android) and JARs otherwise; applies on the next Start.
@@ -59,6 +60,7 @@ func Start(dataDir, sandboxAddr, sandboxToken string) error {
 		SandboxToken:    sandboxToken,
 		PreferAPK:       preferAPK,
 		VideoEngine:     engineOption(),
+		SyncDiscovery:   discoveryOption(),
 	})
 	if err != nil {
 		return err

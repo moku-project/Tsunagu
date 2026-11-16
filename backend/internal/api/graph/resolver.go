@@ -17,6 +17,7 @@ import (
 	"tsunagu/backend/internal/flaresolverr"
 	"tsunagu/backend/internal/localsource"
 	"tsunagu/backend/internal/metadata"
+	"tsunagu/backend/internal/mokusync"
 	"tsunagu/backend/internal/sandbox"
 	sandboxv1 "tsunagu/backend/internal/sandbox/gen/sandbox/v1"
 	"tsunagu/backend/internal/streamresolve"
@@ -39,6 +40,7 @@ type Resolver struct {
 	Cf        *contentfilter.Manager
 	Au        *automation.Manager
 	Am        *auth.Manager
+	Ms        *mokusync.Engine
 	MediaDir  string
 	Name      string
 	Version   string

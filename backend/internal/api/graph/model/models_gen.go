@@ -299,6 +299,7 @@ type Media struct {
 	Metadata           *MetadataMatch     `json:"metadata,omitempty"`
 	Source             *Extension         `json:"source,omitempty"`
 	DownloadFolderPath *string            `json:"downloadFolderPath,omitempty"`
+	ResumePoint        *ResumePoint       `json:"resumePoint,omitempty"`
 }
 
 type MediaAutomation struct {
@@ -368,6 +369,26 @@ type Mutation struct {
 type Query struct {
 }
 
+// Reading done on one date in the reader's time zone.
+type ReadingDay struct {
+	// YYYY-MM-DD.
+	Date     string `json:"date"`
+	Seconds  int32  `json:"seconds"`
+	Chapters int32  `json:"chapters"`
+}
+
+type ReadingDayInput struct {
+	Date     string `json:"date"`
+	Seconds  int32  `json:"seconds"`
+	Chapters int32  `json:"chapters"`
+}
+
+type ReadingHistoryImport struct {
+	Imported int32 `json:"imported"`
+	// Sessions for titles this server doesn't have, or already imported.
+	Skipped int32 `json:"skipped"`
+}
+
 type ReadingProgress struct {
 	ID              string    `json:"id"`
 	MediaID         string    `json:"mediaId"`
@@ -377,6 +398,53 @@ type ReadingProgress struct {
 	PositionSeconds *float64  `json:"positionSeconds,omitempty"`
 	DurationSeconds *float64  `json:"durationSeconds,omitempty"`
 	UpdatedAt       time.Time `json:"updatedAt"`
+}
+
+// One stretch of reading a title: from opening it until the reader stops for an hour or moves to another title.
+type ReadingSession struct {
+	ID           string    `json:"id"`
+	Media        *Media    `json:"media"`
+	StartChapter *Chapter  `json:"startChapter,omitempty"`
+	EndChapter   *Chapter  `json:"endChapter,omitempty"`
+	StartPage    int32     `json:"startPage"`
+	EndPage      int32     `json:"endPage"`
+	StartedAt    time.Time `json:"startedAt"`
+	EndedAt      time.Time `json:"endedAt"`
+	// Time spent reading, at most an hour.
+	DurationMs int32 `json:"durationMs"`
+	// Chapters opened during the session.
+	Chapters int32 `json:"chapters"`
+}
+
+type ReadingSessionInput struct {
+	// Chosen by the app, so sending a session twice doesn't record it twice.
+	ID             string    `json:"id"`
+	MediaID        string    `json:"mediaId"`
+	StartChapterID *string   `json:"startChapterId,omitempty"`
+	EndChapterID   *string   `json:"endChapterId,omitempty"`
+	StartPage      int32     `json:"startPage"`
+	EndPage        int32     `json:"endPage"`
+	StartedAt      time.Time `json:"startedAt"`
+	EndedAt        time.Time `json:"endedAt"`
+	DurationMs     int32     `json:"durationMs"`
+	Chapters       int32     `json:"chapters"`
+}
+
+type ReadingStats struct {
+	// Chapters marked read.
+	TotalChaptersRead int32 `json:"totalChaptersRead"`
+	TotalTitlesRead   int32 `json:"totalTitlesRead"`
+	TotalMinutesRead  int32 `json:"totalMinutesRead"`
+	// Chapters opened in the last 7 days.
+	ChaptersThisWeek int32      `json:"chaptersThisWeek"`
+	FirstReadAt      *time.Time `json:"firstReadAt,omitempty"`
+	LastReadAt       *time.Time `json:"lastReadAt,omitempty"`
+	// Days in a row with reading, counting today or yesterday. 0 once a day is missed.
+	CurrentStreakDays int32 `json:"currentStreakDays"`
+	LongestStreakDays int32 `json:"longestStreakDays"`
+	// Last date with reading; empty when there's none.
+	LastStreakDate string        `json:"lastStreakDate"`
+	Days           []*ReadingDay `json:"days"`
 }
 
 type RecentChapter struct {
@@ -407,6 +475,16 @@ type Repository struct {
 	ContentType  ContentType `json:"contentType"`
 	AddedAt      time.Time   `json:"addedAt"`
 	LastSyncedAt *time.Time  `json:"lastSyncedAt,omitempty"`
+}
+
+// Where to pick a title back up: the chapter read most recently, and the page reached in it.
+type ResumePoint struct {
+	ChapterID string `json:"chapterId"`
+	// Absent when the app that read it didn't send a page.
+	Page      *int32    `json:"page,omitempty"`
+	Progress  float64   `json:"progress"`
+	Completed bool      `json:"completed"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 type SearchResponse struct {
@@ -500,6 +578,77 @@ type StorageInfo struct {
 type SubtitleTrack struct {
 	Lang string `json:"lang"`
 	URL  string `json:"url"`
+}
+
+// An extension synced titles need that isn't installed here.
+type SyncMissingExtension struct {
+	PackageName string `json:"packageName"`
+	Name        string `json:"name"`
+	Lang        string `json:"lang"`
+	ContentType string `json:"contentType"`
+	// Where a paired device installed it from. Empty when no device said.
+	Repository string `json:"repository"`
+	// This device already lists it, so installing needs no new repository.
+	Available bool `json:"available"`
+	// Library titles waiting on it.
+	Titles int32 `json:"titles"`
+	// A few of those titles by name.
+	Examples []string `json:"examples"`
+}
+
+// Another Tsunagu advertising on the local network.
+type SyncNearbyDevice struct {
+	Node    string `json:"node"`
+	Name    string `json:"name"`
+	Address string `json:"address"`
+	// Already paired with this one.
+	Paired bool `json:"paired"`
+}
+
+// What pairing with a device would merge. Shown before connecting so the user can back out.
+type SyncPairPreview struct {
+	Node string `json:"node"`
+	Name string `json:"name"`
+	// Titles in their library, and how many of those this device doesn't have.
+	Titles    int32 `json:"titles"`
+	NewTitles int32 `json:"newTitles"`
+	// This device's titles they don't have yet.
+	SentTitles   int32 `json:"sentTitles"`
+	Folders      int32 `json:"folders"`
+	ReadChapters int32 `json:"readChapters"`
+	// Their folders that will merge with a same-name folder here.
+	MergingFolders []string `json:"mergingFolders"`
+}
+
+type SyncPairingCode struct {
+	// Entered on the other device. Works once.
+	Code      string    `json:"code"`
+	ExpiresAt time.Time `json:"expiresAt"`
+}
+
+// Another Tsunagu this one syncs its library with.
+type SyncPeer struct {
+	Node string `json:"node"`
+	Name string `json:"name"`
+	// Where this instance reaches the peer. Empty when only the peer can connect, like a device that doesn't listen.
+	Address    *string    `json:"address,omitempty"`
+	LastSeenAt *time.Time `json:"lastSeenAt,omitempty"`
+	// Connected now, so a change on either device reaches the other within seconds.
+	Online bool `json:"online"`
+}
+
+type SyncStatus struct {
+	// This instance's sync ID.
+	Node string `json:"node"`
+	// The name other devices show for this one. Null until someone names it: the app asks for a name the first time sync is opened, and pairing waits for it.
+	Name  *string     `json:"name,omitempty"`
+	Peers []*SyncPeer `json:"peers"`
+	// Library titles synced here whose source hasn't been fetched yet.
+	PendingTitles int32 `json:"pendingTitles"`
+	// Where devices on the local network reach this one to pair. Empty when it only connects out.
+	Addresses []string `json:"addresses"`
+	// Extensions this device lacks that synced library titles come from. Those titles appear once it's installed.
+	MissingExtensions []*SyncMissingExtension `json:"missingExtensions"`
 }
 
 type TagFacet struct {

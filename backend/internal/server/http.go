@@ -22,6 +22,7 @@ import (
 	"tsunagu/backend/internal/api/graph"
 	"tsunagu/backend/internal/auth"
 	"tsunagu/backend/internal/db/sqlcgen"
+	"tsunagu/backend/internal/mokusync"
 	"tsunagu/backend/internal/sandbox"
 	sandboxv1 "tsunagu/backend/internal/sandbox/gen/sandbox/v1"
 	"tsunagu/backend/internal/sync"
@@ -111,7 +112,9 @@ func logRequests(next http.Handler) http.Handler {
 func authMiddleware(token string, am *auth.Manager, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/healthz" || r.URL.Path == "/api/auth/status" || r.URL.Path == "/api/auth/login" ||
-			strings.HasPrefix(r.URL.Path, "/api/tracker/") || strings.HasPrefix(r.URL.Path, "/internal/") || r.Method == http.MethodOptions {
+			strings.HasPrefix(r.URL.Path, "/api/tracker/") || strings.HasPrefix(r.URL.Path, "/internal/") ||
+			// Paired instances authenticate with their own peer tokens.
+			strings.HasPrefix(r.URL.Path, mokusync.PeerPrefix) || r.Method == http.MethodOptions {
 			next.ServeHTTP(w, r)
 			return
 		}

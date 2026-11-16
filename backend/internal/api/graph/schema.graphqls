@@ -574,7 +574,8 @@ type Mutation {
   setInLibrary(mediaId: ID!, inLibrary: Boolean!): Media!
   migrateMedia(fromMediaId: ID!, toExtensionId: ID!, toExternalId: String!): Media!
   syncChapters(mediaId: ID!): [Chapter!]!
-  updateReadingProgress(mediaId: ID!, chapterId: ID!, progress: Float!, completed: Boolean, positionSeconds: Float, durationSeconds: Float): ReadingProgress!
+  "page is the page the reader is on; it comes back in Media.resumePoint and syncs to paired devices."
+  updateReadingProgress(mediaId: ID!, chapterId: ID!, progress: Float!, completed: Boolean, positionSeconds: Float, durationSeconds: Float, page: Int): ReadingProgress!
   markChapterRead(mediaId: ID!, chapterId: ID!): ReadingProgress!
   enqueueDownload(mediaId: ID!, chapterIds: [ID!]!): [Download!]!
   retryDownload(mediaId: ID!, chapterId: ID!): Download!

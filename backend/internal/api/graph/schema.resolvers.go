@@ -398,6 +398,10 @@ func (r *mutationResolver) CreateFolder(ctx context.Context, name string, parent
 		}
 		parentID = sql.NullInt64{Int64: pid, Valid: true}
 	}
+	name, err := folderName(name)
+	if err != nil {
+		return nil, err
+	}
 	row, err := r.Q.CreateFolder(ctx, sqlcgen.CreateFolderParams{Name: name, ParentFolderID: parentID})
 	if err != nil {
 		return nil, err
@@ -408,6 +412,9 @@ func (r *mutationResolver) CreateFolder(ctx context.Context, name string, parent
 func (r *mutationResolver) RenameFolder(ctx context.Context, folderID string, name string) (*model.Folder, error) {
 	fid, err := parseID(folderID)
 	if err != nil {
+		return nil, err
+	}
+	if name, err = folderName(name); err != nil {
 		return nil, err
 	}
 	row, err := r.Q.RenameFolder(ctx, sqlcgen.RenameFolderParams{Name: name, ID: fid})
@@ -676,6 +683,9 @@ func (r *mutationResolver) InstallExtension(ctx context.Context, packageName str
 		return nil, err
 	}
 	ext = r.persistSupportsLatest(ctx, ext, loaded)
+	if r.Ms != nil {
+		r.Ms.ExtensionsChanged()
+	}
 	return toExtension(ext, r.MediaDir), nil
 }
 
@@ -808,7 +818,7 @@ func (r *mutationResolver) SyncChapters(ctx context.Context, mediaID string) ([]
 	return out, nil
 }
 
-func (r *mutationResolver) UpdateReadingProgress(ctx context.Context, mediaID string, chapterID string, progress float64, completed *bool, positionSeconds *float64, durationSeconds *float64) (*model.ReadingProgress, error) {
+func (r *mutationResolver) UpdateReadingProgress(ctx context.Context, mediaID string, chapterID string, progress float64, completed *bool, positionSeconds *float64, durationSeconds *float64, page *int32) (*model.ReadingProgress, error) {
 	mID, err := parseID(mediaID)
 	if err != nil {
 		return nil, err
@@ -824,6 +834,12 @@ func (r *mutationResolver) UpdateReadingProgress(ctx context.Context, mediaID st
 	prog, err := r.Sy.RecordProgress(ctx, mID, chID, progress, comp, positionSeconds, durationSeconds)
 	if err != nil {
 		return nil, err
+	}
+	if page != nil && *page > 0 {
+		if _, err := r.DB.ExecContext(ctx, `INSERT INTO reading_pages (chapter_id, page) VALUES (?, ?)
+			ON CONFLICT(chapter_id) DO UPDATE SET page = excluded.page`, chID, *page); err != nil {
+			return nil, err
+		}
 	}
 	if comp {
 		r.afterChaptersMarked(mID, []int64{chID}, true)
