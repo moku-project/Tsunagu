@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"sort"
 	"time"
+	// Stats are counted in the reader's time zone, and Windows and iOS have no zone files for Go to read.
+	_ "time/tzdata"
 )
 
 // MaxSession caps one session's counted time, so a reader left open overnight doesn't count as reading.
