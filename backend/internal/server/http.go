@@ -160,11 +160,12 @@ func registerGraphQL(mux *http.ServeMux, resolver *graph.Resolver) {
 func sandboxErrorPresenter(ctx context.Context, e error) *gqlerror.Error {
 	gqlErr := graphql.DefaultErrorPresenter(ctx, e)
 
+	// The sandbox's own status, not status.FromError's, which folds every wrapping message into the text.
 	var st *status.Status
-	for err := e; err != nil; err = errors.Unwrap(err) {
-		if s, ok := status.FromError(err); ok && s.Code() != codes.OK {
+	var grpcErr interface{ GRPCStatus() *status.Status }
+	if errors.As(e, &grpcErr) {
+		if s := grpcErr.GRPCStatus(); s.Code() != codes.OK {
 			st = s
-			break
 		}
 	}
 	if st == nil {

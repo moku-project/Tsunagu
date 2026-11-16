@@ -115,7 +115,7 @@ object ExtensionLoader {
 
     private fun sourceClassName(doc: org.w3c.dom.Document, packageName: String): String {
         val meta = SOURCE_CLASS_KEYS.firstNotNullOfOrNull { getManifestMetaData(doc, it) }
-            ?: throw ExtensionLoadException("no source class meta-data (${SOURCE_CLASS_KEYS.joinToString()}) in manifest for $packageName")
+            ?: throw ExtensionLoadException("$packageName isn't an extension; it may be an app. Install an extension's own APK, or add its repository.")
         return meta.trim().let { if (it.startsWith(".")) packageName + it else it }
     }
 
