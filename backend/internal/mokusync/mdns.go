@@ -37,12 +37,15 @@ type advert struct {
 	port                       uint16
 }
 
+// newAdvert ends the instance label with part of the node ID: DNS-SD keys records by that label, so two
+// devices given the same name would otherwise overwrite each other and one would vanish from the list.
 func newAdvert(node, name string, port int) advert {
 	label := strings.TrimSpace(strings.ReplaceAll(name, ".", " "))
 	if label == "" {
 		label = "Tsunagu"
 	}
-	label = truncate(label, 63)
+	suffix := " (" + node[:min(6, len(node))] + ")"
+	label = truncate(label, 63-len(suffix)) + suffix
 	return advert{
 		instance: label + "." + serviceName,
 		host:     "moku-" + node[:min(12, len(node))] + ".local.",
@@ -253,6 +256,18 @@ func interfaceIPv4s(ifi *net.Interface) [][4]byte {
 
 // Advertise answers mDNS queries for this instance's sync port until ctx ends, then says goodbye.
 func (e *Engine) Advertise(ctx context.Context, port int) error {
+	// An unnamed device stays off the network, so nobody sees it under a placeholder.
+	for {
+		renamed := e.renamed.wait()
+		if e.Named() {
+			break
+		}
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-renamed:
+		}
+	}
 	lc := net.ListenConfig{Control: reuseAddr}
 	c, err := lc.ListenPacket(ctx, "udp4", "0.0.0.0:5353")
 	if err != nil {
@@ -520,4 +535,9 @@ func Browse(ctx context.Context, wait time.Duration, self string) ([]Nearby, err
 		s.add(buf[:n])
 	}
 	return s.found(self), ctx.Err()
+}
+
+// ServiceInstance is the DNS-SD instance name this device announces, for apps that publish it themselves.
+func (e *Engine) ServiceInstance() string {
+	return strings.TrimSuffix(newAdvert(e.node, e.Name(), 0).instance, "."+serviceName)
 }

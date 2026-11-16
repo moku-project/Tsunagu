@@ -2,16 +2,20 @@ package mokusync
 
 import (
 	"context"
+	"errors"
 	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
 	"golang.org/x/net/dns/dnsmessage"
 	"golang.org/x/net/ipv4"
+
+	"tsunagu/backend/internal/db"
 )
 
 func query(id uint16, qs ...dnsmessage.Question) []byte {
@@ -89,7 +93,7 @@ func TestAdvertNamesStayValid(t *testing.T) {
 	if ad.announcement(nil, -1) == nil {
 		t.Fatal("couldn't build an announcement")
 	}
-	if newAdvert("abc", "  ", 1).instance != "Tsunagu."+serviceName {
+	if newAdvert("abc", "  ", 1).instance != "Tsunagu (abc)."+serviceName {
 		t.Fatal("blank name not replaced")
 	}
 }
@@ -249,4 +253,56 @@ func TestAdvertiseAndBrowseOnTheLAN(t *testing.T) {
 		}
 		t.Fatal("no multicast answer")
 	})
+}
+
+func TestSameNamedDevicesBothShowUp(t *testing.T) {
+	s := newBrowseState()
+	for i, node := range []string{"aaaaaaaa1111", "bbbbbbbb2222"} {
+		ad := newAdvert(node, "Phone", 6008)
+		s.add(ad.answer(browseQuery(), [][4]byte{{192, 168, 1, byte(20 + i)}}, true))
+	}
+	if got := s.found("me"); len(got) != 2 || got[0].Name != "Phone" || got[1].Name != "Phone" {
+		t.Fatalf("found %+v, want both phones", got)
+	}
+}
+
+func TestDevicesMustBeNamedToPairOrAnnounce(t *testing.T) {
+	conn, err := db.Open(filepath.Join(t.TempDir(), "t.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+	e, err := Open(t.Context(), conn)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if e.Named() {
+		t.Fatalf("a new device was named %q without anyone choosing it", e.Name())
+	}
+	if _, _, err := e.PairingCode(t.Context()); !errors.Is(err, ErrUnnamed) {
+		t.Fatalf("pairing code while unnamed: %v", err)
+	}
+	if _, err := e.ConnectTo(t.Context(), nil, "http://127.0.0.1:1", "AAAAAAAA", ""); !errors.Is(err, ErrUnnamed) {
+		t.Fatalf("pairing while unnamed: %v", err)
+	}
+	ctx, cancel := context.WithTimeout(t.Context(), 100*time.Millisecond)
+	defer cancel()
+	if err := e.Advertise(ctx, 6008); err != nil {
+		t.Fatalf("advertise while unnamed: %v", err)
+	}
+	for _, bad := range []string{"", "   ", strings.Repeat("x", maxNameLength+1), "Desk\x00"} {
+		if err := e.SetName(t.Context(), bad); err == nil {
+			t.Errorf("accepted the name %q", bad)
+		}
+	}
+	if err := e.SetName(t.Context(), "  Living   room PC "); err != nil || e.Name() != "Living room PC" {
+		t.Fatalf("name %q, %v", e.Name(), err)
+	}
+	if _, _, err := e.PairingCode(t.Context()); err != nil {
+		t.Fatalf("pairing code once named: %v", err)
+	}
+	again, err := Open(t.Context(), conn)
+	if err != nil || again.Name() != "Living room PC" {
+		t.Fatalf("name after restart %q, %v", again.Name(), err)
+	}
 }

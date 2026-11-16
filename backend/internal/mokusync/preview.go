@@ -123,6 +123,9 @@ type PairPreview struct {
 
 // Preview asks the instance at address what pairing would bring in, without spending the code.
 func (e *Engine) Preview(ctx context.Context, client *http.Client, address, code string) (PairPreview, error) {
+	if !e.Named() {
+		return PairPreview{}, ErrUnnamed
+	}
 	address = strings.TrimRight(strings.TrimSpace(address), "/")
 	if address == "" {
 		return PairPreview{}, errors.New("missing address")

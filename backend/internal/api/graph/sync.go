@@ -16,7 +16,10 @@ func (r *Resolver) syncStatus(ctx context.Context) (*model.SyncStatus, error) {
 	if err != nil {
 		return nil, err
 	}
-	out := &model.SyncStatus{Node: st.Node, Name: st.Name, Peers: []*model.SyncPeer{}, PendingTitles: int32(st.PendingTitles), Addresses: st.Addresses, MissingExtensions: toMissingExtensions(st.MissingExtensions)}
+	out := &model.SyncStatus{Node: st.Node, Peers: []*model.SyncPeer{}, PendingTitles: int32(st.PendingTitles), Addresses: st.Addresses, MissingExtensions: toMissingExtensions(st.MissingExtensions)}
+	if st.Name != "" {
+		out.Name = &st.Name
+	}
 	for _, p := range st.Peers {
 		out.Peers = append(out.Peers, toSyncPeer(p))
 	}

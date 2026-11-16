@@ -118,6 +118,17 @@ func TestPeersFollowEachOtherToNewAddresses(t *testing.T) {
 		t.Fatalf("desktop dials the phone at %q, want %q", got, moved.URL)
 	}
 
+	// A rename shows up on the other device with the next sync.
+	if err := phone.e.SetName(phone.ctx, "Shozikan's Pixel"); err != nil {
+		t.Fatal(err)
+	}
+	if err := phone.e.SyncNow(phone.ctx, nil); err != nil {
+		t.Fatal(err)
+	}
+	if peers, _ := hub.e.Peers(hub.ctx); len(peers) != 1 || peers[0].Name != "Shozikan's Pixel" {
+		t.Fatalf("desktop shows %+v after the rename", peers)
+	}
+
 	// An address the user typed, like a hostname behind a proxy, is left alone.
 	hub.exec(`UPDATE sync_peers SET address = 'https://phone.example' WHERE node = ?`, phone.e.Node())
 	if err := phone.e.SyncNow(phone.ctx, nil); err != nil {

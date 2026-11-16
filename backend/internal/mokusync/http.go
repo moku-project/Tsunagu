@@ -112,6 +112,9 @@ func (h *Handler) authorized(r *http.Request, node string) bool {
 
 // PairingCode issues a one-time code another instance trades for a peer token.
 func (e *Engine) PairingCode(ctx context.Context) (string, time.Time, error) {
+	if !e.Named() {
+		return "", time.Time{}, ErrUnnamed
+	}
 	b := make([]byte, 8)
 	if _, err := rand.Read(b); err != nil {
 		return "", time.Time{}, err
@@ -264,6 +267,9 @@ func (e *Engine) Connect(ctx context.Context, client *http.Client, address, code
 
 // ConnectTo pairs only if the instance at address is node, the one a preview showed; "" skips the check.
 func (e *Engine) ConnectTo(ctx context.Context, client *http.Client, address, code, node string) (string, error) {
+	if !e.Named() {
+		return "", ErrUnnamed
+	}
 	address = strings.TrimRight(strings.TrimSpace(address), "/")
 	if address == "" {
 		return "", errors.New("missing address")

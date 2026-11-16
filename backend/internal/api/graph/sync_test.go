@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -59,6 +60,19 @@ func TestPairingThroughGraphQL(t *testing.T) {
 	_, phoneGQL := syncGraph(t)
 	srv := httptest.NewServer(&mokusync.Handler{E: hub})
 	defer srv.Close()
+
+	// A new device has no name, and pairing waits until it gets one.
+	if out := hubGQL(`{ syncStatus { name } }`); fmt.Sprint(out["data"]) != "map[syncStatus:map[name:<nil>]]" {
+		t.Fatalf("a new device came with a name: %v", out)
+	}
+	if out := hubGQL(`mutation { createSyncPairingCode { code } }`); out["errors"] == nil {
+		t.Fatal("an unnamed device made a pairing code")
+	}
+	hubGQL(`mutation { setSyncDeviceName(name: "Desk") { name } }`)
+	if out := phoneGQL(`mutation { previewSyncPeer(address: "` + srv.URL + `", code: "AAAAAAAA") { node } }`); !strings.Contains(fmt.Sprint(out["errors"]), "name this device") {
+		t.Fatalf("an unnamed device previewed: %v", out["errors"])
+	}
+	phoneGQL(`mutation { setSyncDeviceName(name: "Phone") { name } }`)
 
 	out := hubGQL(`mutation { createSyncPairingCode { code expiresAt } }`)
 	code := out["data"].(map[string]any)["createSyncPairingCode"].(map[string]any)["code"].(string)

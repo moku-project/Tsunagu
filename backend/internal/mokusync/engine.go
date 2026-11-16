@@ -9,13 +9,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
+	"unicode"
+	"unicode/utf8"
 )
 
 // Engine owns this instance's sync state in the Tsunagu database.
@@ -128,11 +129,23 @@ func (e *Engine) Name() string {
 	return e.name
 }
 
-// SetName changes the name other instances show for this one.
+// maxNameLength keeps a name readable in a list on a phone screen.
+const maxNameLength = 40
+
+// ErrUnnamed is returned until someone names this device, so no other device sees it under a placeholder.
+var ErrUnnamed = errors.New("name this device before pairing it")
+
+// SetName changes the name other instances show for this one; they pick it up on their next sync.
 func (e *Engine) SetName(ctx context.Context, name string) error {
-	name = strings.TrimSpace(name)
+	name = strings.Join(strings.Fields(name), " ")
 	if name == "" {
 		return errors.New("device name can't be empty")
+	}
+	if utf8.RuneCountInString(name) > maxNameLength {
+		return fmt.Errorf("device name can't be longer than %d characters", maxNameLength)
+	}
+	if strings.IndexFunc(name, unicode.IsControl) >= 0 {
+		return errors.New("device name can't contain control characters")
 	}
 	if _, err := e.db.ExecContext(ctx, `INSERT INTO sync_meta (key, value) VALUES ('name', ?)
 		ON CONFLICT(key) DO UPDATE SET value = excluded.value`, name); err != nil {
@@ -195,13 +208,12 @@ func initNode(ctx context.Context, db *sql.DB) (string, error) {
 		return "", err
 	}
 	node := hex.EncodeToString(b)
-	host, _ := os.Hostname()
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return "", err
 	}
 	defer tx.Rollback()
-	for _, kv := range [][2]string{{"node", node}, {"seq", "0"}, {"name", host}, {"rows", "1"}} {
+	for _, kv := range [][2]string{{"node", node}, {"seq", "0"}, {"rows", "1"}} {
 		if _, err := tx.ExecContext(ctx, `INSERT INTO sync_meta (key, value) VALUES (?, ?)`, kv[0], kv[1]); err != nil {
 			return "", fmt.Errorf("init sync meta: %w", err)
 		}
@@ -812,3 +824,6 @@ func splitKey(key string, parts int) ([]string, bool) {
 }
 
 func nowMillis() int64 { return time.Now().UnixMilli() }
+
+// Named reports whether someone has named this device; pairing and announcing wait until then.
+func (e *Engine) Named() bool { return e.Name() != "" }

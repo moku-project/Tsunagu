@@ -562,8 +562,8 @@ type SyncPeer struct {
 type SyncStatus struct {
 	// This instance's sync ID.
 	Node string `json:"node"`
-	// The name paired devices show for this instance.
-	Name  string      `json:"name"`
+	// The name other devices show for this one. Null until someone names it: the app asks for a name the first time sync is opened, and pairing waits for it.
+	Name  *string     `json:"name,omitempty"`
 	Peers []*SyncPeer `json:"peers"`
 	// Library titles synced here whose source hasn't been fetched yet.
 	PendingTitles int32 `json:"pendingTitles"`

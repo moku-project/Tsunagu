@@ -12,8 +12,8 @@ type SyncPeer {
 type SyncStatus {
   "This instance's sync ID."
   node: ID!
-  "The name paired devices show for this instance."
-  name: String!
+  "The name other devices show for this one. Null until someone names it: the app asks for a name the first time sync is opened, and pairing waits for it."
+  name: String
   peers: [SyncPeer!]!
   "Library titles synced here whose source hasn't been fetched yet."
   pendingTitles: Int!

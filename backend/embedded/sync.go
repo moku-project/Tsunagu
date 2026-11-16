@@ -52,7 +52,7 @@ func discoveryOption() func(ctx context.Context, self string) ([]mokusync.Nearby
 }
 
 // SyncAdvert is what the app publishes as a _moku._tcp service when it provides SyncDiscovery: JSON with the
-// port and TXT entries. It's "" while stopped or not listening; read it again after renaming the device.
+// instance name, port and TXT entries; show people the TXT name. It's "" while stopped, not listening or not yet named; read it again after naming the device.
 func SyncAdvert() string {
 	mu.Lock()
 	defer mu.Unlock()
@@ -61,12 +61,12 @@ func SyncAdvert() string {
 	}
 	e := running.Sync
 	port := e.SyncPort()
-	if port == 0 {
+	if port == 0 || !e.Named() {
 		return ""
 	}
 	b, _ := json.Marshal(map[string]any{
 		"type": "_moku._tcp",
-		"name": e.Name(),
+		"name": e.ServiceInstance(),
 		"port": port,
 		"txt":  map[string]string{"v": "1", "node": e.Node(), "name": e.Name()},
 	})
